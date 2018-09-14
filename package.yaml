@@ -19,32 +19,19 @@ default-extensions:
 dependencies:
   - base >= 4.7 && < 5
   - directory
-  - containers
-  - optparse-applicative
   - cairo
-  - transformers
-  - mtl
-  - random
-  - time
-  - random-fu
-  - MonadRandom
-  - monad-loops
-  - random-extras
-  - linear
-  - lens
-  - semigroups
   - colour
-  - random-shuffle
-  - vector
-  - safe
-  - groom
-  - pqueue
+  - linear
+  - MonadRandom
+  - mtl
+  - optparse-applicative
   - process
-  - extra
-  - HCodecs
-  - split
-  - rvar
+  - random
+  - random-fu
   - random-source
+  - semigroups
+  - time
+  - transformers
 
 library:
     source-dirs: src
