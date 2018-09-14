@@ -1,0 +1,6 @@
+resolver: lts-10.5
+
+packages:
+- .
+extra-deps:
+  - random-extras-0.19

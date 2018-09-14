@@ -1,0 +1,51 @@
+name:                chaosbox
+version:             0.1.0.0
+#synopsis:
+#description:
+homepage:            https://github.com/5outh/chaosbox#readme
+license:             MIT
+author:              Benjamin Kovach
+maintainer:          bkovach13@gmail.com
+copyright:           2018 Benjamin Kovach
+category:            Art
+extra-source-files:
+- README.md
+
+default-extensions:
+  - TypeApplications
+  - RecordWildCards
+  - LambdaCase
+
+dependencies:
+  - base >= 4.7 && < 5
+  - directory
+  - containers
+  - optparse-applicative
+  - cairo
+  - transformers
+  - mtl
+  - random
+  - time
+  - random-fu
+  - MonadRandom
+  - monad-loops
+  - random-extras
+  - linear
+  - lens
+  - semigroups
+  - colour
+  - random-shuffle
+  - vector
+  - safe
+  - groom
+  - pqueue
+  - process
+  - extra
+  - HCodecs
+  - split
+  - rvar
+  - random-source
+
+library:
+    source-dirs: src
+    ghc-options: -O2 -threaded -rtsopts
