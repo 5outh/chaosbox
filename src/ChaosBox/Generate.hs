@@ -83,17 +83,7 @@ runGenerate surface ctx@GenerateCtx {..} doRender =
     . flip runReaderT ctx
     . flip runRandT   (mkStdGen gcSeed)
     $ do
-        lift . lift $ scale gcScale gcScale
-        doRender
-
-runGenerate_ :: Surface -> GenerateCtx -> Generate a -> IO ()
-runGenerate_ surface ctx@GenerateCtx {..} doRender =
-  void
-    . renderWith surface
-    . flip runReaderT ctx
-    . flip runRandT   (mkStdGen gcSeed)
-    $ do
-        lift . lift $ scale gcScale gcScale
+        cairo $ scale gcScale gcScale
         doRender
 
 -- | Lift a Cairo action into a Generate action
