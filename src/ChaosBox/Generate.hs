@@ -4,18 +4,13 @@
 module ChaosBox.Generate where
 
 import           Control.Arrow               ((&&&))
-import           Control.Concurrent          (forkIO)
 import           Control.Monad.Random
 import           Control.Monad.Reader
-import           Control.Monad.State
 import           Data.IORef
-import           Data.Random
 import qualified Data.Random                 as D
 import           Data.Random.Internal.Source
-import           Data.Random.Source
 import           Data.Semigroup
 import           Graphics.Rendering.Cairo
-import           Linear.V2
 import           Text.Printf
 
 data GenerateCtx = GenerateCtx

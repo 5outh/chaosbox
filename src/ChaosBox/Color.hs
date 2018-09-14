@@ -1,4 +1,4 @@
-module ChaosBox.Color where
+module ChaosBox.Color (HSV(..),WithAlpha(..),setSourceHSV,setSourceHSVA) where
 
 import           Data.Colour.RGBSpace
 import           Data.Colour.RGBSpace.HSV
@@ -16,7 +16,7 @@ data WithAlpha color = WithAlpha
   }
 
 setSourceHSV :: HSV -> Render ()
-setSourceHSV hsv = setSourceHsva (hsv `WithAlpha` 1)
+setSourceHSV color = setSourceHSVA (color `WithAlpha` 1)
 
 setSourceHSVA :: WithAlpha HSV -> Render ()
 setSourceHSVA (WithAlpha HSV {..} alpha) =

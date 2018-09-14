@@ -35,4 +35,10 @@ dependencies:
 
 library:
     source-dirs: src
-    ghc-options: -O2 -threaded -rtsopts
+
+executables:
+  chaosbox-example:
+    source-dirs: example
+    main: Main.hs
+    dependencies:
+      - chaosbox

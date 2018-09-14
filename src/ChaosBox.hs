@@ -2,6 +2,7 @@ module ChaosBox
   ( runChaosBoxWith
   , runChaosBoxIO
   , runChaosBoxIOWith
+  , fillScreenHSV
   , Opts(..)
   , module ChaosBox.Generate
   , module ChaosBox.Color
@@ -19,7 +20,6 @@ import           Data.Time.Clock.POSIX
 import           Graphics.Rendering.Cairo
 import           Options.Applicative
 import           System.Directory
-import           System.Process
 
 data Opts = Opts
   { optSeed           :: Maybe Int
@@ -36,7 +36,7 @@ opts :: Parser Opts
 opts =
   Opts
     <$> optional (option auto $ long "seed" <> metavar "SEED")
-    <*> option auto (long "scale" <> metavar "SCALE" <> value 10)
+    <*> option auto (long "scale" <> metavar "SCALE" <> value 1)
     <*> option auto (long "width" <> short 'w' <> metavar "WIDTH" <> value 100)
     <*> option auto
                (long "height" <> short 'h' <> metavar "HEIGHT" <> value 100)
@@ -87,8 +87,9 @@ runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
   progressRef <- newIORef 0
 
   -- Create directories if they don't exist
-  createDirectoryIfMissing False $ "images/" <> optName
-  createDirectoryIfMissing False $ "images/" <> optName <> "/progress"
+  createDirectoryIfMissing False $ "./images/"
+  createDirectoryIfMissing False $ "./images/" <> optName
+  createDirectoryIfMissing False $ "./images/" <> optName <> "/progress"
 
   beforeSaveHookRef <- newIORef Nothing
 
@@ -102,11 +103,11 @@ runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
                         beforeSaveHookRef
 
   void . renderWith surface . flip runReaderT ctx . flip runRandT stdGen $ do
-    lift . lift $ scale optScale optScale
+    cairo $ scale optScale optScale
     void doRender
 
-    beforeSaveHookRef <- asks gcBeforeSaveHook
-    mHook             <- liftIO $ readIORef beforeSaveHookRef
+    ref   <- asks gcBeforeSaveHook
+    mHook <- liftIO $ readIORef ref
 
     case mHook of
       Nothing   -> pure ()
@@ -129,3 +130,12 @@ runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
 
   surfaceWriteToPNG surface filename
   surfaceWriteToPNG surface latest
+
+-- Utility function
+
+fillScreenHSV :: HSV -> Generate ()
+fillScreenHSV color = do
+  (w, h) <- getSize
+  cairo $ do
+    rectangle 0 0 w h
+    setSourceHSV color *> fill
