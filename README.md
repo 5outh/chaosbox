@@ -4,7 +4,7 @@ A minimal framework for generative art.
 
 `chaosbox` exposes:
 
-- An easy-to-hook-into CLI interface for generating art (`chaosBoxIO` and friends),
+- An easy-to-hook-into CLI interface for generating art (`runChaosBoxIO` and friends),
   see `--help` for details.
 - A monad transformer stack (`Generate`) that:
   - is capable of drawing with `cairo`
