@@ -8,7 +8,7 @@ data HSV = HSV
   { hsvHue        :: Double
   , hsvSaturation :: Double
   , hsvValue      :: Double
-  } deriving (Show, Eq)
+  } deriving (Show, Read, Eq)
 
 data WithAlpha color = WithAlpha
   { waColor :: color
