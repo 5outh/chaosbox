@@ -8,12 +8,12 @@ data HSV = HSV
   { hsvHue        :: Double
   , hsvSaturation :: Double
   , hsvValue      :: Double
-  } deriving (Show, Read, Eq)
+  } deriving (Show, Read, Eq, Ord)
 
 data WithAlpha color = WithAlpha
   { waColor :: color
   , waAlpha :: Double
-  }
+  } deriving (Show, Read, Eq, Ord)
 
 setSourceHSV :: HSV -> Render ()
 setSourceHSV color = setSourceHSVA (color `WithAlpha` 1)
