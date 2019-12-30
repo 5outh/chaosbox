@@ -33,6 +33,7 @@ dependencies:
   - time
   - transformers
   - mersenne-random-pure64
+  - vector
 
 library:
     source-dirs: src

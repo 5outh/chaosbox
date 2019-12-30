@@ -57,7 +57,7 @@ toHSV :: RGB Double -> HSV
 toHSV rgb = let (h, s, v) = hsvView rgb in HSV h s v
 
 grayscale :: Num a => a -> RGB a
-grayscale value = RGB value value value
+grayscale v = RGB v v v
 
 toRGB :: HSV -> RGB Double
 toRGB HSV {..} = hsv2rgb hsvHue hsvSaturation hsvValue
@@ -72,6 +72,7 @@ hsv2rgb h s v = case i `mod` 6 of
   5 -> RGB v p q
   _ -> error "mod 6 returned something out of range"
  where
+  i :: Int
   i = floor $ h * 6
   f = h * 6 - fromIntegral i
   p = v * (1 - s)

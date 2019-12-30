@@ -10,10 +10,8 @@ import           Control.Arrow                 ((&&&))
 import           Control.Monad.Random
 import           Control.Monad.Reader
 import           Data.IORef
-import qualified Data.Random                   as D
 import           Data.Random.Internal.Source
 import           Data.Random.Source            as Source
-import           Data.Semigroup
 import           Graphics.Rendering.Cairo
 import           System.Random.Mersenne.Pure64
 import           Text.Printf

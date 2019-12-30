@@ -16,7 +16,7 @@ import           Prelude              hiding (init)
 
 import           ChaosBox.Generate
 import           Control.Monad.Random
-import           Data.Vector          (Vector (..), init, (!))
+import           Data.Vector          (Vector, init, (!))
 import qualified Data.Vector          as V
 import           Linear
 
@@ -60,11 +60,10 @@ newNoise4 = do
   seed <- V4 <$> getRandom <*> getRandom <*> getRandom <*> getRandom
   pure $ \x -> noise4 (x + seed)
 
-e = exp 1
-
 vector2 :: [[a]] -> Vector (Vector a)
 vector2 = V.fromList . fmap V.fromList
 
+gradients3d :: Vector (Vector Double)
 gradients3d = vector2
   [ [1, 1, 0]
   , [-1, 1, 0]
@@ -80,6 +79,7 @@ gradients3d = vector2
   , [0, -1, -1]
   ]
 
+gradients4d :: Vector (Vector Double)
 gradients4d = vector2
   [ [0, 1, 1, 1]
   , [0, 1, 1, -1]
@@ -115,6 +115,8 @@ gradients4d = vector2
   , [-1, -1, -1, 0]
   ]
 
+
+perm :: Vector Int
 perm = V.fromList
   [ 151
   , 160
@@ -630,6 +632,7 @@ perm = V.fromList
   , 180
   ]
 
+simplex :: Vector (Vector Double)
 simplex = vector2
   [ [0, 1, 2, 3]
   , [0, 1, 3, 2]
@@ -874,12 +877,12 @@ noise4D x y z w =
     z1  = z0 - fromIntegral k1 + g4
     w1  = w0 - fromIntegral l1 + g4
 
-    x2  = x0 - fromIntegral i2 + 2 * g4
+    x2  = x0 - i2 + 2 * g4
     y2  = y0 - fromIntegral j2 + 2 * g4
     z2  = z0 - fromIntegral k2 + 2 * g4
     w2  = w0 - fromIntegral l2 + 2 * g4
 
-    x3  = x0 - fromIntegral i3 + 3 * g4
+    x3  = x0 - i3 + 3 * g4
     y3  = y0 - fromIntegral j3 + 3 * g4
     z3  = z0 - fromIntegral k3 + 3 * g4
     w3  = w0 - fromIntegral l3 + 3 * g4
