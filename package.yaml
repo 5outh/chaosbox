@@ -1,5 +1,5 @@
 name:                chaosbox
-version:             0.1.0.0
+version:             0.1.1.0
 #synopsis:
 #description:
 homepage:            https://github.com/5outh/chaosbox#readme
@@ -32,6 +32,7 @@ dependencies:
   - semigroups
   - time
   - transformers
+  - mersenne-random-pure64
 
 library:
     source-dirs: src

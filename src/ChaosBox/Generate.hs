@@ -1,27 +1,41 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE QuasiQuotes           #-}
 {-# LANGUAGE RecordWildCards       #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
 module ChaosBox.Generate where
 
-import           Control.Arrow               ((&&&))
+import           Control.Arrow                 ((&&&))
 import           Control.Monad.Random
 import           Control.Monad.Reader
 import           Data.IORef
-import qualified Data.Random                 as D
+import qualified Data.Random                   as D
 import           Data.Random.Internal.Source
+import           Data.Random.Source            as Source
 import           Data.Semigroup
 import           Graphics.Rendering.Cairo
+import           System.Random.Mersenne.Pure64
 import           Text.Printf
 
 data GenerateCtx = GenerateCtx
   { gcWidth          :: Int
+  -- ^ Width of the canvas
   , gcHeight         :: Int
+  -- ^ Height of the canvas
   , gcSeed           :: Int
+  -- ^ Seed for random generation
   , gcScale          :: Double
+  -- ^ Scaling factor for 'gcWidth' and 'gcHeight' to generate the final pixel
+  -- size of the output
   , gcName           :: String
+  -- Name of the current project
   , gcRenderProgress :: Bool
+  -- Should it render intermediate progress images?
   , gcProgress       :: IORef Int
+  -- Current progress "tick"
   , gcBeforeSaveHook :: IORef (Maybe (Generate ()))
+  -- Action to perform before saving the image.
   }
 
 beforeSave :: Generate () -> Generate ()
@@ -31,19 +45,10 @@ beforeSave hook = do
 
 type Generate a = RandT StdGen (ReaderT GenerateCtx Render) a
 
-instance Monad m => D.MonadRandom (RandT StdGen (ReaderT GenerateCtx m)) where
-    -- |Generate a uniformly distributed random 'Word8'
-    getRandomWord8 = getRandom
-    -- |Generate a uniformly distributed random 'Word16'
-    getRandomWord16 = getRandom
-    -- |Generate a uniformly distributed random 'Word32'
-    getRandomWord32 = getRandom
-    -- |Generate a uniformly distributed random 'Word64'
-    getRandomWord64 = getRandom
-    -- |Generate a uniformly distributed random 'Double' in the range 0 <= U < 1
-    getRandomDouble = getRandom
-    -- |Generate a uniformly distributed random 'Integer' in the range 0 <= U < 256^n
-    getRandomNByteInteger n = getRandomR (0, 256^n)
+$(monadRandom [d|
+  instance Monad m => Source.MonadRandom (RandT PureMT (ReaderT GenerateCtx m)) where
+    getRandomWord64 = liftRandT (\g -> pure $ randomWord64 g)
+  |])
 
 getSize :: Num a => Generate (a, a)
 getSize = do
@@ -84,3 +89,4 @@ runGenerate surface ctx@GenerateCtx {..} doRender =
 -- | Lift a Cairo action into a Generate action
 cairo :: Render a -> Generate a
 cairo = lift . lift
+
