@@ -3,21 +3,27 @@ module ChaosBox
   , runChaosBoxIO
   , runChaosBoxIOWith
   , fillScreenHSV
+  , fillScreenRGB
   , Opts(..)
-  , module ChaosBox.Generate
-  , module ChaosBox.Color
-  ) where
+  , module X
+  )
+where
 
-import           ChaosBox.Color
-import           ChaosBox.Generate
+import           ChaosBox.Color                as X
+import           ChaosBox.Generate             as X
+import           ChaosBox.Geometry             as X
+import           ChaosBox.Draw                 as X
+import           Graphics.Rendering.Cairo      as X
+                                         hiding ( setSourceRGB
+                                                , Path
+                                                )
 
 import           Control.Monad.Random
 import           Control.Monad.Reader
 import           Data.IORef
 import           Data.Maybe
-import           Data.Semigroup           ((<>))
+import           Data.Semigroup                 ( (<>) )
 import           Data.Time.Clock.POSIX
-import           Graphics.Rendering.Cairo
 import           Options.Applicative
 import           System.Directory
 
@@ -139,3 +145,10 @@ fillScreenHSV color = do
   cairo $ do
     rectangle 0 0 w h
     setSourceHSV color *> fill
+
+fillScreenRGB :: RGB Double -> Generate ()
+fillScreenRGB color = do
+  (w, h) <- getSize
+  cairo $ do
+    rectangle 0 0 w h
+    X.setSourceRGB color *> fill

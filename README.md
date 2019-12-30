@@ -10,10 +10,10 @@ A minimal framework for generative art.
   - is capable of drawing with `cairo`
   - instantiates `MonadRandom`, for functions like `getRandomR` and `uniform`
   - instantiates `random-fu.MonadRandom`, to pull from non-uniform distributions like `normal` and `bernoulli`.
+- A modest collection of data types for Shapes that can be drawn to a Cairo canvas
+- Some utilities for working with color and noise, that interface well with the `linear` package.
 
-It's very simple and doesn't try to do much other than this. The goal is to
-provide an absolutely minimal shim for those who want a pre-built framework for
-creating images from random data.
+This should provide good starting point for generating art with Haskell.
 
 Example (copied from the example project):
 
@@ -21,12 +21,9 @@ Example (copied from the example project):
 module Main where
 
 import           ChaosBox
-import           Control.Monad            (replicateM)
-import           Control.Monad.Random     (getRandomR)
-import           Data.Foldable            (for_)
-import           Data.List.NonEmpty
-import qualified Data.List.NonEmpty       as NE
-import           Graphics.Rendering.Cairo
+import           Control.Monad        (replicateM)
+import           Control.Monad.Random (getRandomR)
+import           Data.Foldable        (for_)
 import           Linear.V2
 
 main :: IO ()
@@ -35,25 +32,15 @@ main = runChaosBoxIOWith (\opts -> opts { optWidth = 400, optHeight = 400 })
 
 renderSketch :: Generate ()
 renderSketch = do
-  let white = HSV 0 0 1
-      black = HSV 0 0 0
+  let white = RGB 1 1 1
+      black = RGB 0 0 0
 
-  fillScreenHSV white
+  fillScreenRGB white
 
   (w, h)     <- getSize
 
   randomPath <- replicateM 100 $ V2 <$> getRandomR (0, w) <*> getRandomR (0, h)
-
-  cairo $ do
-    setLineWidth 1
-    setSourceHSV black
-    path (NE.fromList randomPath) *> stroke
-
-path :: NE.NonEmpty (V2 Double) -> Render ()
-path ((V2 startX startY):|rest) = do
-  newPath
-  moveTo startX startY
-  for_   rest   (\(V2 x y) -> lineTo x y)
+  for_ (path randomPath) $ \p -> cairo $ setSourceRGB black *> draw p *> stroke
 ```
 
 if installing from source, this example can be run with `stack exec chaosbox-example`.
