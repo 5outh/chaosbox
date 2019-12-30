@@ -8,31 +8,58 @@ module ChaosBox.Noise
   )
 where
 
-import           Prelude     hiding (init)
+import           Prelude              hiding (init)
 
-import           Data.Vector
+import           ChaosBox.Generate
+import           Control.Monad.Random
+import           Data.Vector          (Vector (..), init, (!))
+import qualified Data.Vector          as V
 import           Linear
 
 -- | One dimensional simplex noise
 noise :: Double -> Double
 noise x = noise2D x 0
 
+-- | Generate one dimensional simplex noise with a random seed.
+newNoise :: Generate (Double -> Double)
+newNoise = do
+  seed <- getRandom
+  pure $ \x -> noise (x + seed)
+
 -- | Two dimensional simplex noise
 noise2 :: V2 Double -> Double
 noise2 (V2 x y) = noise2D x y
+
+-- | Generate two dimensional simplex noise with a random seed.
+newNoise2 :: Generate (V2 Double -> Double)
+newNoise2 = do
+  seed <- V2 <$> getRandom <*> getRandom
+  pure $ \x -> noise2 (x + seed)
 
 -- | Three dimensional simplex noise
 noise3 :: V3 Double -> Double
 noise3 (V3 x y z) = noise3D x y z
 
+-- | Generate three dimensional simplex noise with a random seed.
+newNoise3 :: Generate (V3 Double -> Double)
+newNoise3 = do
+  seed <- V3 <$> getRandom <*> getRandom <*> getRandom
+  pure $ \x -> noise3 (x + seed)
+
 -- | Four dimensional simplex noise
 noise4 :: V4 Double -> Double
 noise4 (V4 x y z w) = noise4D x y z w
 
+-- | Generate four dimensional simplex noise with a random seed.
+newNoise4 :: Generate (V4 Double -> Double)
+newNoise4 = do
+  seed <- V4 <$> getRandom <*> getRandom <*> getRandom <*> getRandom
+  pure $ \x -> noise4 (x + seed)
+
 e = exp 1
 
 vector2 :: [[a]] -> Vector (Vector a)
-vector2 = fromList . fmap fromList
+vector2 = V.fromList . fmap V.fromList
 
 gradients3d = vector2
   [ [1, 1, 0]
@@ -84,7 +111,7 @@ gradients4d = vector2
   , [-1, -1, -1, 0]
   ]
 
-perm = fromList
+perm = V.fromList
   [ 151
   , 160
   , 137
@@ -704,13 +731,13 @@ noise2D x y =
 
     n0  = if (t0 < 0)
       then 0
-      else ((t0 ** 4) * dot (init (gradients3d ! gi0)) (fromList [x0, y0]))
+      else ((t0 ** 4) * dot (init (gradients3d ! gi0)) (V.fromList [x0, y0]))
     n1 = if (t1 < 0)
       then 0
-      else ((t1 ** 4) * dot (init (gradients3d ! gi1)) (fromList [x1, y1]))
+      else ((t1 ** 4) * dot (init (gradients3d ! gi1)) (V.fromList [x1, y1]))
     n2 = if (t2 < 0)
       then 0
-      else ((t2 ** 4) * dot (init (gradients3d ! gi2)) (fromList [x2, y2]))
+      else ((t2 ** 4) * dot (init (gradients3d ! gi2)) (V.fromList [x2, y2]))
   in
     70.0 * (n0 + n1 + n2) --sum the contributions
 
@@ -777,16 +804,16 @@ noise3D x y z
 
                              n0  = if (t0 < 0)
                                then 0
-                               else (t0 ** 4) * (gradients3d ! gi0 `dot` fromList ([x0, y0, z0]))
+                               else (t0 ** 4) * (gradients3d ! gi0 `dot` V.fromList ([x0, y0, z0]))
                              n1 = if (t1 < 0)
                                then 0
-                               else (t1 ** 4) * (gradients3d ! gi1 `dot` fromList ([x1, y1, z1]))
+                               else (t1 ** 4) * (gradients3d ! gi1 `dot` V.fromList ([x1, y1, z1]))
                              n2 = if (t2 < 0)
                                then 0
-                               else (t2 ** 4) * (gradients3d ! gi2 `dot` fromList ([x2, y2, z2]))
+                               else (t2 ** 4) * (gradients3d ! gi2 `dot` V.fromList ([x2, y2, z2]))
                              n3 = if (t3 < 0)
                                then 0
-                               else (t3 ** 4) * (gradients3d ! gi3 `dot` fromList ([x3, y3, z3]))
+                               else (t3 ** 4) * (gradients3d ! gi3 `dot` V.fromList ([x3, y3, z3]))
                            in
                              32 * (n0 + n1 + n2 + n3)
 
@@ -900,18 +927,18 @@ noise4D x y z w =
 
     n0 = if (t0 < 0)
       then 0
-      else (t0 ** 4) * ((gradients4d ! gi0) `dot` fromList [x0, y0, z0, w0])
+      else (t0 ** 4) * ((gradients4d ! gi0) `dot` V.fromList [x0, y0, z0, w0])
     n1 = if (t1 < 0)
       then 0
-      else (t1 ** 4) * ((gradients4d ! gi1) `dot` fromList [x1, y1, z1, w1])
+      else (t1 ** 4) * ((gradients4d ! gi1) `dot` V.fromList [x1, y1, z1, w1])
     n2 = if (t2 < 0)
       then 0
-      else (t2 ** 4) * ((gradients4d ! gi2) `dot` fromList [x2, y2, z2, w2])
+      else (t2 ** 4) * ((gradients4d ! gi2) `dot` V.fromList [x2, y2, z2, w2])
     n3 = if (t3 < 0)
       then 0
-      else (t3 ** 4) * ((gradients4d ! gi3) `dot` fromList [x3, y3, z3, w3])
+      else (t3 ** 4) * ((gradients4d ! gi3) `dot` V.fromList [x3, y3, z3, w3])
     n4 = if (t4 < 0)
       then 0
-      else (t4 ** 4) * ((gradients4d ! gi4) `dot` fromList [x4, y4, z4, w4])
+      else (t4 ** 4) * ((gradients4d ! gi4) `dot` V.fromList [x4, y4, z4, w4])
   in
     27 * (n0 + n1 + n2 + n3 + n4)
