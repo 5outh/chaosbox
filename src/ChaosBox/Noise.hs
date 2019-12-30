@@ -2,9 +2,13 @@
 -- <https://github.com/weswigham/simplex/tree/master/haskell wesigham's Simplex Noise implemenation>
 module ChaosBox.Noise
   ( noise
+  , newNoise
   , noise2
+  , newNoise2
   , noise3
+  , newNoise3
   , noise4
+  , newNoise4
   )
 where
 
