@@ -34,6 +34,8 @@ dependencies:
   - transformers
   - mersenne-random-pure64
   - vector
+  - containers
+  - array
 
 library:
     source-dirs: src
