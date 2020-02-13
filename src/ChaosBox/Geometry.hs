@@ -1,18 +1,18 @@
 module ChaosBox.Geometry
-  ( Path(..)
-  , Polygon(..)
+  ( Arc(..)
   , Circle(..)
-  , Rect(..)
-  , Segment(..)
-  , Arc(..)
   , Ellipse(..)
+  , Line(..)
+  , Path(..)
+  , Polygon(..)
   , Quad(..)
+  , Rect(..)
   , Triangle(..)
   -- * Smart constructors
-  , path
-  , polygon
   , ellipse
+  , path
   , point
+  , polygon
   )
 where
 
@@ -76,13 +76,13 @@ instance Draw Rect where
   draw Rect {..} = rectangle rectX rectY rectW rectH
 
 -- | A line segment
-data Segment = Segment
-  { segmentStart :: V2 Double
-  , segmentEnd   :: V2 Double
+data Line = Line
+  { lineStart :: V2 Double
+  , lineEnd   :: V2 Double
   } deriving (Show, Eq, Ord)
 
-instance Draw Segment where
-  draw Segment {..} = draw (Path (segmentStart:| [segmentEnd]))
+instance Draw Line where
+  draw Line {..} = draw (Path (lineStart:| [lineEnd]))
 
 -- | An Arc (partial Circle)
 data Arc = Arc
