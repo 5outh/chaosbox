@@ -13,11 +13,12 @@ import           ChaosBox.Color                as X
 import           ChaosBox.Generate             as X
 import           ChaosBox.Geometry             as X
 import           ChaosBox.Draw                 as X
+
 import           Graphics.Rendering.Cairo      as X
                                          hiding ( setSourceRGB
                                                 , Path
                                                 )
-
+import           System.Random.Mersenne.Pure64
 import           Control.Monad.Random
 import           Control.Monad.Reader
 import           Data.IORef
@@ -26,9 +27,10 @@ import           Data.Semigroup                 ( (<>) )
 import           Data.Time.Clock.POSIX
 import           Options.Applicative
 import           System.Directory
+import           GHC.Word
 
 data Opts = Opts
-  { optSeed           :: Maybe Int
+  { optSeed           :: Maybe Word64
   , optScale          :: Double
   , optWidth          :: Int
   , optHeight         :: Int
@@ -57,7 +59,7 @@ optsInfo = info
   (fullDesc <> progDesc "Generate art with ChaosBox" <> header "chaosbox")
 
 runChaosBoxIO
-  :: RandT StdGen (ReaderT GenerateCtx Render) a
+  :: RandT PureMT (ReaderT GenerateCtx Render) a
   -- ^ Render function
   -> IO ()
 runChaosBoxIO render = do
@@ -67,7 +69,7 @@ runChaosBoxIO render = do
 runChaosBoxIOWith
   :: (Opts -> Opts)
   -- ^ Option modifier
-  -> RandT StdGen (ReaderT GenerateCtx Render) a
+  -> RandT PureMT (ReaderT GenerateCtx Render) a
   -- ^ Render function
   -> IO ()
 runChaosBoxIOWith fn render = do
@@ -77,7 +79,7 @@ runChaosBoxIOWith fn render = do
 runChaosBoxWith
   :: Opts
   -- ^ Art options
-  -> RandT StdGen (ReaderT GenerateCtx Render) a
+  -> RandT PureMT (ReaderT GenerateCtx Render) a
   -- ^ Render function
   -> IO ()
 runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
@@ -85,7 +87,7 @@ runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
     Just seed' -> pure seed'
     Nothing    -> round . (* 1000) <$> getPOSIXTime
 
-  let stdGen = mkStdGen seed
+  let stdGen = pureMT seed
       w      = round $ fromIntegral optWidth * optScale
       h      = round $ fromIntegral optHeight * optScale
 

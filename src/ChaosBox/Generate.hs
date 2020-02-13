@@ -12,6 +12,7 @@ import           Control.Monad.Reader
 import           Data.IORef
 import           Data.Random.Internal.Source
 import           Data.Random.Source            as Source
+import           GHC.Word                      (Word64)
 import           Graphics.Rendering.Cairo
 import           System.Random.Mersenne.Pure64
 import           Text.Printf
@@ -21,7 +22,7 @@ data GenerateCtx = GenerateCtx
   -- ^ Width of the canvas
   , gcHeight         :: Int
   -- ^ Height of the canvas
-  , gcSeed           :: Int
+  , gcSeed           :: Word64
   -- ^ Seed for random generation
   , gcScale          :: Double
   -- ^ Scaling factor for 'gcWidth' and 'gcHeight' to generate the final pixel
@@ -41,7 +42,7 @@ beforeSave hook = do
   beforeSaveHookRef <- asks gcBeforeSaveHook
   liftIO $ writeIORef beforeSaveHookRef (Just hook)
 
-type Generate a = RandT StdGen (ReaderT GenerateCtx Render) a
+type Generate a = RandT PureMT (ReaderT GenerateCtx Render) a
 
 $(monadRandom [d|
   instance Monad m => Source.MonadRandom (RandT PureMT (ReaderT GenerateCtx m)) where
@@ -75,16 +76,12 @@ renderProgress = do
 
     liftIO $ modifyIORef progressRef (+ 1)
 
-runGenerate :: Surface -> GenerateCtx -> Generate a -> IO (a, StdGen)
+runGenerate :: Surface -> GenerateCtx -> Generate a -> IO (a, PureMT)
 runGenerate surface ctx@GenerateCtx {..} doRender =
-  renderWith surface
-    . flip runReaderT ctx
-    . flip runRandT   (mkStdGen gcSeed)
-    $ do
-        cairo $ scale gcScale gcScale
-        doRender
+  renderWith surface . flip runReaderT ctx . flip runRandT (pureMT gcSeed) $ do
+    cairo $ scale gcScale gcScale
+    doRender
 
 -- | Lift a Cairo action into a Generate action
 cairo :: Render a -> Generate a
 cairo = lift . lift
-
