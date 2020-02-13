@@ -7,14 +7,16 @@ module ChaosBox.Geometry
   , Arc(..)
   , Ellipse(..)
   , Quad(..)
+  , Triangle(..)
   -- * Smart constructors
   , path
   , polygon
   , ellipse
+  , point
   )
 where
 
-import           ChaosBox.Prelude
+import           ChaosBox.Prelude        hiding ( point )
 
 import           ChaosBox.Draw
 import           Data.Foldable                  ( for_ )
@@ -141,3 +143,7 @@ data Triangle = Triangle
 
 instance Draw Triangle where
   draw Triangle{..} = for_ (polygon [triangleA,triangleB,triangleC]) draw
+
+-- | A circle with diameter 1
+point :: V2 Double -> Circle
+point center = Circle center 0.5
