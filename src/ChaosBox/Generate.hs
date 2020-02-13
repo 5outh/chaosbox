@@ -28,13 +28,15 @@ data GenerateCtx = GenerateCtx
   -- ^ Scaling factor for 'gcWidth' and 'gcHeight' to generate the final pixel
   -- size of the output
   , gcName           :: String
-  -- Name of the current project
+  -- ^ Name of the current project
   , gcRenderProgress :: Bool
-  -- Should it render intermediate progress images?
+  -- ^ Should it render intermediate progress images?
   , gcProgress       :: IORef Int
-  -- Current progress "tick"
+  -- ^ Current progress "tick"
   , gcBeforeSaveHook :: IORef (Maybe (Generate ()))
-  -- Action to perform before saving the image.
+  -- ^ Action to perform before saving the image.
+  , gcCairoSurface   :: Surface
+  -- ^ Raw mutable cairo Surface
   }
 
 beforeSave :: Generate () -> Generate ()

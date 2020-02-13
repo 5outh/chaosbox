@@ -13,11 +13,11 @@ import           ChaosBox.Color                as X
 import           ChaosBox.Generate             as X
 import           ChaosBox.Geometry             as X
 import           ChaosBox.Draw                 as X
-
 import           Graphics.Rendering.Cairo      as X
                                          hiding ( setSourceRGB
                                                 , Path
                                                 )
+
 import           System.Random.Mersenne.Pure64
 import           Control.Monad.Random
 import           Control.Monad.Reader
@@ -107,6 +107,7 @@ runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
                         optRenderProgress
                         progressRef
                         beforeSaveHookRef
+                        surface
 
   void . renderWith surface . flip runReaderT ctx . flip runRandT stdGen $ do
     cairo $ scale optScale optScale
