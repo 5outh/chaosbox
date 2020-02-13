@@ -6,6 +6,7 @@ module ChaosBox.Geometry
   , Segment(..)
   , Arc(..)
   , Ellipse(..)
+  , Quad(..)
   -- * Smart constructors
   , path
   , polygon
@@ -121,3 +122,22 @@ ellipsePoints Ellipse {..} = map
   V2 x y = ellipseCenter
   ellipsePoint t = V2 (x + ellipseWidth * cos t) (y + ellipseHeight * sin t)
   unV1 (V1 a) = a
+
+data Quad = Quad
+  { quadA :: V2 Double
+  , quadB :: V2 Double
+  , quadC :: V2 Double
+  , quadD :: V2 Double
+  }
+
+instance Draw Quad where
+  draw Quad{..} = for_ (polygon [quadA,quadB,quadC,quadD]) draw
+
+data Triangle = Triangle
+  { triangleA :: V2 Double
+  , triangleB :: V2 Double
+  , triangleC :: V2 Double
+  }
+
+instance Draw Triangle where
+  draw Triangle{..} = for_ (polygon [triangleA,triangleB,triangleC]) draw
