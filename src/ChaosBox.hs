@@ -62,9 +62,7 @@ runChaosBoxIO
   :: RandT PureMT (ReaderT GenerateCtx Render) a
   -- ^ Render function
   -> IO ()
-runChaosBoxIO render = do
-  options <- execParser optsInfo
-  runChaosBoxWith options render
+runChaosBoxIO = runChaosBoxIOWith id
 
 runChaosBoxIOWith
   :: (Opts -> Opts)
