@@ -1,12 +1,14 @@
 module ChaosBox.Geometry
   ( Path(..)
-  , path
   , Polygon(..)
-  , polygon
   , Circle(..)
   , Rect(..)
   , Segment(..)
   , Arc(..)
+  , Ellipse(..)
+  -- * Smart constructors
+  , path
+  , polygon
   )
 where
 
@@ -14,7 +16,8 @@ import           ChaosBox.Prelude
 
 import           ChaosBox.Draw
 import           Data.Foldable                  ( for_ )
-import           Data.List.NonEmpty
+import qualified Data.List.NonEmpty            as NE
+import           Data.List.NonEmpty             ( NonEmpty(..) )
 import           Graphics.Rendering.Cairo       ( lineTo
                                                 , moveTo
                                                 , newPath
@@ -28,7 +31,7 @@ data Path = Path { getPath :: NonEmpty (V2 Double) }
   deriving (Show, Eq, Ord)
 
 path :: [V2 Double] -> Maybe Path
-path = fmap Path . nonEmpty
+path = fmap Path . NE.nonEmpty
 
 instance Draw Path where
   draw (Path ((V2 startX startY):|rest)) = do
@@ -41,7 +44,7 @@ data Polygon = Polygon { getPolygon :: NonEmpty (V2 Double) }
   deriving (Show, Eq, Ord)
 
 polygon :: [V2 Double] -> Maybe Polygon
-polygon = fmap Polygon . nonEmpty
+polygon = fmap Polygon . NE.nonEmpty
 
 instance Draw Polygon where
   draw Polygon{..} = draw (Path getPolygon) *> closePath
@@ -92,3 +95,27 @@ data Arc = Arc
 instance Draw Arc where
   draw Arc{..} = arc x y arcRadius arcStart arcEnd
    where V2 x y = arcCenter
+
+data Ellipse = Ellipse
+  { ellipseCenter :: V2 Double
+  , ellipseWidth :: Double
+  , ellipseHeight :: Double
+  , ellipseDetail :: Int
+  }
+
+-- | An ellipse with default detail (100)
+ellipse :: V2 Double -> Double -> Double -> Ellipse
+ellipse c w h = Ellipse c w h 100
+
+instance Draw Ellipse where
+  draw ellipse@Ellipse{..}
+    | ellipseDetail <= 0 = error $ "Ellipse detail must be greater than zero. Provided: " <> show ellipseDetail
+    | otherwise = for_ (polygon (ellipsePoints ellipse)) draw
+
+ellipsePoints :: Ellipse -> [V2 Double]
+ellipsePoints Ellipse {..} = map
+  ellipsePoint
+  (map unV1 $ lerpMany ellipseDetail (V1 0) (V1 $ 2 * pi))
+ where
+  ellipsePoint t = V2 (ellipseWidth * cos t) (ellipseHeight * sin t)
+  unV1 (V1 a) = a
