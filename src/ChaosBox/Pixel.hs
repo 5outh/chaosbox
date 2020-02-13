@@ -11,9 +11,9 @@
 {-# LANGUAGE TypeOperators       #-}
 module ChaosBox.Pixel
   ( parsePixelsFromFile
-  , getPixelAt
-  , getColumn
-  , getRow
+  , readPixelAt
+  , readColumn
+  , readRow
   , PixelArray(..)
   , Pixel(..)
   )
@@ -37,18 +37,18 @@ newtype Pixel = Pixel { getPixel :: RGB Double }
 newtype PixelArray = PixelArray{ getPixelArray :: Seq (Seq Pixel) }
  deriving (Show, Eq)
 
-getPixelAt :: V2 Int -> PixelArray -> Pixel
-getPixelAt (V2 x y) pixelArray = case getColumn x pixelArray Seq.!? y of
+readPixelAt :: V2 Int -> PixelArray -> Pixel
+readPixelAt (V2 x y) pixelArray = case readColumn x pixelArray Seq.!? y of
   Nothing -> error $ "Column " <> show y <> " out of bounds"
   Just px -> px
 
-getColumn :: Int -> PixelArray -> Seq Pixel
-getColumn y PixelArray {..} = case getPixelArray Seq.!? y of
+readColumn :: Int -> PixelArray -> Seq Pixel
+readColumn y PixelArray {..} = case getPixelArray Seq.!? y of
   Nothing  -> error $ "Column " <> show y <> " out of bounds"
   Just col -> col
 
-getRow :: Int -> PixelArray -> Seq Pixel
-getRow x PixelArray {..} = case traverse (Seq.!? x) getPixelArray of
+readRow :: Int -> PixelArray -> Seq Pixel
+readRow x PixelArray {..} = case traverse (Seq.!? x) getPixelArray of
   Nothing  -> error $ "Row " <> show x <> " out of bounds"
   Just row -> row
 
