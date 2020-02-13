@@ -19,6 +19,7 @@ where
 
 import           ChaosBox.Prelude        hiding ( point )
 
+import           ChaosBox.Math
 import           ChaosBox.Draw
 import           Data.Foldable                  ( for_ )
 import qualified Data.List.NonEmpty            as NE
@@ -120,13 +121,11 @@ instance Draw Ellipse where
     | otherwise = for_ (polygon (ellipsePoints ellipse)) draw
 
 ellipsePoints :: Ellipse -> [V2 Double]
-ellipsePoints Ellipse {..} = map
-  ellipsePoint
-  (map unV1 $ lerpMany ellipseDetail (V1 0) (V1 $ 2 * pi))
+ellipsePoints Ellipse {..} = map ellipsePoint
+  $ lerpMany ellipseDetail 0 (2 * pi)
  where
   V2 x y = ellipseCenter
   ellipsePoint t = V2 (x + ellipseWidth * cos t) (y + ellipseHeight * sin t)
-  unV1 (V1 a) = a
 
 data Quad = Quad
   { quadA :: V2 Double
