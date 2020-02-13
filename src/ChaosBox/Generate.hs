@@ -14,6 +14,7 @@ import           Data.Random.Internal.Source
 import           Data.Random.Source            as Source
 import           GHC.Word                      (Word64)
 import           Graphics.Rendering.Cairo
+import           Linear.V2
 import           System.Random.Mersenne.Pure64
 import           Text.Printf
 
@@ -55,6 +56,11 @@ getSize :: Num a => Generate (a, a)
 getSize = do
   (w, h) <- asks (gcWidth &&& gcHeight)
   pure (fromIntegral w, fromIntegral h)
+
+getCenterPoint :: Generate (V2 Double)
+getCenterPoint = do
+  (w, h) <- asks (gcWidth &&& gcHeight)
+  pure $ V2 (fromIntegral w / 2) (fromIntegral h / 2)
 
 renderProgress :: Generate ()
 renderProgress = do

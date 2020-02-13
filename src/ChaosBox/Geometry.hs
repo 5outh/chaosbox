@@ -9,6 +9,7 @@ module ChaosBox.Geometry
   -- * Smart constructors
   , path
   , polygon
+  , ellipse
   )
 where
 
@@ -117,5 +118,6 @@ ellipsePoints Ellipse {..} = map
   ellipsePoint
   (map unV1 $ lerpMany ellipseDetail (V1 0) (V1 $ 2 * pi))
  where
-  ellipsePoint t = V2 (ellipseWidth * cos t) (ellipseHeight * sin t)
+  V2 x y = ellipseCenter
+  ellipsePoint t = V2 (x + ellipseWidth * cos t) (y + ellipseHeight * sin t)
   unV1 (V1 a) = a
