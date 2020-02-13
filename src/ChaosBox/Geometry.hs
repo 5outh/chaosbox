@@ -13,6 +13,7 @@ module ChaosBox.Geometry
   , path
   , point
   , polygon
+  , square
   )
 where
 
@@ -66,14 +67,16 @@ instance Draw Circle where
 
 -- | A Rectangle
 data Rect = Rect
-  { rectX :: Double
-  , rectY :: Double
+  { rectTopLeft :: V2 Double
   , rectW :: Double
   , rectH :: Double
   } deriving (Show, Eq, Ord)
 
 instance Draw Rect where
-  draw Rect {..} = rectangle rectX rectY rectW rectH
+  draw Rect {..} = let (V2 rectX rectY) = rectTopLeft in rectangle rectX rectY rectW rectH
+
+square :: V2 Double -> Double -> Rect
+square c w = Rect c w w
 
 -- | A line segment
 data Line = Line
