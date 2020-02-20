@@ -1,6 +1,6 @@
 # chaosbox
 
-A minimal framework for generative art.
+A framework for generative art.
 
 `chaosbox` exposes:
 
