@@ -45,7 +45,8 @@ beforeSave hook = do
   beforeSaveHookRef <- asks gcBeforeSaveHook
   liftIO $ writeIORef beforeSaveHookRef (Just hook)
 
-type Generate a = RandT PureMT (ReaderT GenerateCtx Render) a
+type GenerateT m a = RandT PureMT (ReaderT GenerateCtx m) a
+type Generate a = GenerateT Render a
 
 $(monadRandom [d|
   instance Monad m => Source.MonadRandom (RandT PureMT (ReaderT GenerateCtx m)) where
