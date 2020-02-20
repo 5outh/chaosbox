@@ -4,6 +4,7 @@ module ChaosBox.Random
   -- * Distribution sampling
     uniform
   , unsafeUniform
+  , uniformBounded
   , weighted
   , unsafeWeighted
   , normal
@@ -43,6 +44,10 @@ uniform = MonadRandom.uniform
 -- | Sample a uniformly distributed element of a collection.
 unsafeUniform :: (Foldable f, MonadRandom m) => f a -> m a
 unsafeUniform = MonadRandom.uniform
+
+-- | A uniformly distributed random variable of a 'Bounded' 'Enum'.
+uniformBounded :: (Monad m, Enum a, Bounded a) => GenerateT m a
+uniformBounded = MonadRandom.uniform [minBound .. maxBound]
 
 -- | Sample a uniformly distributed element from a non-empty weighted collection.
 weighted :: (Foldable1 f, MonadRandom m) => f (a, Rational) -> m a
