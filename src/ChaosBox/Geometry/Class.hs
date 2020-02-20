@@ -1,9 +1,11 @@
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE TypeFamilies    #-}
 module ChaosBox.Geometry.Class
   ( HasCenter(..)
   , Scale(..)
   , Translate(..)
   , Rotate(..)
+  , Geometry
   , scale
   , rotate
   )
@@ -30,6 +32,8 @@ class Translate a where
 
 class Rotate a where
   rotateAround :: V2 Double -> Angle -> a -> a
+
+type Geometry a = (HasCenter a, Scale a, Translate a, Rotate a)
 
 -- V2 instances
 

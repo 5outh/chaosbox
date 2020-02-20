@@ -10,6 +10,7 @@ import           Data.Fixed (mod')
 import           Linear.V2
 
 newtype Angle = Angle { getAngle :: Double }
+  deriving (Eq, Ord, Show)
 
 -- | Construct an angle in radians in the range [0, 2*pi)
 --
