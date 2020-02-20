@@ -15,6 +15,9 @@ module ChaosBox.Random
   -- * Collection operations
   , shuffle
   , sampleN
+  -- * Higher-order functions
+  , suchThat
+  , unsafeSuchThat
   -- * Re-Exports
   , MonadRandom.uniformMay
   , MonadRandom.weightedMay
@@ -110,3 +113,29 @@ shuffle = sampleRVar . Random.shuffle
 -- | Sample @N@ elements of a list without replacement.
 sampleN :: Monad m => Int -> [a] -> GenerateT m [a]
 sampleN n xs = sampleRVar $ Random.shuffleNofM n (length xs) xs
+
+-- | Generate a random variable satisfying a given predicate safely.
+--
+-- Attempts to generate a variable a maximum of @1,000@ times. If the
+-- predicate is never satisfied, returns 'Nothing'.
+--
+suchThat :: Monad m => GenerateT m a -> (a -> Bool) -> GenerateT m (Maybe a)
+suchThat gen predicate = go 1000
+ where
+  go 0 = pure Nothing
+  go n = do
+    a <- gen
+    if predicate a then pure (Just a) else go (n - 1)
+
+-- | Generate a random variable satisfying a given predicate.
+--
+-- Will 'error' after @1,000@ failed generations.
+--
+unsafeSuchThat :: Monad m => GenerateT m a -> (a -> Bool) -> GenerateT m a
+unsafeSuchThat gen predicate = do
+  ma <- gen `suchThat` predicate
+  case ma of
+    Nothing ->
+      error
+        "Error in 'unsafeSuchThat': Maximum generation attempts (1000) exceeded."
+    Just x -> pure x
