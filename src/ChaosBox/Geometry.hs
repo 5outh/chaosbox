@@ -17,33 +17,41 @@ module ChaosBox.Geometry
   )
 where
 
-import           ChaosBox.Prelude        hiding ( point )
-
-import           ChaosBox.Math
 import           ChaosBox.Draw
-import           Data.Foldable                  ( for_ )
-import qualified Data.List.NonEmpty            as NE
-import           Data.List.NonEmpty             ( NonEmpty(..) )
-import           Graphics.Rendering.Cairo       ( lineTo
-                                                , moveTo
-                                                , newPath
-                                                , arc
-                                                , rectangle
-                                                , closePath
-                                                )
+import           ChaosBox.Geometry.Class
+import           ChaosBox.Math
+import           ChaosBox.Prelude         hiding (point)
+
+import           Data.Foldable            (for_)
+import           Data.List.NonEmpty       (NonEmpty (..))
+import qualified Data.List.NonEmpty       as NE
+import           Graphics.Rendering.Cairo (arc, closePath, lineTo, moveTo,
+                                           newPath, rectangle)
 
 -- | An open path
-data Path = Path { getPath :: NonEmpty (V2 Double) }
+newtype Path = Path { getPath :: NonEmpty (V2 Double) }
   deriving (Show, Eq, Ord)
 
 path :: [V2 Double] -> Maybe Path
 path = fmap Path . NE.nonEmpty
 
 instance Draw Path where
-  draw (Path ((V2 startX startY):|rest)) = do
+  draw (Path (V2 startX startY :| rest)) = do
     newPath
     moveTo startX startY
-    for_   rest   (\(V2 x y) -> lineTo x y)
+    for_ rest (\(V2 x y) -> lineTo x y)
+
+instance HasCenter Path where
+  getCenter (Path ps) = average ps
+
+instance Scale Path where
+  scaleAround v s (Path xs) = Path $ fmap (scaleAround v s) xs
+
+instance Translate Path where
+  translate v (Path xs) = Path $ fmap (translate v) xs
+
+instance Rotate Path where
+  rotateAround v theta (Path xs) = Path $ fmap (rotateAround v theta) xs
 
 -- | A closed path
 data Polygon = Polygon { getPolygon :: NonEmpty (V2 Double) }
@@ -53,7 +61,7 @@ polygon :: [V2 Double] -> Maybe Polygon
 polygon = fmap Polygon . NE.nonEmpty
 
 instance Draw Polygon where
-  draw Polygon{..} = draw (Path getPolygon) *> closePath
+  draw Polygon {..} = draw (Path getPolygon) *> closePath
 
 -- | A circle with radius 'circleRadius' centered at 'circleCenter'
 data Circle = Circle { circleCenter :: V2 Double, circleRadius :: Double }
@@ -61,20 +69,20 @@ data Circle = Circle { circleCenter :: V2 Double, circleRadius :: Double }
 
 instance Draw Circle where
   draw Circle {..} = do
-    let
-      V2 x y = circleCenter
-    moveTo (x + circleRadius) (y)
+    let V2 x y = circleCenter
+    moveTo (x + circleRadius) y
     arc x y circleRadius 0 (2 * pi)
 
 -- | A Rectangle
 data Rect = Rect
   { rectTopLeft :: V2 Double
-  , rectW :: Double
-  , rectH :: Double
+  , rectW       :: Double
+  , rectH       :: Double
   } deriving (Show, Eq, Ord)
 
 instance Draw Rect where
-  draw Rect {..} = let (V2 rectX rectY) = rectTopLeft in rectangle rectX rectY rectW rectH
+  draw Rect {..} =
+    let (V2 rectX rectY) = rectTopLeft in rectangle rectX rectY rectW rectH
 
 square :: V2 Double -> Double -> Rect
 square c w = Rect c w w
@@ -86,7 +94,7 @@ data Line = Line
   } deriving (Show, Eq, Ord)
 
 instance Draw Line where
-  draw Line {..} = draw (Path (lineStart:| [lineEnd]))
+  draw Line {..} = draw (Path (lineStart :| [lineEnd]))
 
 -- | An Arc (partial Circle)
 data Arc = Arc
@@ -101,12 +109,11 @@ data Arc = Arc
   } deriving (Eq, Ord, Show)
 
 instance Draw Arc where
-  draw Arc{..} = arc x y arcRadius arcStart arcEnd
-   where V2 x y = arcCenter
+  draw Arc {..} = arc x y arcRadius arcStart arcEnd where V2 x y = arcCenter
 
 data Ellipse = Ellipse
   { ellipseCenter :: V2 Double
-  , ellipseWidth :: Double
+  , ellipseWidth  :: Double
   , ellipseHeight :: Double
   , ellipseDetail :: Int
   }
@@ -116,9 +123,13 @@ ellipse :: V2 Double -> Double -> Double -> Ellipse
 ellipse c w h = Ellipse c w h 100
 
 instance Draw Ellipse where
-  draw ellipse@Ellipse{..}
-    | ellipseDetail <= 0 = error $ "Ellipse detail must be greater than zero. Provided: " <> show ellipseDetail
-    | otherwise = for_ (polygon (ellipsePoints ellipse)) draw
+  draw ellipse@Ellipse {..}
+    | ellipseDetail <= 0
+    = error
+      $  "Ellipse detail must be greater than zero. Provided: "
+      <> show ellipseDetail
+    | otherwise
+    = for_ (polygon (ellipsePoints ellipse)) draw
 
 ellipsePoints :: Ellipse -> [V2 Double]
 ellipsePoints Ellipse {..} = map ellipsePoint
@@ -135,7 +146,7 @@ data Quad = Quad
   }
 
 instance Draw Quad where
-  draw Quad{..} = for_ (polygon [quadA,quadB,quadC,quadD]) draw
+  draw Quad {..} = for_ (polygon [quadA, quadB, quadC, quadD]) draw
 
 data Triangle = Triangle
   { triangleA :: V2 Double
@@ -144,7 +155,7 @@ data Triangle = Triangle
   }
 
 instance Draw Triangle where
-  draw Triangle{..} = for_ (polygon [triangleA,triangleB,triangleC]) draw
+  draw Triangle {..} = for_ (polygon [triangleA, triangleB, triangleC]) draw
 
 -- | A circle with diameter 1
 point :: V2 Double -> Circle

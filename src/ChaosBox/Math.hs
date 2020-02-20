@@ -3,10 +3,13 @@ module ChaosBox.Math
   , lerpMany
   , lerpV
   , lerpManyV
+  , average
   )
 where
 
-import qualified Linear as L
+import           Data.Foldable (toList)
+import           Data.List     (genericLength)
+import qualified Linear        as L
 
 lerp :: Num a => a -> a -> a -> a
 lerp perc a b = (perc - 1) * a + perc * b
@@ -30,3 +33,5 @@ lerpManyV n p q = map (\c -> L.lerp c p q) constants
   step      = 1 / fromIntegral n
   constants = [0, step .. fromIntegral n - step]
 
+average :: (Num a, Fractional a, Foldable f) => f a -> a
+average xs = sum xs0 / genericLength xs0 where xs0 = toList xs
