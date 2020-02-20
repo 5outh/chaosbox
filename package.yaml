@@ -36,6 +36,7 @@ dependencies:
   - vector
   - containers
   - array
+  - rvar
 
 library:
     source-dirs: src
