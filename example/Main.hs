@@ -18,6 +18,11 @@ renderSketch = do
   fillScreenRGB white
 
   (w, h)     <- getSize
+  c          <- getCenterPoint
 
   randomPath <- replicateM 100 $ V2 <$> getRandomR (0, w) <*> getRandomR (0, h)
   for_ (path randomPath) $ \p -> cairo $ setSourceRGB black *> draw p *> stroke
+
+  let e = ellipse c (w / 10) (h / 3)
+
+  cairo $ draw e *> stroke

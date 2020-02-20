@@ -36,6 +36,13 @@ dependencies:
   - vector
   - containers
   - array
+  - haskell-gi-base
+  - gi-glib
+  - gi-cairo
+  - gi-gdk
+  - gi-gdkpixbuf
+  - gi-gtk
+  - old-time
 
 library:
     source-dirs: src
