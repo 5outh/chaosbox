@@ -4,18 +4,16 @@ A framework for generative art.
 
 `chaosbox` exposes:
 
-- An easy-to-hook-into CLI interface for generating art (`runChaosBoxIO` and friends),
-  see `--help` for details.
+- Functions to easily build a CLI interface for generating art (`runChaosBoxIO` and friends), see `--help` for details.
 - A monad transformer stack (`Generate`) that:
-  - is capable of drawing with `cairo`
+  - is capable of drawing to a png image file using `cairo`
   - instantiates `MonadRandom`, for functions like `getRandomR` and `uniform`
   - instantiates `random-fu.MonadRandom`, to pull from non-uniform distributions like `normal` and `bernoulli`.
-- A modest collection of data types for Shapes that can be drawn to a Cairo canvas
+- A library of Random generation (`ChaosBox.Random`)
+- A collection of data types for Shapes that can be drawn
 - Some utilities for working with color and noise, that interface well with the `linear` package.
 
-This should provide good starting point for generating art with Haskell.
-
-Example (copied from the example project):
+Simple Example (copied from the example project):
 
 ```hs
 module Main where
