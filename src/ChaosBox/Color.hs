@@ -15,9 +15,15 @@ module ChaosBox.Color
     -- * Conversion functions
   , toHSV
   , toRGB
+
+  -- * Context-sensitive actions
+  , fillScreenHSV
+  , fillScreenRGB
   , module X
   )
 where
+
+import           ChaosBox.Generate
 
 import           Data.Colour.RGBSpace          as X
 import           Data.Colour.RGBSpace.HSV
@@ -82,3 +88,19 @@ hsv2rgb h s v = case i `mod` 6 of
 hsva :: Double -> Double -> Double -> Double -> Render ()
 hsva h s v = setSourceRGBA channelRed channelGreen channelBlue
   where RGB {..} = hsv h s v
+
+-- Utility function
+
+fillScreenHSV :: HSV -> Generate ()
+fillScreenHSV color = do
+  (w, h) <- getSize
+  cairo $ do
+    rectangle 0 0 w h
+    setSourceHSV color *> fill
+
+fillScreenRGB :: RGB Double -> Generate ()
+fillScreenRGB color = do
+  (w, h) <- getSize
+  cairo $ do
+    rectangle 0 0 w h
+    setSourceRGB color *> fill

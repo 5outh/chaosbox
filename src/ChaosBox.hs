@@ -2,8 +2,6 @@ module ChaosBox
   ( runChaosBoxWith
   , runChaosBoxIO
   , runChaosBoxIOWith
-  , fillScreenHSV
-  , fillScreenRGB
   , Opts(..)
   , module X
   )
@@ -137,19 +135,3 @@ runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
 
   surfaceWriteToPNG surface filename
   surfaceWriteToPNG surface latest
-
--- Utility function
-
-fillScreenHSV :: HSV -> Generate ()
-fillScreenHSV color = do
-  (w, h) <- getSize
-  cairo $ do
-    rectangle 0 0 w h
-    setSourceHSV color *> fill
-
-fillScreenRGB :: RGB Double -> Generate ()
-fillScreenRGB color = do
-  (w, h) <- getSize
-  cairo $ do
-    rectangle 0 0 w h
-    X.setSourceRGB color *> fill
