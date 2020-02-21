@@ -19,19 +19,23 @@ class HasCenter a where
   getCenter :: a -> V2 Double
 
 class Scale a where
+  type Scaled a
+  type Scaled a = a
   scaleAround
     :: V2 Double
     -- ^ Center
     -> V2 Double
     -- ^ Scale
     -> a
-    -> a
+    -> Scaled a
 
 class Translate a where
   translate :: V2 Double -> a -> a
 
 class Rotate a where
-  rotateAround :: V2 Double -> Angle -> a -> a
+  type Rotated a
+  type Rotated a = a
+  rotateAround :: V2 Double -> Angle -> a -> Rotated a
 
 type Geometry a = (HasCenter a, Scale a, Translate a, Rotate a)
 
@@ -55,8 +59,8 @@ instance a ~ Double => Rotate (V2 a) where
 
 -- Utilities
 
-scale :: (HasCenter a, Scale a) => V2 Double -> a -> a
+scale :: (HasCenter a, Scale a) => V2 Double -> a -> Scaled a
 scale s a = scaleAround (getCenter a) s a
 
-rotate :: (HasCenter a, Rotate a) => Angle -> a -> a
+rotate :: (HasCenter a, Rotate a) => Angle -> a -> Rotated a
 rotate theta a = rotateAround (getCenter a) theta a

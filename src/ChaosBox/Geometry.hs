@@ -1,4 +1,5 @@
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE TypeFamilies #-}
 module ChaosBox.Geometry
   ( Arc(..)
   , Circle(..)
@@ -22,13 +23,18 @@ import           ChaosBox.Draw
 import           ChaosBox.Geometry.Angle
 import           ChaosBox.Geometry.Class
 import           ChaosBox.Math
-import           ChaosBox.Prelude         hiding (point)
+import           ChaosBox.Prelude        hiding ( point )
 
-import           Data.Foldable            (for_)
-import           Data.List.NonEmpty       (NonEmpty (..))
-import qualified Data.List.NonEmpty       as NE
-import           Graphics.Rendering.Cairo (arc, closePath, lineTo, moveTo,
-                                           newPath, rectangle)
+import           Data.Foldable                  ( for_ )
+import           Data.List.NonEmpty             ( NonEmpty(..) )
+import qualified Data.List.NonEmpty            as NE
+import           Graphics.Rendering.Cairo       ( arc
+                                                , closePath
+                                                , lineTo
+                                                , moveTo
+                                                , newPath
+                                                , rectangle
+                                                )
 
 -- | An open path
 newtype Path = Path { getPath :: NonEmpty (V2 Double) }
@@ -85,11 +91,12 @@ instance HasCenter Circle where
   getCenter Circle { circleCenter } = circleCenter
 
 instance Scale Circle where
+  type Scaled Circle = Ellipse
   -- Note: Maximum of vector scale is used
-  scaleAround c s@(V2 sx sy) circle = Circle
-    { circleCenter = scaleAround c s (circleCenter circle)
-    , circleRadius = circleRadius circle * max sx sy
-    }
+  scaleAround c s@(V2 sx sy) circle = ellipse
+    (scaleAround c s (circleCenter circle))
+    (circleRadius circle * sx)
+    (circleRadius circle * sy)
 
 instance Translate Circle where
   translate v c = c { circleCenter = translate v (circleCenter c) }
@@ -182,13 +189,14 @@ instance Draw Arc where
 instance Translate Arc where
   translate v a = a { arcCenter = translate v (arcCenter a) }
 
-instance Scale Arc where
-  scaleAround v s a = a
-    { arcCenter = circleCenter
-                    $ scaleAround v s (Circle (arcCenter a) (arcRadius a))
-    , arcRadius = circleRadius
-                    $ scaleAround v s (Circle (arcCenter a) (arcRadius a))
-    }
+-- TODO: Introduce EllipticalArc to support scaling
+-- instance Scale Arc where
+  -- scaleAround v s a = a
+    -- { arcCenter = circleCenter
+                    -- $ scaleAround v s (Circle (arcCenter a) (arcRadius a))
+    -- , arcRadius = circleRadius
+                    -- $ scaleAround v s (Circle (arcCenter a) (arcRadius a))
+    -- }
 
 -- TODO: this one is a bit tricky; use unit vectors of arcStart and arcEnd +
 -- arcCenter to get new positions, then derive angles against arcCenter later
