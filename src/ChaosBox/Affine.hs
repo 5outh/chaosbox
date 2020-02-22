@@ -3,13 +3,16 @@ module ChaosBox.Affine
   , resetMatrix
   , withReset
   , applyAffine
+  , withCairoAffine
   )
 where
 
-import qualified ChaosBox.Math.Matrix as Matrix
+import           ChaosBox.Prelude
+
+import qualified ChaosBox.Math.Matrix            as Matrix
 import           Control.Lens
-import           Linear.Matrix
-import           Linear.V2
+import           Graphics.Rendering.Cairo
+import qualified Graphics.Rendering.Cairo.Matrix as CairoMatrix
 
 -- | A class of items that are transformable via linear transformations
 class Affine a where
@@ -31,3 +34,12 @@ withReset f a = resetMatrix (f a)
 -- | Get a V2 transformation from the 'Affine' transformation
 applyAffine :: Affine a => a -> V2 Double -> V2 Double
 applyAffine = Matrix.apply . view matrixLens
+
+-- brittany-ignore-next-binding
+
+withCairoAffine :: M33 Double -> Render () -> Render ()
+withCairoAffine (V3 (V3 a b c) (V3 d e f) _) render = do
+  setMatrix cairoMatrix
+  render
+  setMatrix CairoMatrix.identity
+  where cairoMatrix = CairoMatrix.Matrix a b c d e f

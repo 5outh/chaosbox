@@ -12,13 +12,12 @@ module ChaosBox.Geometry
   , Triangle(..)
   -- * Smart constructors
   , ellipse
-  , path
   , point
   , polygon
   , square
   -- * Combinators
   , ellipsePoints
-  , rawPath
+  , module ChaosBox.Geometry.Path
   )
 where
 
@@ -31,42 +30,15 @@ import           ChaosBox.Prelude        hiding ( point )
 import           Data.Foldable                  ( for_ )
 import           Data.List.NonEmpty             ( NonEmpty(..) )
 import qualified Data.List.NonEmpty            as NE
-import           Graphics.Rendering.Cairo       ( Render
-                                                , arc
+import           Graphics.Rendering.Cairo       ( arc
                                                 , closePath
                                                 , lineTo
                                                 , moveTo
                                                 , newPath
                                                 , rectangle
-                                                , setMatrix
                                                 )
-import qualified Graphics.Rendering.Cairo.Matrix
-                                               as CairoMatrix
 import           ChaosBox.Affine
-
--- | An open path
-data Path = Path { getPath :: NonEmpty (V2 Double), pathMatrix :: M33 Double }
-  deriving (Show, Eq, Ord)
-
--- NB. this operation and those like it are useful but should not be a part of
--- the public API.
-bakePath :: Path -> Path
-bakePath = withReset $ \p -> p { getPath = fmap (applyAffine p) (getPath p) }
-
-rawPath :: Path -> NonEmpty (V2 Double)
-rawPath = getPath . bakePath
-
-instance Affine Path where
-  matrixLens wrap (Path p m) = fmap (Path p) (wrap m)
-
-path :: [V2 Double] -> Maybe Path
-path xs = Path <$> NE.nonEmpty xs <*> pure identity
-
-instance Draw Path where
-  draw (Path (V2 startX startY :| rest) m) = withCairoAffine m $ do
-    newPath
-    moveTo startX startY
-    for_ rest (\(V2 x y) -> lineTo x y)
+import           ChaosBox.Geometry.Path
 
 -- | A closed path
 data Polygon = Polygon { getPolygon :: NonEmpty (V2 Double), polygonMatrix :: M33 Double}
@@ -215,12 +187,3 @@ instance Draw Triangle where
 -- | A circle with diameter 1
 point :: V2 Double -> Circle
 point center = Circle center 0.5 identity
-
--- brittany-ignore-next-binding
-
-withCairoAffine :: M33 Double -> Render () -> Render ()
-withCairoAffine (V3 (V3 a b c) (V3 d e f) _) render = do
-  setMatrix cairoMatrix
-  render
-  setMatrix CairoMatrix.identity
-  where cairoMatrix = CairoMatrix.Matrix a b c d e f
