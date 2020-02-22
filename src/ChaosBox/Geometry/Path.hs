@@ -33,6 +33,7 @@ path xs = Path <$> NE.nonEmpty xs <*> pure identity
 bakePath :: Path -> Path
 bakePath = withReset $ \p -> p { getPath = fmap (applyAffine p) (getPath p) }
 
+-- TODO: implement this interface
 -- transformed -> deferred
 -- transform   -> multiply by transform and bake
 -- bake        -> apply transformation matrix
