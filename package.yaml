@@ -38,6 +38,7 @@ dependencies:
   - array
   - rvar
   - semigroupoids
+  - lens
 
 library:
     source-dirs: src
