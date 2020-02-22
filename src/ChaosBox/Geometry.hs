@@ -1,4 +1,4 @@
-{-# LANGUAGE NamedFieldPuns #-}
+
 {-# LANGUAGE TypeFamilies #-}
 module ChaosBox.Geometry
   ( Arc(..)
@@ -23,90 +23,125 @@ import           ChaosBox.Draw
 import           ChaosBox.Geometry.Angle
 import           ChaosBox.Geometry.Class
 import           ChaosBox.Math
-import           ChaosBox.Prelude        hiding ( point )
+import qualified ChaosBox.Math.Matrix            as Matrix
+import           ChaosBox.Prelude                hiding (point)
+import           Control.Lens
 
-import           Data.Foldable                  ( for_ )
-import           Data.List.NonEmpty             ( NonEmpty(..) )
-import qualified Data.List.NonEmpty            as NE
-import           Graphics.Rendering.Cairo       ( arc
-                                                , closePath
-                                                , lineTo
-                                                , moveTo
-                                                , newPath
-                                                , rectangle
-                                                )
+import           Data.Foldable                   (for_)
+import           Data.List.NonEmpty              (NonEmpty (..))
+import qualified Data.List.NonEmpty              as NE
+import           Graphics.Rendering.Cairo        (Render, arc, closePath,
+                                                  lineTo, moveTo, newPath,
+                                                  rectangle, setMatrix)
+import qualified Graphics.Rendering.Cairo.Matrix as CairoMatrix
+
+-- | A class of items that are transformable via linear transformations
+class Affine a where
+  matrixLens :: Lens' a (M33 Double)
+
+-- | Reset a transformation matrix to 'identity'
+resetMatrix :: Affine a => a -> a
+resetMatrix = set matrixLens identity
+
+-- | Apply a function and reset the transformation matrix afterwards.
+--
+-- This is commonly used for "baking", where the transformation matrix gets
+-- applied to the underlying data type directly in haskell values so we don't
+-- need to hold onto the matrix anymore.
+--
+withReset :: (Affine a, Affine b) => (a -> b) -> a -> b
+withReset f a = resetMatrix (f a)
+
+-- TODO:
+--
+-- I should ONLY carry around a transformation matrix on top of the data type
+-- and implement 'Affine' for each
+--
+-- -- can implement some shape sampling to pull points in the shape
+--
+-- The only problem here is that non-linear transformations must be
+-- applied *after* the current transformation has taken place.
+--
+-- So the translation matrix must be applied directly (in haskell) before any
+-- others take place.  The solution here might be to introduce modifying
+-- combinators, e.g.
+--
+-- transformPath :: (V2 Double -> V2 Double) -> Path -> Path
+-- transformPath f = map (f . applyMatrix pathMatrix) getPath
+--
+-- -- basically MonoFunctor -- does it satisfy the functor laws?
+-- class Transform t where
+--  transform :: (V2 Double -> V2 Double) -> t -> t
+--
+-- fmap id = id
+-- -- breaks this law, since fmap would change all points AND matrix
+-- -- _but not_
+-- -- if equality is loose (the view of the item)
+--
+-- fmap (g . f) = fmap g . fmap f
+--
+-- -- same deal, I think; applying `g` then `f` works fine as long as
+-- -- equality == equality by view
+-- --
+--
+-- class Affine t => Transform t where
+-- -- ...
 
 -- | An open path
-newtype Path = Path { getPath :: NonEmpty (V2 Double) }
+data Path = Path { getPath :: NonEmpty (V2 Double), pathMatrix :: M33 Double }
   deriving (Show, Eq, Ord)
 
+-- | Get a V2 transformation from the 'Affine' transformation
+applyAffine :: Affine a => a -> V2 Double -> V2 Double
+applyAffine = Matrix.apply . view matrixLens
+
+-- NB. this operation and those like it are useful but should not be a part of
+-- the public API. Maybe 'rawPath' should grab the innards after application
+-- etc?
+bakePath :: Path -> Path
+bakePath = withReset $ \p -> p { getPath = fmap (applyAffine p) (getPath p) }
+
+rawPath :: Path -> NonEmpty (V2 Double)
+rawPath = getPath . bakePath
+
+instance Affine Path where
+  matrixLens wrap (Path p m) = fmap (Path p) (wrap m)
+
 path :: [V2 Double] -> Maybe Path
-path = fmap Path . NE.nonEmpty
+path xs = Path <$> NE.nonEmpty xs <*> pure identity
 
 instance Draw Path where
-  draw (Path (V2 startX startY :| rest)) = do
+  draw (Path (V2 startX startY :| rest) m) = withCairoAffine m $ do
     newPath
     moveTo startX startY
     for_ rest (\(V2 x y) -> lineTo x y)
 
-instance HasCenter Path where
-  getCenter (Path ps) = average ps
-
-instance Scale Path where
-  scaleAround v s (Path xs) = Path $ fmap (scaleAround v s) xs
-
-instance Translate Path where
-  translate v (Path xs) = Path $ fmap (translate v) xs
-
-instance Rotate Path where
-  rotateAround v theta (Path xs) = Path $ fmap (rotateAround v theta) xs
-
 -- | A closed path
-newtype Polygon = Polygon { getPolygon :: NonEmpty (V2 Double) }
+data Polygon = Polygon { getPolygon :: NonEmpty (V2 Double), polygonMatrix :: M33 Double}
   deriving (Show, Eq, Ord)
+
+instance Affine Polygon where
+  matrixLens wrap (Polygon p m) = fmap (Polygon p) (wrap m)
 
 polygon :: [V2 Double] -> Maybe Polygon
-polygon = fmap Polygon . NE.nonEmpty
-
-instance HasCenter Polygon where
-  getCenter (Polygon ps) = average ps
-
-instance Scale Polygon where
-  scaleAround v s (Polygon xs) = Polygon $ fmap (scaleAround v s) xs
-
-instance Translate Polygon where
-  translate v (Polygon xs) = Polygon $ fmap (translate v) xs
-
-instance Rotate Polygon where
-  rotateAround v theta (Polygon xs) = Polygon $ fmap (rotateAround v theta) xs
+polygon xs = Polygon <$> NE.nonEmpty xs <*> pure identity
 
 instance Draw Polygon where
-  draw Polygon {..} = draw (Path getPolygon) *> closePath
+  draw (Polygon (V2 startX startY :| rest) m) = withCairoAffine m $ do
+    newPath
+    moveTo startX startY
+    for_ rest (\(V2 x y) -> lineTo x y)
+    closePath
 
 -- | A circle with radius 'circleRadius' centered at 'circleCenter'
-data Circle = Circle { circleCenter :: V2 Double, circleRadius :: Double }
+data Circle = Circle { circleCenter :: V2 Double, circleRadius :: Double, circleMatrix :: M33 Double }
   deriving (Show, Eq, Ord)
 
-instance HasCenter Circle where
-  getCenter Circle { circleCenter } = circleCenter
-
-instance Scale Circle where
-  type Scaled Circle = Ellipse
-  -- Note: Maximum of vector scale is used
-  scaleAround c s@(V2 sx sy) circle = ellipse
-    (scaleAround c s (circleCenter circle))
-    (circleRadius circle * sx)
-    (circleRadius circle * sy)
-
-instance Translate Circle where
-  translate v c = c { circleCenter = translate v (circleCenter c) }
-
-instance Rotate Circle where
-  rotateAround v theta c =
-    c { circleCenter = rotateAround v theta (circleCenter c) }
+instance Affine Circle where
+  matrixLens wrap (Circle c r m) = fmap (Circle c r) (wrap m)
 
 instance Draw Circle where
-  draw Circle {..} = do
+  draw Circle {..} = withCairoAffine circleMatrix $ do
     let V2 x y = circleCenter
     moveTo (x + circleRadius) y
     arc x y circleRadius 0 (2 * pi)
@@ -116,59 +151,35 @@ data Rect = Rect
   { rectTopLeft :: V2 Double
   , rectW       :: Double
   , rectH       :: Double
+  , rectMatrix  :: M33 Double
   } deriving (Show, Eq, Ord)
 
+instance Affine Rect where
+  matrixLens wrap (Rect tl w h m) = fmap (Rect tl w h) (wrap m)
+
 instance Draw Rect where
-  draw Rect {..} =
-    let (V2 rectX rectY) = rectTopLeft in rectangle rectX rectY rectW rectH
+  draw Rect {..} = withCairoAffine rectMatrix
+    $ rectangle rectX rectY rectW rectH
+    where V2 rectX rectY = rectTopLeft
 
-instance HasCenter Rect where
-  getCenter Rect {..} = average [rectTopLeft, V2 rectW rectH]
-
-instance Scale Rect where
-  scaleAround v s rect@Rect {..} = fromPath (map (scaleAround v s) path)
-   where
-    path =
-      [ rectTopLeft
-      , rectTopLeft + V2 rectW 0
-      , rectTopLeft + V2 rectW rectH
-      , rectTopLeft + V2 0 rectH
-      ]
-    fromPath [tl, tr, br, bl] = let V2 w h = (br - tl) in Rect tl w h
-
-instance Translate Rect where
-  translate v r = r { rectTopLeft = rectTopLeft r + v }
+-- instance HasCenter Rect where
+  -- getCenter Rect {..} = average [rectTopLeft, V2 rectW rectH]
 
 square :: V2 Double -> Double -> Rect
-square c w = Rect c w w
+square c w = Rect c w w identity
 
 -- | A line segment
 data Line = Line
-  { lineStart :: V2 Double
-  , lineEnd   :: V2 Double
+  { lineStart  :: V2 Double
+  , lineEnd    :: V2 Double
+  , lineMatrix :: M33 Double
   } deriving (Show, Eq, Ord)
 
+instance Affine Line where
+  matrixLens wrap (Line s e m) = fmap (Line s e) (wrap m)
+
 instance Draw Line where
-  draw Line {..} = draw (Path (lineStart :| [lineEnd]))
-
-instance HasCenter Line where
-  getCenter Line {..} = lerpV 0.5 lineStart lineEnd
-
-instance Scale Line where
-  scaleAround v s line = line { lineStart = scaleAround v s $ lineStart line
-                              , lineEnd   = scaleAround v s $ lineEnd line
-                              }
-
-instance Rotate Line where
-  rotateAround v theta line = line
-    { lineStart = rotateAround v theta $ lineStart line
-    , lineEnd   = rotateAround v theta $ lineEnd line
-    }
-
-instance Translate Line where
-  translate v line = line { lineStart = translate v (lineStart line)
-                          , lineEnd   = translate v (lineEnd line)
-                          }
+  draw Line {..} = draw $ Path (lineStart :| [lineEnd]) lineMatrix
 
 -- | An Arc (partial Circle)
 data Arc = Arc
@@ -180,76 +191,84 @@ data Arc = Arc
   -- ^ Start 'Angle'
   , arcEnd    :: Angle
   -- ^ End 'Angle'
+  , arcMatrix :: M33 Double
   } deriving (Eq, Ord, Show)
 
 instance Draw Arc where
-  draw Arc {..} = arc x y arcRadius (getAngle arcStart) (getAngle arcEnd)
+  draw Arc {..} = withCairoAffine arcMatrix
+    $ arc x y arcRadius (getAngle arcStart) (getAngle arcEnd)
     where V2 x y = arcCenter
 
-instance Translate Arc where
-  translate v a = a { arcCenter = translate v (arcCenter a) }
-
--- TODO: Introduce EllipticalArc to support scaling
--- instance Scale Arc where
-  -- scaleAround v s a = a
-    -- { arcCenter = circleCenter
-                    -- $ scaleAround v s (Circle (arcCenter a) (arcRadius a))
-    -- , arcRadius = circleRadius
-                    -- $ scaleAround v s (Circle (arcCenter a) (arcRadius a))
-    -- }
-
--- TODO: this one is a bit tricky; use unit vectors of arcStart and arcEnd +
--- arcCenter to get new positions, then derive angles against arcCenter later
---
--- instance Rotate Arc where
-  -- rotateAround = ???
-
+  -- TODO: Carry a matrix around with every shape.
 data Ellipse = Ellipse
   { ellipseCenter :: V2 Double
   , ellipseWidth  :: Double
   , ellipseHeight :: Double
-  , ellipseDetail :: Int
+  , ellipseMatrix :: M33 Double
   }
+
+instance Affine Ellipse where
+  matrixLens wrap (Ellipse c w h m) = fmap (Ellipse c w h) (wrap m)
 
 -- | An ellipse with default detail (100)
 ellipse :: V2 Double -> Double -> Double -> Ellipse
-ellipse c w h = Ellipse c w h 100
+ellipse c w h = Ellipse c w h identity
 
 instance Draw Ellipse where
-  draw ellipse@Ellipse {..}
-    | ellipseDetail <= 0
-    = error
-      $  "Ellipse detail must be greater than zero. Provided: "
-      <> show ellipseDetail
-    | otherwise
-    = for_ (polygon (ellipsePoints ellipse)) draw
+  draw Ellipse {..} =
+    draw
+      $ Circle 0 1
+      $ ellipseMatrix
+      * Matrix.scalar (V2 ellipseWidth ellipseHeight)
+      * Matrix.translation ellipseCenter
 
-ellipsePoints :: Ellipse -> [V2 Double]
-ellipsePoints Ellipse {..} = map ellipsePoint
+-- | Sample 'N' evenly spaced points along the ellipse's path
+ellipsePoints :: Int -> Ellipse -> [V2 Double]
+ellipsePoints ellipseDetail Ellipse {..} = map ellipsePoint
   $ lerpMany ellipseDetail 0 (2 * pi)
  where
   V2 x y = ellipseCenter
-  ellipsePoint t = V2 (x + ellipseWidth * cos t) (y + ellipseHeight * sin t)
+  ellipsePoint t = Matrix.apply ellipseMatrix
+    $ V2 (x + ellipseWidth * cos t) (y + ellipseHeight * sin t)
 
 data Quad = Quad
-  { quadA :: V2 Double
-  , quadB :: V2 Double
-  , quadC :: V2 Double
-  , quadD :: V2 Double
+  { quadA      :: V2 Double
+  , quadB      :: V2 Double
+  , quadC      :: V2 Double
+  , quadD      :: V2 Double
+  , quadMatrix :: M33 Double
   }
+
+instance Affine Quad where
+  matrixLens wrap (Quad a b c d m) = fmap (Quad a b c d) (wrap m)
 
 instance Draw Quad where
-  draw Quad {..} = for_ (polygon [quadA, quadB, quadC, quadD]) draw
+  draw Quad {..} = for_ (polygon [quadA, quadB, quadC, quadD])
+    $ \p -> draw p { polygonMatrix = quadMatrix }
 
 data Triangle = Triangle
-  { triangleA :: V2 Double
-  , triangleB :: V2 Double
-  , triangleC :: V2 Double
+  { triangleA      :: V2 Double
+  , triangleB      :: V2 Double
+  , triangleC      :: V2 Double
+  , triangleMatrix :: M33 Double
   }
 
+instance Affine Triangle where
+  matrixLens wrap (Triangle a b c m) = fmap (Triangle a b c) (wrap m)
+
 instance Draw Triangle where
-  draw Triangle {..} = for_ (polygon [triangleA, triangleB, triangleC]) draw
+  draw Triangle {..} = for_ (polygon [triangleA, triangleB, triangleC])
+    $ \p -> draw p { polygonMatrix = triangleMatrix }
 
 -- | A circle with diameter 1
 point :: V2 Double -> Circle
-point center = Circle center 0.5
+point center = Circle center 0.5 identity
+
+-- brittany-ignore-next-binding
+
+withCairoAffine :: M33 Double -> Render () -> Render ()
+withCairoAffine (V3 (V3 a b c) (V3 d e f) _) render = do
+  setMatrix cairoMatrix
+  render
+  setMatrix CairoMatrix.identity
+  where cairoMatrix = CairoMatrix.Matrix a b c d e f
