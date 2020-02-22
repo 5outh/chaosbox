@@ -52,9 +52,9 @@ instance a ~ Double => Translate (V2 a) where
 
 instance a ~ Double => Rotate (V2 a) where
   rotateAround center (Angle theta) v =
-    center + (rotationMatrix theta !* (v - center))
+    center + (rotationMatrix !* (v - center))
    where
-    rotationMatrix theta =
+    rotationMatrix =
       V2 (V2 (cos theta) (-(sin theta))) (V2 (sin theta) (cos theta))
 
 -- Utilities

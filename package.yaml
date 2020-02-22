@@ -11,6 +11,10 @@ category:            Art
 extra-source-files:
 - README.md
 
+ghc-options:
+  - -Werror
+  - -Wall
+
 default-extensions:
   - TypeApplications
   - RecordWildCards

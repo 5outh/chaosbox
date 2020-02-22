@@ -29,8 +29,8 @@ import           ChaosBox.Generate
 
 import           Control.Monad.Random                (MonadRandom)
 import qualified Control.Monad.Random                as MonadRandom
-import           Data.Random                         (Distribution, Gamma,
-                                                      Normal, StdUniform)
+import           Data.Random                         (Distribution, Normal,
+                                                      StdUniform)
 import qualified Data.Random                         as Random
 import           Data.Random.Distribution.Bernoulli  (boolBernoulli)
 import           Data.Random.Distribution.Triangular (floatingTriangular)
@@ -125,7 +125,7 @@ sampleN n xs = sampleRVar $ Random.shuffleNofM n (length xs) xs
 -- predicate is never satisfied, returns 'Nothing'.
 --
 suchThat :: Monad m => GenerateT m a -> (a -> Bool) -> GenerateT m (Maybe a)
-suchThat gen predicate = go 1000
+suchThat gen predicate = go (1000 :: Int)
  where
   go 0 = pure Nothing
   go n = do
