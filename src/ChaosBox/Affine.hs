@@ -11,6 +11,7 @@ import           ChaosBox.Prelude
 
 import qualified ChaosBox.Math.Matrix            as Matrix
 import           Control.Lens
+import           Debug.Trace
 import           Graphics.Rendering.Cairo
 import qualified Graphics.Rendering.Cairo.Matrix as CairoMatrix
 
@@ -38,8 +39,9 @@ applyAffine = Matrix.apply . view matrixLens
 -- brittany-ignore-next-binding
 
 withCairoAffine :: M33 Double -> Render () -> Render ()
-withCairoAffine (V3 (V3 a b c) (V3 d e f) _) render = do
+withCairoAffine m render = do
+  let (V3 (V3 a b c) (V3 d e f) _) = traceShowId m
+      cairoMatrix = traceShowId $ CairoMatrix.Matrix a d b e c f
   setMatrix cairoMatrix
   render
   setMatrix CairoMatrix.identity
-  where cairoMatrix = CairoMatrix.Matrix a b c d e f
