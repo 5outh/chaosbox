@@ -6,21 +6,21 @@ module ChaosBox.Geometry
   , Ellipse(..)
   , Line(..)
   , Path(..)
-  , Polygon(..)
   , Quad(..)
   , Rect(..)
   , Triangle(..)
   -- * Smart constructors
   , ellipse
   , point
-  , polygon
   , square
   -- * Combinators
   , ellipsePoints
   , module ChaosBox.Geometry.Path
+  , module ChaosBox.Geometry.Polygon
   )
 where
 
+import           Control.Lens
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Angle
 import           ChaosBox.Math
@@ -29,33 +29,14 @@ import           ChaosBox.Prelude        hiding ( point )
 
 import           Data.Foldable                  ( for_ )
 import           Data.List.NonEmpty             ( NonEmpty(..) )
-import qualified Data.List.NonEmpty            as NE
+-- import qualified Data.List.NonEmpty            as NE
 import           Graphics.Rendering.Cairo       ( arc
-                                                , closePath
-                                                , lineTo
                                                 , moveTo
-                                                , newPath
                                                 , rectangle
                                                 )
 import           ChaosBox.Affine
 import           ChaosBox.Geometry.Path
-
--- | A closed path
-data Polygon = Polygon { getPolygon :: NonEmpty (V2 Double), polygonMatrix :: M33 Double}
-  deriving (Show, Eq, Ord)
-
-instance Affine Polygon where
-  matrixLens wrap (Polygon p m) = fmap (Polygon p) (wrap m)
-
-polygon :: [V2 Double] -> Maybe Polygon
-polygon xs = Polygon <$> NE.nonEmpty xs <*> pure identity
-
-instance Draw Polygon where
-  draw (Polygon (V2 startX startY :| rest) m) = withCairoAffine m $ do
-    newPath
-    moveTo startX startY
-    for_ rest (\(V2 x y) -> lineTo x y)
-    closePath
+import           ChaosBox.Geometry.Polygon
 
 -- | A circle with radius 'circleRadius' centered at 'circleCenter'
 data Circle = Circle { circleCenter :: V2 Double, circleRadius :: Double, circleMatrix :: M33 Double }
@@ -168,7 +149,7 @@ instance Affine Quad where
 
 instance Draw Quad where
   draw Quad {..} = for_ (polygon [quadA, quadB, quadC, quadD])
-    $ \p -> draw p { polygonMatrix = quadMatrix }
+    $ draw . set matrixLens quadMatrix
 
 data Triangle = Triangle
   { triangleA      :: V2 Double
@@ -182,7 +163,7 @@ instance Affine Triangle where
 
 instance Draw Triangle where
   draw Triangle {..} = for_ (polygon [triangleA, triangleB, triangleC])
-    $ \p -> draw p { polygonMatrix = triangleMatrix }
+    $ draw . set matrixLens triangleMatrix
 
 -- | A circle with diameter 1
 point :: V2 Double -> Circle
