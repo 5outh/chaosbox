@@ -60,18 +60,18 @@ scalar (V2 w h) = affine
 
 shearX :: Double -> M33 Double
 shearX t = affine
-  1 (tan t) 0
-  0 1       0
-  0 0       1
+  1 t 0
+  0 1 0
+  0 0 1
 
 shearY :: Double -> M33 Double
 shearY t = affine
-  1       0 0
-  (tan t) 1 0
-  0 0     1
+  1 0 0
+  t 1 0
+  0 0 1
 
 shear :: V2 Double -> M33 Double
-shear (V2 x y) = shearX x * shearY y
+shear (V2 x y) = shearX x !*! shearY y
 
 reflectOrigin :: M33 Double
 reflectOrigin = affine
