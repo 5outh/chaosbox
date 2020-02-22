@@ -16,88 +16,40 @@ module ChaosBox.Geometry
   , point
   , polygon
   , square
+  -- * Combinators
+  , ellipsePoints
+  , rawPath
   )
 where
 
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Angle
-import           ChaosBox.Geometry.Class
 import           ChaosBox.Math
-import qualified ChaosBox.Math.Matrix            as Matrix
-import           ChaosBox.Prelude                hiding (point)
-import           Control.Lens
+import qualified ChaosBox.Math.Matrix          as Matrix
+import           ChaosBox.Prelude        hiding ( point )
 
-import           Data.Foldable                   (for_)
-import           Data.List.NonEmpty              (NonEmpty (..))
-import qualified Data.List.NonEmpty              as NE
-import           Graphics.Rendering.Cairo        (Render, arc, closePath,
-                                                  lineTo, moveTo, newPath,
-                                                  rectangle, setMatrix)
-import qualified Graphics.Rendering.Cairo.Matrix as CairoMatrix
-
--- | A class of items that are transformable via linear transformations
-class Affine a where
-  matrixLens :: Lens' a (M33 Double)
-
--- | Reset a transformation matrix to 'identity'
-resetMatrix :: Affine a => a -> a
-resetMatrix = set matrixLens identity
-
--- | Apply a function and reset the transformation matrix afterwards.
---
--- This is commonly used for "baking", where the transformation matrix gets
--- applied to the underlying data type directly in haskell values so we don't
--- need to hold onto the matrix anymore.
---
-withReset :: (Affine a, Affine b) => (a -> b) -> a -> b
-withReset f a = resetMatrix (f a)
-
--- TODO:
---
--- I should ONLY carry around a transformation matrix on top of the data type
--- and implement 'Affine' for each
---
--- -- can implement some shape sampling to pull points in the shape
---
--- The only problem here is that non-linear transformations must be
--- applied *after* the current transformation has taken place.
---
--- So the translation matrix must be applied directly (in haskell) before any
--- others take place.  The solution here might be to introduce modifying
--- combinators, e.g.
---
--- transformPath :: (V2 Double -> V2 Double) -> Path -> Path
--- transformPath f = map (f . applyMatrix pathMatrix) getPath
---
--- -- basically MonoFunctor -- does it satisfy the functor laws?
--- class Transform t where
---  transform :: (V2 Double -> V2 Double) -> t -> t
---
--- fmap id = id
--- -- breaks this law, since fmap would change all points AND matrix
--- -- _but not_
--- -- if equality is loose (the view of the item)
---
--- fmap (g . f) = fmap g . fmap f
---
--- -- same deal, I think; applying `g` then `f` works fine as long as
--- -- equality == equality by view
--- --
---
--- class Affine t => Transform t where
--- -- ...
+import           Data.Foldable                  ( for_ )
+import           Data.List.NonEmpty             ( NonEmpty(..) )
+import qualified Data.List.NonEmpty            as NE
+import           Graphics.Rendering.Cairo       ( Render
+                                                , arc
+                                                , closePath
+                                                , lineTo
+                                                , moveTo
+                                                , newPath
+                                                , rectangle
+                                                , setMatrix
+                                                )
+import qualified Graphics.Rendering.Cairo.Matrix
+                                               as CairoMatrix
+import           ChaosBox.Affine
 
 -- | An open path
 data Path = Path { getPath :: NonEmpty (V2 Double), pathMatrix :: M33 Double }
   deriving (Show, Eq, Ord)
 
--- | Get a V2 transformation from the 'Affine' transformation
-applyAffine :: Affine a => a -> V2 Double -> V2 Double
-applyAffine = Matrix.apply . view matrixLens
-
 -- NB. this operation and those like it are useful but should not be a part of
--- the public API. Maybe 'rawPath' should grab the innards after application
--- etc?
+-- the public API.
 bakePath :: Path -> Path
 bakePath = withReset $ \p -> p { getPath = fmap (applyAffine p) (getPath p) }
 

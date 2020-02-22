@@ -92,7 +92,7 @@ reflectY = affine
   0    0 1
 
 transform :: V2 Double -> M33 Double -> V2 Double
-transform v@(V2 x y) m = V2 x0 y0
+transform (V2 x y) m = V2 x0 y0
  where
   v0 = V3 x y 0
   V3 x0 y0 _ = m !* v0
