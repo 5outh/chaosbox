@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeFamilies #-}
 module ChaosBox.Geometry.Ellipse
   ( Ellipse(..)
   , ellipse
@@ -5,11 +6,13 @@ module ChaosBox.Geometry.Ellipse
   )
 where
 
-import           ChaosBox.Prelude
+import           ChaosBox.Prelude        hiding ( scaled )
 
+import           Data.Foldable                  ( for_ )
 import qualified ChaosBox.Math.Matrix          as Matrix
 import           ChaosBox.Affine
 import           ChaosBox.Draw
+import           ChaosBox.Geometry.Polygon
 import           ChaosBox.Math                  ( lerpMany )
 import           ChaosBox.Geometry.Circle
 
@@ -18,32 +21,36 @@ data Ellipse = Ellipse
   { ellipseCenter :: V2 Double
   , ellipseWidth  :: Double
   , ellipseHeight :: Double
-  , ellipseMatrix :: M33 Double
+  , ellipseDetail :: Int
   }
 
 instance Affine Ellipse where
-  matrixLens wrap (Ellipse c w h m) = fmap (Ellipse c w h) (wrap m)
+  type Transformed Ellipse = Maybe Polygon
+  transform m e = case toPolygon e of
+    Nothing -> Nothing
+    Just p -> Just $ transform m p
 
--- | An ellipse with default detail (100)
+-- | An ellipse with default detail (200)
 ellipse :: V2 Double -> Double -> Double -> Ellipse
-ellipse c w h = Ellipse c w h identity
+ellipse c w h = Ellipse c w h 200
 
 instance Draw Ellipse where
-  draw Ellipse {..} =
-    draw
-      $ Circle 0 1
-      $ ellipseMatrix
-      * Matrix.scalar (V2 ellipseWidth ellipseHeight)
-      * Matrix.translation ellipseCenter
+  draw e = for_ (toPolygon e) draw
 
 -- | Sample 'N' evenly spaced points along the ellipse's path
-ellipsePoints :: Int -> Ellipse -> [V2 Double]
-ellipsePoints ellipseDetail Ellipse {..} = map ellipsePoint
+ellipsePoints :: Ellipse -> [V2 Double]
+ellipsePoints Ellipse {..} = map ellipsePoint
   $ lerpMany ellipseDetail 0 (2 * pi)
  where
   V2 x y = ellipseCenter
-  mat =
-    ellipseMatrix
-      * Matrix.scalar (V2 ellipseWidth ellipseHeight)
-      * Matrix.translation ellipseCenter
-  ellipsePoint t = Matrix.apply mat $ V2 (x + cos t) (y + sin t)
+  mat    = Matrix.scalar (V2 ellipseWidth ellipseHeight)
+    * Matrix.translation ellipseCenter
+  ellipsePoint t = Matrix.applyMatrix mat $ V2 (x + cos t) (y + sin t)
+
+toPolygon :: Ellipse -> Maybe Polygon
+toPolygon Ellipse {..} =
+  transform
+      (   Matrix.translation ellipseCenter
+      !*! Matrix.scalar (V2 ellipseWidth ellipseHeight)
+      )
+    $ circle 0 1

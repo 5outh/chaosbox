@@ -1,12 +1,9 @@
 {-# LANGUAGE TypeFamilies #-}
 module ChaosBox.Affine
   ( Affine(..)
-  , resetMatrix
-  , withReset
-  , applyAffine
   , withCairoAffine
   -- * Deferred transformations
-  , transformed
+  -- , transformed
   , rotated
   , translated
   , scaled
@@ -22,30 +19,14 @@ where
 import           ChaosBox.Prelude                hiding (scaled)
 
 import qualified ChaosBox.Math.Matrix            as Matrix
-import           Control.Lens                    hiding (transform)
-import           Graphics.Rendering.Cairo
+import           Graphics.Rendering.Cairo        hiding (transform)
 import qualified Graphics.Rendering.Cairo.Matrix as CairoMatrix
 
 -- | A class of items that are transformable via linear transformations
 class Affine a where
-  matrixLens :: Lens' a (M33 Double)
-
--- | Reset a transformation matrix to 'identity'
-resetMatrix :: Affine a => a -> a
-resetMatrix = set matrixLens identity
-
--- | Apply a function and reset the transformation matrix afterwards.
---
--- This is commonly used for "baking", where the transformation matrix gets
--- applied to the underlying data type directly in haskell values so we don't
--- need to hold onto the matrix anymore.
---
-withReset :: (Affine a, Affine b) => (a -> b) -> a -> b
-withReset f a = resetMatrix (f a)
-
--- | Get a V2 transformation from the 'Affine' transformation
-applyAffine :: Affine a => a -> V2 Double -> V2 Double
-applyAffine = Matrix.apply . view matrixLens
+  type Transformed a :: *
+  type Transformed a = a
+  transform :: M33 Double -> a -> Transformed a
 
 -- | Render something with an 'M33' transformation matrix applied
 --
@@ -64,32 +45,32 @@ withCairoAffine (V3 (V3 a b c) (V3 d e f) _) render = do
 
 -- Applied transformations
 
-transformed :: Affine a => M33 Double -> a -> a
-transformed m a = a & matrixLens %~ (!*! m)
+-- transformed :: Affine a => M33 Double -> a -> a
+-- transformed m a = a & matrixLens %~ (!*! m)
 
-rotated :: Affine a => Double -> a -> a
-rotated = transformed . Matrix.rotation
+rotated :: Affine a => Double -> a -> Transformed a
+rotated = transform . Matrix.rotation
 
-translated :: Affine a => V2 Double -> a -> a
-translated = transformed . Matrix.translation
+translated :: Affine a => V2 Double -> a -> Transformed a
+translated = transform . Matrix.translation
 
-scaled :: Affine a => V2 Double -> a -> a
-scaled = transformed . Matrix.scalar
+scaled :: Affine a => V2 Double -> a -> Transformed a
+scaled = transform . Matrix.scalar
 
-shearedX :: Affine a => Double -> a -> a
-shearedX = transformed . Matrix.shearX
+shearedX :: Affine a => Double -> a -> Transformed a
+shearedX = transform . Matrix.shearX
 
-shearedY :: Affine a => Double -> a -> a
-shearedY = transformed . Matrix.shearY
+shearedY :: Affine a => Double -> a -> Transformed a
+shearedY = transform . Matrix.shearY
 
-sheared :: Affine a => V2 Double -> a -> a
-sheared = transformed . Matrix.shear
+sheared :: Affine a => V2 Double -> a -> Transformed a
+sheared = transform . Matrix.shear
 
-reflectedOrigin :: Affine a => a -> a
-reflectedOrigin = transformed Matrix.reflectOrigin
+reflectedOrigin :: Affine a => a -> Transformed a
+reflectedOrigin = transform Matrix.reflectOrigin
 
-reflectedX :: Affine a => a -> a
-reflectedX = transformed Matrix.reflectX
+reflectedX :: Affine a => a -> Transformed a
+reflectedX = transform Matrix.reflectX
 
-reflectedY :: Affine a => a -> a
-reflectedY = transformed Matrix.reflectY
+reflectedY :: Affine a => a -> Transformed a
+reflectedY = transform Matrix.reflectY
