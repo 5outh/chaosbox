@@ -1,17 +1,28 @@
+{-# LANGUAGE TypeFamilies #-}
 module ChaosBox.Affine
   ( Affine(..)
   , resetMatrix
   , withReset
   , applyAffine
   , withCairoAffine
+  -- * Deferred transformations
   , transformed
+  , rotated
+  , translated
+  , scaled
+  , shearedX
+  , shearedY
+  , sheared
+  , reflectedOrigin
+  , reflectedX
+  , reflectedY
   )
 where
 
-import           ChaosBox.Prelude
+import           ChaosBox.Prelude                hiding (scaled)
 
 import qualified ChaosBox.Math.Matrix            as Matrix
-import           Control.Lens
+import           Control.Lens                    hiding (transform)
 import           Graphics.Rendering.Cairo
 import qualified Graphics.Rendering.Cairo.Matrix as CairoMatrix
 
@@ -56,12 +67,29 @@ withCairoAffine (V3 (V3 a b c) (V3 d e f) _) render = do
 transformed :: Affine a => M33 Double -> a -> a
 transformed m a = a & matrixLens %~ (!*! m)
 
--- rotation
--- translation
--- scalar
--- shearX
--- shearY
--- shear
--- reflectOrigin
--- reflectX
--- reflectY
+rotated :: Affine a => Double -> a -> a
+rotated = transformed . Matrix.rotation
+
+translated :: Affine a => V2 Double -> a -> a
+translated = transformed . Matrix.translation
+
+scaled :: Affine a => V2 Double -> a -> a
+scaled = transformed . Matrix.scalar
+
+shearedX :: Affine a => Double -> a -> a
+shearedX = transformed . Matrix.shearX
+
+shearedY :: Affine a => Double -> a -> a
+shearedY = transformed . Matrix.shearY
+
+sheared :: Affine a => V2 Double -> a -> a
+sheared = transformed . Matrix.shear
+
+reflectedOrigin :: Affine a => a -> a
+reflectedOrigin = transformed Matrix.reflectOrigin
+
+reflectedX :: Affine a => a -> a
+reflectedX = transformed Matrix.reflectX
+
+reflectedY :: Affine a => a -> a
+reflectedY = transformed Matrix.reflectY
