@@ -13,6 +13,8 @@ module ChaosBox.Math.Matrix
   -- * Vector Operations
   , transform
   , apply
+  -- * Combinators
+  , around
   -- * Re-exports
   , identity
   )
@@ -99,3 +101,10 @@ transform (V2 x y) m = V2 x0 y0
 
 apply :: M33 Double -> V2 Double -> V2 Double
 apply = flip transform
+
+-- | Perform a linear transformation around a certain point
+--
+-- This is useful for rotation around the center, etc.
+--
+around :: V2 Double -> M33 Double -> M33 Double
+around v m = translation (-v) !*! m !*! translation v
