@@ -4,6 +4,7 @@ module ChaosBox.Geometry.ClosedCurve
   , drawWithDetail
   , fromPolygon
   , toPolygon
+  , bakeClosedCurve
   )
 where
 
@@ -58,3 +59,7 @@ fromPolygon (Polygon p m) = ClosedCurve p m
 
 iterateNLast :: Int -> (a -> a) -> a -> a
 iterateNLast n f x = last . take n $ iterate f x
+
+bakeClosedCurve :: ClosedCurve -> ClosedCurve
+bakeClosedCurve c@(ClosedCurve ps _) =
+  ClosedCurve (fmap (applyAffine c) ps) identity

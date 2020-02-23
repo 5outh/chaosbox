@@ -3,6 +3,7 @@ module ChaosBox.Geometry.Curve
   , curve
   , toPath
   , fromPath
+  , bakeCurve
   )
 where
 
@@ -56,3 +57,6 @@ fromPath (Path p m) = Curve p m
 
 iterateNLast :: Int -> (a -> a) -> a -> a
 iterateNLast n f x = last . take n $ iterate f x
+
+bakeCurve :: Curve -> Curve
+bakeCurve c@(Curve ps _) = Curve (fmap (applyAffine c) ps) identity

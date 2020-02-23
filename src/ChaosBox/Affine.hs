@@ -12,7 +12,6 @@ import           ChaosBox.Prelude
 
 import qualified ChaosBox.Math.Matrix            as Matrix
 import           Control.Lens
-import           Debug.Trace
 import           Graphics.Rendering.Cairo
 import qualified Graphics.Rendering.Cairo.Matrix as CairoMatrix
 
@@ -37,17 +36,32 @@ withReset f a = resetMatrix (f a)
 applyAffine :: Affine a => a -> V2 Double -> V2 Double
 applyAffine = Matrix.apply . view matrixLens
 
--- brittany-ignore-next-binding
-
+-- | Render something with an 'M33' transformation matrix applied
+--
+-- @withCairoAffine m render@ resets the 'Matrix' to what it was before
+-- @render@ is executed afterwards.
+--
 withCairoAffine :: M33 Double -> Render () -> Render ()
-withCairoAffine m render = do
-  let (V3 (V3 a b c) (V3 d e f) _) = traceShowId m
-      cairoMatrix = traceShowId $ CairoMatrix.Matrix a d b e c f
+withCairoAffine (V3 (V3 a b c) (V3 d e f) _) render = do
+  -- Note: Cairo's transformation matrix is column-major and does not contain a
+  -- third row.
+  let cairoMatrix = CairoMatrix.Matrix a d b e c f
+  oldMatrix <- getMatrix
   setMatrix cairoMatrix
   render
-  setMatrix CairoMatrix.identity
+  setMatrix oldMatrix
 
 -- Applied transformations
 
 transformed :: Affine a => M33 Double -> a -> a
 transformed m a = a & matrixLens %~ (!*! m)
+
+-- rotation
+-- translation
+-- scalar
+-- shearX
+-- shearY
+-- shear
+-- reflectOrigin
+-- reflectX
+-- reflectY
