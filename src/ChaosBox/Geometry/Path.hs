@@ -10,7 +10,7 @@ import           ChaosBox.Prelude
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           Data.Foldable            (for_)
-import           Data.List.NonEmpty
+import           Data.List.NonEmpty       (NonEmpty (..))
 import qualified Data.List.NonEmpty       as NE
 import           Graphics.Rendering.Cairo hiding (Path)
 

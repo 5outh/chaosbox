@@ -4,6 +4,7 @@ module ChaosBox.Affine
   , withReset
   , applyAffine
   , withCairoAffine
+  , transformed
   )
 where
 
@@ -45,3 +46,8 @@ withCairoAffine m render = do
   setMatrix cairoMatrix
   render
   setMatrix CairoMatrix.identity
+
+-- Applied transformations
+
+transformed :: Affine a => M33 Double -> a -> a
+transformed m a = a & matrixLens %~ (!*! m)

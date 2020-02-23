@@ -11,6 +11,7 @@ module ChaosBox.Geometry
   , module ChaosBox.Geometry.Quad
   , module ChaosBox.Geometry.Triangle
   , module ChaosBox.Geometry.Arc
+  , module ChaosBox.Geometry.Curve
   )
 where
 
@@ -18,6 +19,7 @@ import           ChaosBox.Geometry.Angle
 
 import           ChaosBox.Geometry.Arc
 import           ChaosBox.Geometry.Circle
+import           ChaosBox.Geometry.Curve
 import           ChaosBox.Geometry.Ellipse
 import           ChaosBox.Geometry.Line
 import           ChaosBox.Geometry.Path
