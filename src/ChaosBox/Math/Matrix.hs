@@ -12,7 +12,7 @@ module ChaosBox.Math.Matrix
   , reflectY
   -- * Vector Operations
   , transform
-  , apply
+  , applyMatrix
   -- * Combinators
   , around
   -- * Re-exports
@@ -99,8 +99,8 @@ transform (V2 x y) m = V2 x0 y0
   v0 = V3 x y 0
   V3 x0 y0 _ = m !* v0
 
-apply :: M33 Double -> V2 Double -> V2 Double
-apply = flip transform
+applyMatrix :: M33 Double -> V2 Double -> V2 Double
+applyMatrix = flip transform
 
 -- | Perform a linear transformation around a certain point
 --
@@ -108,3 +108,5 @@ apply = flip transform
 --
 around :: V2 Double -> M33 Double -> M33 Double
 around v m = translation (-v) !*! m !*! translation v
+
+-- mapRect (Matrix.apply (transform 10 `around` getCenter rect)) rect

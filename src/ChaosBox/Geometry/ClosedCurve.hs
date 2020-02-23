@@ -4,7 +4,6 @@ module ChaosBox.Geometry.ClosedCurve
   , drawWithDetail
   , fromPolygon
   , toPolygon
-  , bakeClosedCurve
   )
 where
 
@@ -13,19 +12,20 @@ import           ChaosBox.Prelude
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Polygon
+import           ChaosBox.Math.Matrix      (applyMatrix)
 import           Data.List.NonEmpty        (NonEmpty)
 import qualified Data.List.NonEmpty        as NE
 import           Graphics.Rendering.Cairo  (Render)
 
 -- | Closed Cubic B-Spline
-data ClosedCurve = ClosedCurve { getClosedCurve :: NonEmpty (V2 Double), closedCurveMatrix :: M33 Double }
+data ClosedCurve = ClosedCurve { getClosedCurve :: NonEmpty (V2 Double) }
   deriving (Show, Eq, Ord)
 
 closedCurve :: [V2 Double] -> Maybe ClosedCurve
-closedCurve xs = flip fmap (NE.nonEmpty xs) $ flip ClosedCurve identity
+closedCurve xs = ClosedCurve <$> NE.nonEmpty xs
 
 instance Affine ClosedCurve where
-  matrixLens wrap (ClosedCurve p m) = fmap (ClosedCurve p) (wrap m)
+  transform m = ClosedCurve . fmap (applyMatrix m) . getClosedCurve
 
 instance Draw ClosedCurve where
   draw = drawWithDetail 5
@@ -35,9 +35,8 @@ drawWithDetail :: Int -> ClosedCurve -> Render ()
 drawWithDetail detail = draw . toPolygon detail
 
 toPolygon :: Int -> ClosedCurve -> Polygon
-toPolygon detail (ClosedCurve ps m) = Polygon newPath m
+toPolygon detail (ClosedCurve ps) = Polygon newPath
  where
-  -- pathList = NE.toList ps
   newPath =
     (NE.fromList $ iterateNLast
       detail
@@ -55,11 +54,8 @@ toPolygon detail (ClosedCurve ps m) = Polygon newPath m
   go _                = []
 
 fromPolygon :: Polygon -> ClosedCurve
-fromPolygon (Polygon p m) = ClosedCurve p m
+fromPolygon (Polygon p) = ClosedCurve p
 
+-- TODO: Consolidate
 iterateNLast :: Int -> (a -> a) -> a -> a
 iterateNLast n f x = last . take n $ iterate f x
-
-bakeClosedCurve :: ClosedCurve -> ClosedCurve
-bakeClosedCurve c@(ClosedCurve ps _) =
-  ClosedCurve (fmap (applyAffine c) ps) identity

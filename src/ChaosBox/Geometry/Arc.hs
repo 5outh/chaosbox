@@ -29,3 +29,5 @@ instance Draw Arc where
   draw Arc {..} = withCairoAffine arcMatrix
     $ arc x y arcRadius (getAngle arcStart) (getAngle arcEnd)
     where V2 x y = arcCenter
+
+-- TODO: arcPoints, instance affine
