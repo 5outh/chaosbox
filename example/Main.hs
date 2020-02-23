@@ -1,9 +1,12 @@
 module Main where
 
 import           ChaosBox
-import           Control.Monad        (replicateM)
-import           Control.Monad.Random (getRandomR)
-import           Data.Foldable        (for_)
+import           ChaosBox.Affine
+import qualified ChaosBox.Geometry.Curve as Curve
+import           ChaosBox.Math.Matrix
+import           Control.Monad           (replicateM)
+import           Control.Monad.Random    (getRandomR)
+import           Data.Foldable           (for_)
 import           Linear.V2
 
 main :: IO ()
@@ -19,5 +22,9 @@ renderSketch = do
 
   (w, h)     <- getSize
 
-  randomPath <- replicateM 100 $ V2 <$> getRandomR (0, w) <*> getRandomR (0, h)
-  for_ (path randomPath) $ \p -> cairo $ setSourceRGB black *> draw p *> stroke
+  randomPath <- replicateM 10 $ V2 <$> getRandomR (20, w - 20) <*> getRandomR
+    (20, h - 20)
+  for_ (path randomPath) $ \p -> do
+    let _sheared = transformed (shearX 1.5) p
+        curved   = Curve.fromPath p
+    cairo $ setSourceRGB black *> draw curved *> stroke
