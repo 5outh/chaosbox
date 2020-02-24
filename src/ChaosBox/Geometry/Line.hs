@@ -23,4 +23,4 @@ instance Affine Line where
     (applyMatrix m lineEnd)
 
 instance Draw Line where
-  draw Line {..} = draw $ Path (lineStart :| [lineEnd])
+  draw Line {..} = draw $ PathOf (lineStart :| [lineEnd])

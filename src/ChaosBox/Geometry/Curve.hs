@@ -30,7 +30,7 @@ drawWithDetail :: Int -> Curve -> Render ()
 drawWithDetail detail = draw . toPath detail
 
 toPath :: Int -> Curve -> Path
-toPath detail (Curve ps) = Path
+toPath detail (Curve ps) = PathOf
   (NE.fromList $ iterateNLast detail (go . expand) (NE.toList ps))
  where
   expand1 prev a = [(prev + a) / 2, a]
@@ -48,7 +48,7 @@ toPath detail (Curve ps) = Path
   go xs@(a : _) = a : go1 xs
 
 fromPath :: Path -> Curve
-fromPath (Path p) = Curve p
+fromPath (PathOf p) = Curve p
 
 iterateNLast :: Int -> (a -> a) -> a -> a
 iterateNLast n f x = last . take n $ iterate f x
