@@ -44,7 +44,7 @@ point :: a -> CircleOf a
 point center = CircleOf center 0.5 200
 
 toPolygon :: HasV2 a => CircleOf a -> Maybe (PolygonOf a)
-toPolygon = polygonOf . circlePoints
+toPolygon = polygon . circlePoints
 
 circlePoints :: HasV2 a => CircleOf a -> [a]
 circlePoints CircleOf {..} = tail $ flip map points $ \v ->

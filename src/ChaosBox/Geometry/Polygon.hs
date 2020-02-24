@@ -2,7 +2,6 @@ module ChaosBox.Geometry.Polygon
   ( PolygonOf(..)
   , Polygon
   , polygon
-  , polygonOf
   )
 where
 
@@ -35,8 +34,5 @@ instance HasV2 a => Draw (PolygonOf a) where
     for_ (map (^. _V2) rest) (\(V2 x y) -> lineTo x y)
     closePath
 
-polygon :: [V2 Double] -> Maybe Polygon
-polygon = polygonOf
-
-polygonOf :: [a] -> Maybe (PolygonOf a)
-polygonOf xs = PolygonOf <$> NE.nonEmpty xs
+polygon :: [a] -> Maybe (PolygonOf a)
+polygon xs = PolygonOf <$> NE.nonEmpty xs
