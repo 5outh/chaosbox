@@ -1,6 +1,8 @@
 module ChaosBox.Geometry.Polygon
-  ( Polygon(..)
+  ( PolygonOf(..)
+  , Polygon
   , polygon
+  , polygonOf
   )
 where
 
@@ -8,25 +10,33 @@ import           ChaosBox.Prelude
 
 import           ChaosBox.Affine
 import           ChaosBox.Draw
-import           ChaosBox.Math.Matrix     (applyMatrix)
+import           ChaosBox.HasV2
+import           Control.Lens             ((^.))
 import           Data.Foldable            (for_)
-import           Data.List.NonEmpty
+import           Data.List.NonEmpty       (NonEmpty (..))
 import qualified Data.List.NonEmpty       as NE
 import           Graphics.Rendering.Cairo hiding (Path)
 
 -- | A closed path
-newtype Polygon = Polygon { getPolygon :: NonEmpty (V2 Double) }
-  deriving (Show, Eq, Ord)
+newtype PolygonOf a = PolygonOf { getPolygonOf :: NonEmpty a }
+  deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
+  deriving newtype (Applicative, Monad)
 
-instance Affine Polygon where
-  transform m = Polygon . fmap (applyMatrix m) . getPolygon
+type Polygon = PolygonOf (V2 Double)
 
-instance Draw Polygon where
-  draw (Polygon (V2 startX startY :| rest)) = do
+instance HasV2 a => Affine (PolygonOf a) where
+  transform = defaultTransform
+
+instance HasV2 a => Draw (PolygonOf a) where
+  draw (PolygonOf (v :| rest)) = do
+    let V2 startX startY = v ^. _V2
     newPath
     moveTo startX startY
-    for_ rest (\(V2 x y) -> lineTo x y)
+    for_ (map (^. _V2) rest) (\(V2 x y) -> lineTo x y)
     closePath
 
 polygon :: [V2 Double] -> Maybe Polygon
-polygon xs = Polygon <$> NE.nonEmpty xs
+polygon = polygonOf
+
+polygonOf :: [a] -> Maybe (PolygonOf a)
+polygonOf xs = PolygonOf <$> NE.nonEmpty xs

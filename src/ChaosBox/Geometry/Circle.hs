@@ -1,48 +1,58 @@
 {-# LANGUAGE TypeFamilies #-}
 module ChaosBox.Geometry.Circle
-  ( Circle(..)
+  ( CircleOf(..)
+  , Circle
   , circle
   , point
+  , circlePoints
+  , pointsOnCircle
   )
 where
 
-import           ChaosBox.Prelude        hiding ( point )
+import           ChaosBox.Prelude          hiding (point)
 
-import           ChaosBox.Geometry.Polygon
 import           ChaosBox.Affine
 import           ChaosBox.Draw
-import           Graphics.Rendering.Cairo
-                                         hiding ( transform )
+import           ChaosBox.Geometry.Polygon
+import           ChaosBox.HasV2
+import           Control.Lens              ((&), (.~), (^.))
+import           Graphics.Rendering.Cairo  hiding (transform)
 
 -- | A circle with radius 'circleRadius' centered at 'circleCenter'
-data Circle = Circle { circleCenter :: V2 Double, circleRadius :: Double, circleDetail :: Int }
-  deriving (Show, Eq, Ord)
+data CircleOf a = CircleOf { circleCenter :: a, circleRadius :: Double, circleDetail :: Int }
+  deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-instance Affine Circle where
-  type Transformed Circle = Maybe Polygon
+type Circle = CircleOf (V2 Double)
+
+instance HasV2 a => Affine (CircleOf a) where
+  type Transformed (CircleOf a) = Maybe (PolygonOf a)
   transform m c = case toPolygon c of
     Nothing -> Nothing
-    Just p -> Just $ transform m p
+    Just p  -> Just $ transform m p
 
-instance Draw Circle where
-  draw Circle {..} = do
-    let V2 x y = circleCenter
+instance HasV2 a => Draw (CircleOf a) where
+  draw CircleOf {..} = do
+    let V2 x y = circleCenter ^. _V2
     moveTo (x + circleRadius) y
     arc x y circleRadius 0 (2 * pi)
 
-circle :: V2 Double -> Double -> Circle
-circle v r = Circle v r 200
+circle :: a -> Double -> CircleOf a
+circle v r = CircleOf v r 200
 
 -- | A circle with diameter 1
-point :: V2 Double -> Circle
-point center = Circle center 0.5 200
+point :: a -> CircleOf a
+point center = CircleOf center 0.5 200
 
-toPolygon :: Circle -> Maybe Polygon
-toPolygon = polygon . circlePoints
+toPolygon :: HasV2 a => CircleOf a -> Maybe (PolygonOf a)
+toPolygon = polygonOf . circlePoints
 
-circlePoints :: Circle -> [V2 Double]
-circlePoints Circle {..} = tail points
+circlePoints :: HasV2 a => CircleOf a -> [a]
+circlePoints CircleOf {..} = tail $ flip map points $ \v ->
+  circleCenter & _V2 .~ v
  where
-  step      = 2 * pi / fromIntegral circleDetail
+  step = 2 * pi / fromIntegral circleDetail
   intervals = [0, step .. (2 * pi)]
-  points    = map ((+ circleCenter) . (^* circleRadius) . angle) intervals
+  points = map ((+ circleCenter ^. _V2) . (^* circleRadius) . angle) intervals
+
+pointsOnCircle :: HasV2 a => Int -> CircleOf a -> [a]
+n `pointsOnCircle` c = circlePoints $ c { circleDetail = n }

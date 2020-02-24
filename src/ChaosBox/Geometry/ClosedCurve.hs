@@ -1,5 +1,7 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 module ChaosBox.Geometry.ClosedCurve
-  ( ClosedCurve(..)
+  ( ClosedCurveOf(..)
+  , ClosedCurve
   , closedCurve
   , drawWithDetail
   , fromPolygon
@@ -12,49 +14,54 @@ import           ChaosBox.Prelude
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Polygon
-import           ChaosBox.Math.Matrix      (applyMatrix)
+import           ChaosBox.HasV2
+import           Control.Lens
 import           Data.List.NonEmpty        (NonEmpty)
 import qualified Data.List.NonEmpty        as NE
 import           Graphics.Rendering.Cairo  (Render)
 
 -- | Closed Cubic B-Spline
-data ClosedCurve = ClosedCurve { getClosedCurve :: NonEmpty (V2 Double) }
-  deriving (Show, Eq, Ord)
+data ClosedCurveOf a = ClosedCurveOf { getClosedCurveOf :: NonEmpty a, closedCurveIterations :: Int }
+  deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
+
+type ClosedCurve = ClosedCurveOf (V2 Double)
+
+closedCurveOf :: [a] -> Maybe (ClosedCurveOf a)
+closedCurveOf xs = ClosedCurveOf <$> NE.nonEmpty xs <*> pure 4
 
 closedCurve :: [V2 Double] -> Maybe ClosedCurve
-closedCurve xs = ClosedCurve <$> NE.nonEmpty xs
+closedCurve = closedCurveOf
 
-instance Affine ClosedCurve where
-  transform m = ClosedCurve . fmap (applyMatrix m) . getClosedCurve
+instance HasV2 a => Affine (ClosedCurveOf a) where
+  transform = defaultTransform
 
-instance Draw ClosedCurve where
-  draw = drawWithDetail 5
+instance HasV2 a => Draw (ClosedCurveOf a) where
+  draw = drawWithDetail
 
 -- | Draw with a specified level of detail (default 5; smaller is less detailed)
-drawWithDetail :: Int -> ClosedCurve -> Render ()
-drawWithDetail detail = draw . toPolygon detail
+drawWithDetail :: HasV2 a => ClosedCurveOf a -> Render ()
+drawWithDetail = draw . toPolygon
 
-toPolygon :: Int -> ClosedCurve -> Polygon
-toPolygon detail (ClosedCurve ps) = Polygon newPath
+toPolygon :: HasV2 a => ClosedCurveOf a -> PolygonOf a
+toPolygon (ClosedCurveOf ps detail) = PolygonOf newPath
  where
-  newPath =
-    (NE.fromList $ iterateNLast
-      detail
-      (go . expand)
-      (NE.last ps : (NE.toList ps <> NE.take 2 (NE.cycle ps)))
-    )
+  newPath = NE.fromList $ iterateNLast
+    detail
+    (go . expand)
+    (NE.last ps : (NE.toList ps <> NE.take 2 (NE.cycle ps)))
 
-  expand1 prev a = [(prev + a) / 2, a]
+  expand1 prev a = [prev & _V2 .~ (prev ^. _V2 + a ^. _V2) / 2, a]
+
   expand ys@(y : _) = y : concat (zipWith expand1 ys (tail ys))
   expand []         = error "impossible"
 
-  mask a b c = (a + 2 * b + c) / 4 -- (Pi-1k-1 + 2 Pik-1 + Pi+1k-1)/4
+  mask a b c = b & _V2 .~ ((a ^. _V2 + 2 * b ^. _V2 + c ^. _V2) / 4)
 
   go (a : b : c : xs) = mask a b c : go (b : c : xs)
   go _                = []
 
-fromPolygon :: Polygon -> ClosedCurve
-fromPolygon (Polygon p) = ClosedCurve p
+fromPolygon :: PolygonOf a -> ClosedCurveOf a
+fromPolygon (PolygonOf p) = ClosedCurveOf p 4
 
 -- TODO: Consolidate
 iterateNLast :: Int -> (a -> a) -> a -> a

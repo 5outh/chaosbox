@@ -12,13 +12,20 @@ extra-source-files:
 - README.md
 
 ghc-options:
-  - -Werror
+  # - -Werror
   - -Wall
 
 default-extensions:
   - TypeApplications
   - RecordWildCards
   - LambdaCase
+  - DeriveFoldable
+  - DeriveFunctor
+  - DeriveTraversable
+  - DeriveGeneric
+  - DerivingStrategies
+  - GeneralizedNewtypeDeriving
+  - TypeFamilies
 
 dependencies:
   - base >= 4.7 && < 5
