@@ -1,6 +1,7 @@
 module ChaosBox.Geometry.Line
   ( LineOf(..)
   , Line
+  , line
   )
 where
 
@@ -16,6 +17,9 @@ data LineOf a = LineOf { lineStart :: a, lineEnd :: a}
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 type Line = LineOf (V2 Double)
+
+line :: a -> a -> LineOf a
+line = LineOf
 
 instance HasV2 a => Affine (LineOf a) where
   transform = defaultTransform
