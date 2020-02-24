@@ -1,5 +1,6 @@
 module ChaosBox.Geometry.Curve
-  ( Curve(..)
+  ( CurveOf(..)
+  , Curve
   , toPath
   , fromPath
   )
@@ -10,34 +11,38 @@ import           ChaosBox.Prelude
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Path
-import           ChaosBox.Math.Matrix     (applyMatrix)
+import           ChaosBox.HasV2
+import           Control.Lens
 import           Data.List.NonEmpty       (NonEmpty)
 import qualified Data.List.NonEmpty       as NE
 import           Graphics.Rendering.Cairo (Render)
 
 -- | Cubic B-Spline
-newtype Curve = Curve { getCurve :: NonEmpty (V2 Double) }
-  deriving (Show, Eq, Ord)
+data CurveOf a = CurveOf { getCurveOf :: NonEmpty a, curveIterations :: Int }
+  deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-instance Affine Curve where
-  transform m = Curve . fmap (applyMatrix m) . getCurve
+type Curve = CurveOf (V2 Double)
 
-instance Draw Curve where
-  draw = drawWithDetail 5
+instance HasV2 a => Affine (CurveOf a) where
+  transform = defaultTransform
+
+instance HasV2 a => Draw (CurveOf a) where
+  draw = drawWithDetail
 
 -- | Draw with a specified level of detail (default 5; smaller is less detailed)
-drawWithDetail :: Int -> Curve -> Render ()
-drawWithDetail detail = draw . toPath detail
+drawWithDetail :: HasV2 a => CurveOf a -> Render ()
+drawWithDetail = draw . toPath
 
-toPath :: Int -> Curve -> Path
-toPath detail (Curve ps) = PathOf
+toPath :: HasV2 a => CurveOf a -> PathOf a
+toPath (CurveOf ps detail) = PathOf
   (NE.fromList $ iterateNLast detail (go . expand) (NE.toList ps))
  where
-  expand1 prev a = [(prev + a) / 2, a]
+  expand1 prev a = [prev & _V2 .~ (prev ^. _V2 + a ^. _V2) / 2, a]
+
   expand ys@(y : _) = y : concat (zipWith expand1 ys (tail ys))
   expand []         = error "impossible"
 
-  mask a b c = (a + 2 * b + c) / 4 -- (Pi-1k-1 + 2 Pik-1 + Pi+1k-1)/4
+  mask a b c = b & _V2 .~ (a ^. _V2 + 2 * b ^. _V2 + c ^. _V2) / 4
 
   go1 []               = []
   go1 [c]              = [c]
@@ -47,8 +52,8 @@ toPath detail (Curve ps) = PathOf
   go []         = []
   go xs@(a : _) = a : go1 xs
 
-fromPath :: Path -> Curve
-fromPath (PathOf p) = Curve p
+fromPath :: PathOf a -> CurveOf a
+fromPath (PathOf p) = CurveOf p 4
 
 iterateNLast :: Int -> (a -> a) -> a -> a
 iterateNLast n f x = last . take n $ iterate f x

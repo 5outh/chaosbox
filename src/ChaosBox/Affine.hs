@@ -1,9 +1,9 @@
 {-# LANGUAGE TypeFamilies #-}
 module ChaosBox.Affine
   ( Affine(..)
+  , defaultTransform
   , withCairoAffine
-  -- * Deferred transformations
-  -- , transformed
+  -- * Transformations
   , rotated
   , translated
   , scaled
@@ -18,7 +18,9 @@ where
 
 import           ChaosBox.Prelude                hiding (scaled)
 
+import           ChaosBox.HasV2
 import qualified ChaosBox.Math.Matrix            as Matrix
+import           Control.Lens                    ((%~))
 import           Graphics.Rendering.Cairo        hiding (transform)
 import qualified Graphics.Rendering.Cairo.Matrix as CairoMatrix
 
@@ -27,6 +29,13 @@ class Affine a where
   type Transformed a :: *
   type Transformed a = a
   transform :: M33 Double -> a -> Transformed a
+
+-- | A useful default 'transform' for 'Functor's over 2D coordinates
+--
+-- Note: This only works if @Transformed (f a) == f a@
+--
+defaultTransform :: (Functor f, HasV2 a) => M33 Double -> f a -> f a
+defaultTransform m = fmap (_V2 %~ Matrix.applyMatrix m)
 
 -- | Render something with an 'M33' transformation matrix applied
 --
@@ -44,9 +53,6 @@ withCairoAffine (V3 (V3 a b c) (V3 d e f) _) render = do
   setMatrix oldMatrix
 
 -- Applied transformations
-
--- transformed :: Affine a => M33 Double -> a -> a
--- transformed m a = a & matrixLens %~ (!*! m)
 
 rotated :: Affine a => Double -> a -> Transformed a
 rotated = transform . Matrix.rotation

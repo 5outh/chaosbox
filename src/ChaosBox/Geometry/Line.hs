@@ -1,26 +1,24 @@
 module ChaosBox.Geometry.Line
-  ( Line(..)
+  ( LineOf(..)
+  , Line
   )
 where
 
 import           ChaosBox.Prelude
 
-import           ChaosBox.Math.Matrix           ( applyMatrix )
 import           ChaosBox.Affine
 import           ChaosBox.Draw
-import           Data.List.NonEmpty
 import           ChaosBox.Geometry.Path
+import           ChaosBox.HasV2
+import           Data.List.NonEmpty
 
--- | A line segment
-data Line = Line
-  { lineStart  :: V2 Double
-  , lineEnd    :: V2 Double
-  } deriving (Show, Eq, Ord)
+data LineOf a = LineOf { lineStart :: a, lineEnd :: a}
+  deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-instance Affine Line where
-  transform m Line{..} = Line
-    (applyMatrix m lineStart)
-    (applyMatrix m lineEnd)
+type Line = LineOf (V2 Double)
 
-instance Draw Line where
-  draw Line {..} = draw $ PathOf (lineStart :| [lineEnd])
+instance HasV2 a => Affine (LineOf a) where
+  transform = defaultTransform
+
+instance HasV2 a => Draw (LineOf a) where
+  draw LineOf {..} = draw $ PathOf (lineStart :| [lineEnd])
