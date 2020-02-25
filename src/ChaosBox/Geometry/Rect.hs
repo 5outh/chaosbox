@@ -1,7 +1,8 @@
 {-# LANGUAGE TypeFamilies #-}
 module ChaosBox.Geometry.Rect
-  ( Rect(..)
-  -- , rect
+  ( RectOf(..)
+  , Rect
+  , rect
   , square
   , toQuad
   )
@@ -10,6 +11,11 @@ where
 import           ChaosBox.Prelude
 
 import           ChaosBox.Affine
+import           Control.Lens                   ( (+~)
+                                                , (&)
+                                                , (^.)
+                                                )
+import           ChaosBox.HasV2
 import           ChaosBox.Geometry.Quad
 import           ChaosBox.Draw
 import           Graphics.Rendering.Cairo
@@ -18,26 +24,33 @@ import           Graphics.Rendering.Cairo
                                                 )
 
 -- | A Rectangle
-data Rect = Rect
-  { rectTopLeft :: V2 Double
+data RectOf a = RectOf
+  { rectTopLeft :: a
   , rectW       :: Double
   , rectH       :: Double
-  } deriving (Show, Eq, Ord)
+  }
+  deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-instance Affine Rect where
-  type Transformed Rect = Quad
+type Rect = RectOf (V2 Double)
+
+instance HasV2 a => Affine (RectOf a) where
+  type Transformed (RectOf a) = QuadOf a
   transform m = transform m . toQuad
 
-instance Draw Rect where
-  draw Rect {..} =
+instance HasV2 a => Draw (RectOf a) where
+  draw RectOf {..} =
     rectangle rectX rectY rectW rectH
-    where V2 rectX rectY = rectTopLeft
+    where
+      V2 rectX rectY = rectTopLeft ^. _V2
 
-square :: V2 Double -> Double -> Rect
-square c w = Rect c w w
+rect :: a -> Double -> Double -> RectOf a
+rect c w h = RectOf c w h
 
-toQuad :: Rect -> Quad
-toQuad Rect {..} = Quad rectTopLeft
-                        (rectTopLeft + V2 rectW 0)
-                        (rectTopLeft + V2 rectW rectH)
-                        (rectTopLeft + V2 0 rectH)
+square :: a -> Double -> RectOf a
+square c w = RectOf c w w
+
+toQuad :: HasV2 a => RectOf a -> QuadOf a
+toQuad RectOf {..} = QuadOf rectTopLeft
+                            (rectTopLeft & _V2 +~ V2 rectW 0)
+                            (rectTopLeft & _V2 +~ V2 rectW rectH)
+                            (rectTopLeft & _V2 +~ V2 0 rectH)

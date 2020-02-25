@@ -2,7 +2,6 @@ module ChaosBox.Geometry.Path
   ( PathOf(..)
   , Path
   , path
-  , pathOf
   )
 where
 
@@ -11,11 +10,12 @@ import           ChaosBox.Prelude
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.HasV2
-import           Control.Lens             ((^.))
-import           Data.Foldable            (for_)
-import           Data.List.NonEmpty       (NonEmpty (..))
-import qualified Data.List.NonEmpty       as NE
-import           Graphics.Rendering.Cairo hiding (Path)
+import           Control.Lens                   ( (^.) )
+import           Data.Foldable                  ( for_ )
+import           Data.List.NonEmpty             ( NonEmpty(..) )
+import qualified Data.List.NonEmpty            as NE
+import           Graphics.Rendering.Cairo
+                                         hiding ( Path )
 
 newtype PathOf a = PathOf { getPathOf :: NonEmpty a}
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
@@ -33,8 +33,5 @@ instance HasV2 a => Draw (PathOf a) where
     moveTo (start ^. _V2 . _x) (start ^. _V2 . _y)
     for_ (map (^. _V2) rest) (\(V2 x y) -> lineTo x y)
 
-path :: [V2 Double] -> Maybe Path
-path = pathOf
-
-pathOf :: [a] -> Maybe (PathOf a)
-pathOf xs = PathOf <$> NE.nonEmpty xs
+path :: [a] -> Maybe (PathOf a)
+path xs = PathOf <$> NE.nonEmpty xs

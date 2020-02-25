@@ -14,8 +14,8 @@ import           Data.Fixed (mod')
 import           Linear.V2
 
 newtype Angle = Angle { getAngle :: Double }
-  deriving stock (Eq, Ord, Show )
-  deriving newtype (Num)
+  deriving stock (Eq, Ord, Show)
+  deriving newtype (Num, Fractional, Enum)
 
 -- | Construct an angle in radians in the range [0, 2*pi)
 --

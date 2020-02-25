@@ -1,5 +1,7 @@
 module ChaosBox.Geometry.Quad
-  ( Quad(..)
+  ( QuadOf(..)
+  , Quad
+  , quad
   )
 where
 
@@ -9,23 +11,25 @@ import           ChaosBox.Math.Matrix           ( applyMatrix )
 import           ChaosBox.Geometry.Polygon      ( polygon )
 import           ChaosBox.Affine
 import           ChaosBox.Draw
+import           ChaosBox.HasV2
 import           Data.Foldable                  ( for_ )
 
-data Quad = Quad
-  { quadA      :: V2 Double
-  , quadB      :: V2 Double
-  , quadC      :: V2 Double
-  , quadD      :: V2 Double
+data QuadOf a = QuadOf
+  { quadA      :: a
+  , quadB      :: a
+  , quadC      :: a
+  , quadD      :: a
   }
+  deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-instance Affine Quad where
-  transform m q = q
-    { quadA = applyMatrix m (quadA q)
-    , quadB = applyMatrix m (quadB q)
-    , quadC = applyMatrix m (quadC q)
-    , quadD = applyMatrix m (quadD q)
-    }
+instance HasV2 a => Affine (QuadOf a) where
+  transform = defaultTransform
 
-instance Draw Quad where
-  draw Quad {..} = for_ (polygon [quadA, quadB, quadC, quadD])
+instance HasV2 a => Draw (QuadOf a) where
+  draw QuadOf {..} = for_ (polygon [quadA, quadB, quadC, quadD])
     draw
+
+type Quad = QuadOf (V2 Double)
+
+quad :: a -> a -> a -> a -> QuadOf a
+quad a b c d = QuadOf a b c d

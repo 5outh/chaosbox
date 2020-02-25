@@ -1,20 +1,28 @@
 module ChaosBox.Geometry.Arc
-  ( Arc(..)
+  ( ArcOf(..)
+  , Arc
   , arc
+  , arcPoints
   )
 where
 
-import           ChaosBox.Prelude
+import           ChaosBox.Prelude        hiding ( unit )
 
+import           Control.Lens                   ( (^.)
+                                                , (.~)
+                                                , (&)
+                                                )
+import           ChaosBox.HasV2
 import           ChaosBox.Geometry.Angle
+import           ChaosBox.Geometry.Path
 import           ChaosBox.Affine
 import           ChaosBox.Draw
-import           Graphics.Rendering.Cairo
-                                         hiding ( Path )
+import qualified Graphics.Rendering.Cairo      as Cairo
+import           ChaosBox.Math                  ( lerpMany )
 
 -- | Arc (partial Circle)
-data Arc = Arc
-  { arcCenter :: V2 Double
+data ArcOf a = ArcOf
+  { arcCenter :: a
   -- ^ Center of the arc's circle
   , arcRadius :: Double
   -- ^ Radius of the arc's circle
@@ -22,12 +30,27 @@ data Arc = Arc
   -- ^ Start 'Angle'
   , arcEnd    :: Angle
   -- ^ End 'Angle'
-  , arcMatrix :: M33 Double
-  } deriving (Eq, Ord, Show)
+  , arcDetail :: Int
+  -- ^ Detail in number of points
+  }
+  deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-instance Draw Arc where
-  draw Arc {..} = withCairoAffine arcMatrix
-    $ arc x y arcRadius (getAngle arcStart) (getAngle arcEnd)
-    where V2 x y = arcCenter
+type Arc = ArcOf (V2 Double)
 
--- TODO: arcPoints, instance affine
+instance HasV2 a => Draw (ArcOf a) where
+  draw ArcOf {..} = Cairo.arc x y arcRadius (getAngle arcStart) (getAngle arcEnd)
+    where V2 x y = arcCenter ^. _V2
+
+instance HasV2 a => Affine (ArcOf a) where
+  type Transformed (ArcOf a) = Maybe (PathOf a)
+  transform m = fmap (transform m) . path . arcPoints
+
+arc :: a -> Double -> Angle -> Angle -> ArcOf a
+arc c r s e = ArcOf c r s e 100
+
+arcPoints :: HasV2 a => ArcOf a -> [a]
+arcPoints ArcOf {..} = points
+ where
+  angles = lerpMany arcDetail arcStart arcEnd
+  points = flip map angles $ \theta ->
+    arcCenter & _V2 .~ (arcCenter ^. _V2 + (unit theta ^* arcRadius))
