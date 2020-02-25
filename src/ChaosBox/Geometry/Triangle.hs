@@ -1,29 +1,33 @@
 module ChaosBox.Geometry.Triangle
-  ( Triangle(..)
+  ( TriangleOf(..)
+  , Triangle
+  , triangle
   )
 where
 
 import           ChaosBox.Prelude
 
 import           ChaosBox.Affine
-import           ChaosBox.Math.Matrix           ( applyMatrix )
+import           ChaosBox.HasV2
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Polygon
 import           Data.Foldable                  ( for_ )
 
-data Triangle = Triangle
-  { triangleA      :: V2 Double
-  , triangleB      :: V2 Double
-  , triangleC      :: V2 Double
+data TriangleOf a = TriangleOf
+  { triangleA      :: a
+  , triangleB      :: a
+  , triangleC      :: a
   }
+  deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-instance Affine Triangle where
-  transform m t = t
-    { triangleA = applyMatrix m (triangleA t)
-    , triangleB = applyMatrix m (triangleB t)
-    , triangleC = applyMatrix m (triangleC t)
-    }
+type Triangle = TriangleOf (V2 Double)
 
-instance Draw Triangle where
-  draw Triangle {..} = for_ (polygon [triangleA, triangleB, triangleC])
+triangle :: a -> a -> a -> TriangleOf a
+triangle = TriangleOf
+
+instance HasV2 a => Affine (TriangleOf a) where
+  transform = defaultTransform
+
+instance HasV2 a => Draw (TriangleOf a) where
+  draw TriangleOf {..} = for_ (polygon [triangleA, triangleB, triangleC])
     draw

@@ -14,6 +14,7 @@ import           ChaosBox.Draw                 as X
 import           Graphics.Rendering.Cairo      as X
                                          hiding ( setSourceRGB
                                                 , Path
+                                                , arc
                                                 )
 
 import           System.Random.Mersenne.Pure64
