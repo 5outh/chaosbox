@@ -22,7 +22,7 @@ renderSketch = do
   (w, h)     <- getSize
 
   center     <- getCenterPoint
-  randomPath <- replicateM 10 $ normal center $ V2 (w / 4) (h / 4)
+  randomPath <- replicateM 20 $ normal center $ V2 (w / 4) (h / 4)
 
   cairo $ for_ (closedCurve randomPath) $ \p -> draw p *> stroke
 

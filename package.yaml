@@ -1,12 +1,12 @@
 name:                chaosbox
-version:             0.0.0.0
+version:             0.0.0.1
 synopsis: A Generative Art Framework
 description: A Generative Art Framework
 homepage:            https://github.com/5outh/chaosbox#readme
 license:             MIT
 author:              Benjamin Kovach
 maintainer:          bkovach13@gmail.com
-copyright:           2018 Benjamin Kovach
+copyright:           2020 Benjamin Kovach
 category:            Art
 extra-source-files:
 - README.md
