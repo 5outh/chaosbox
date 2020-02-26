@@ -12,6 +12,7 @@ module ChaosBox.Geometry
   , module ChaosBox.Geometry.Triangle
   , module ChaosBox.Geometry.Arc
   , module ChaosBox.Geometry.Curve
+  , module ChaosBox.Geometry.ClosedCurve
   )
 where
 
@@ -19,6 +20,7 @@ import           ChaosBox.Geometry.Angle
 
 import           ChaosBox.Geometry.Arc
 import           ChaosBox.Geometry.Circle
+import           ChaosBox.Geometry.ClosedCurve
 import           ChaosBox.Geometry.Curve
 import           ChaosBox.Geometry.Ellipse
 import           ChaosBox.Geometry.Line

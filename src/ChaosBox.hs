@@ -4,29 +4,30 @@ module ChaosBox
   , runChaosBoxIOWith
   , Opts(..)
   , module X
+    -- * Re-exports
+  , module Ext
   )
 where
 
 import           ChaosBox.Color                as X
+import           ChaosBox.Draw                 as X
 import           ChaosBox.Generate             as X
 import           ChaosBox.Geometry             as X
-import           ChaosBox.Draw                 as X
-import           Graphics.Rendering.Cairo      as X
-                                         hiding ( setSourceRGB
-                                                , Path
-                                                , arc
-                                                )
+import           ChaosBox.Random               as X
+import           Graphics.Rendering.Cairo      as Ext hiding (Path, arc,
+                                                       setSourceRGB)
+import           Linear.V2                     as Ext
 
-import           System.Random.Mersenne.Pure64
 import           Control.Monad.Random
 import           Control.Monad.Reader
 import           Data.IORef
-import           Data.Maybe
-import           Data.Semigroup                 ( (<>) )
+import           Data.Maybe                    (fromMaybe)
+import           Data.Semigroup                ((<>))
 import           Data.Time.Clock.POSIX
+import           GHC.Word
 import           Options.Applicative
 import           System.Directory
-import           GHC.Word
+import           System.Random.Mersenne.Pure64
 
 data Opts = Opts
   { optSeed           :: Maybe Word64
@@ -92,7 +93,7 @@ runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
   progressRef <- newIORef 0
 
   -- Create directories if they don't exist
-  createDirectoryIfMissing False $ "./images/"
+  createDirectoryIfMissing False "./images/"
   createDirectoryIfMissing False $ "./images/" <> optName
   createDirectoryIfMissing False $ "./images/" <> optName <> "/progress"
 
@@ -115,9 +116,7 @@ runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
     ref   <- asks gcBeforeSaveHook
     mHook <- liftIO $ readIORef ref
 
-    case mHook of
-      Nothing   -> pure ()
-      Just hook -> hook
+    fromMaybe (pure ()) mHook
 
   putStrLn "Generating art..."
   let filename =

@@ -11,6 +11,8 @@ module ChaosBox.Color
   , setSourceRGB
   , rgb255
   , grayscale
+  , black
+  , white
 
     -- * Conversion functions
   , toHSV
@@ -25,12 +27,11 @@ where
 
 import           ChaosBox.Generate
 
-import           Data.Colour.RGBSpace          as X
+import           Data.Colour.RGBSpace     as X
 import           Data.Colour.RGBSpace.HSV
-import           Graphics.Rendering.Cairo
-                                         hiding ( setSourceRGB )
-import qualified Graphics.Rendering.Cairo      as Cairo
 import           Data.Colour.SRGB
+import           Graphics.Rendering.Cairo hiding (setSourceRGB)
+import qualified Graphics.Rendering.Cairo as Cairo
 
 data HSV = HSV
   { hsvHue        :: Double
@@ -64,6 +65,12 @@ toHSV rgb = let (h, s, v) = hsvView rgb in HSV h s v
 
 grayscale :: Num a => a -> RGB a
 grayscale v = RGB v v v
+
+black :: Num a => RGB a
+black = grayscale 0
+
+white :: Num a => RGB a
+white = grayscale 1
 
 toRGB :: HSV -> RGB Double
 toRGB HSV {..} = hsv2rgb hsvHue hsvSaturation hsvValue
