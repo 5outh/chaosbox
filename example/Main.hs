@@ -1,15 +1,10 @@
 module Main where
 
 import           ChaosBox
--- import           ChaosBox.Affine
-import qualified ChaosBox.Geometry.ClosedCurve as ClosedCurve
--- import qualified ChaosBox.Geometry.Curve       as Curve
--- import           ChaosBox.Math.Matrix
+import           ChaosBox.Geometry.ClosedCurve (closedCurve)
 import           Control.Monad                 (replicateM)
 import           Control.Monad.Random          (getRandomR)
 import           Data.Foldable                 (for_)
--- import           Data.List                     (sort)
--- import           Linear.Matrix                 ((!*!))
 import           Linear.V2
 
 main :: IO ()
@@ -31,6 +26,7 @@ renderSketch = do
 
   randomPath <- replicateM 10 $ V2 <$> getRandomR (20, w - 20) <*> getRandomR
     (20, h - 20)
-  for_ (ClosedCurve.closedCurve randomPath) $ \p -> do
-    cairo $ setLineWidth 8
-    cairo $ setSourceRGB black *> draw p *> stroke
+
+  for_ (closedCurve randomPath) $ \p -> cairo $ do
+    setLineWidth 8
+    setSourceRGB black *> draw p *> stroke
