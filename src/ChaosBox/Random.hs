@@ -26,11 +26,13 @@ module ChaosBox.Random
 where
 
 import           ChaosBox.Generate
+import           ChaosBox.Orphanage                  ()
 
 import           Control.Monad.Random                (MonadRandom)
 import qualified Control.Monad.Random                as MonadRandom
-import           Data.Random                         (Distribution, Normal,
-                                                      StdUniform)
+import           Data.Random                         (Distribution,
+                                                      Distribution (..), Normal,
+                                                      Normal (..), StdUniform)
 import qualified Data.Random                         as Random
 import           Data.Random.Distribution.Bernoulli  (boolBernoulli)
 import           Data.Random.Distribution.Triangular (floatingTriangular)

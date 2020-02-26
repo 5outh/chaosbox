@@ -16,29 +16,44 @@ A framework for generative art.
 Simple Example (copied from the example project):
 
 ```hs
-module Main where
-
 import           ChaosBox
-import           Control.Monad        (replicateM)
-import           Control.Monad.Random (getRandomR)
-import           Data.Foldable        (for_)
-import           Linear.V2
 
+import           Control.Monad (replicateM)
+import           Data.Foldable (for_)
+
+-- Run this example with
+--
+-- @@@
+-- > chaosbox-example -- --scale=100
+-- @@@
+--
+-- to generate a 800x1000 px version of this artwork
+--
 main :: IO ()
-main = runChaosBoxIOWith (\opts -> opts { optWidth = 400, optHeight = 400 })
+main = runChaosBoxIOWith (\opts -> opts { optWidth = 8, optHeight = 10 })
                          renderSketch
 
 renderSketch :: Generate ()
 renderSketch = do
-  let white = RGB 1 1 1
-      black = RGB 0 0 0
-
-  fillScreenRGB white
+  setup
 
   (w, h)     <- getSize
 
-  randomPath <- replicateM 100 $ V2 <$> getRandomR (0, w) <*> getRandomR (0, h)
-  for_ (path randomPath) $ \p -> cairo $ setSourceRGB black *> draw p *> stroke
+  center     <- getCenterPoint
+  randomPath <- replicateM 10 $ normal center $ V2 (w / 4) (h / 4)
+
+  cairo $ for_ (closedCurve randomPath) $ \p -> draw p *> stroke
+
+setup :: Generate ()
+setup = do
+  cairo $ do
+    setLineWidth 0.05
+    setLineJoin LineJoinRound
+    setLineCap LineCapRound
+
+  fillScreenRGB white
+
+  cairo $ setSourceRGB black
 ```
 
 if installing from source, this example can be run with `stack exec chaosbox-example`.

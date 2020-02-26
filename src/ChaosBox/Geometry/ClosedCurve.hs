@@ -26,11 +26,8 @@ data ClosedCurveOf a = ClosedCurveOf { getClosedCurveOf :: NonEmpty a, closedCur
 
 type ClosedCurve = ClosedCurveOf (V2 Double)
 
-closedCurveOf :: [a] -> Maybe (ClosedCurveOf a)
-closedCurveOf xs = ClosedCurveOf <$> NE.nonEmpty xs <*> pure 4
-
-closedCurve :: [V2 Double] -> Maybe ClosedCurve
-closedCurve = closedCurveOf
+closedCurve :: [a] -> Maybe (ClosedCurveOf a)
+closedCurve xs = ClosedCurveOf <$> NE.nonEmpty xs <*> pure 5
 
 instance HasV2 a => Affine (ClosedCurveOf a) where
   transform = defaultTransform
@@ -43,7 +40,7 @@ drawWithDetail :: HasV2 a => ClosedCurveOf a -> Render ()
 drawWithDetail = draw . toPolygon
 
 toPolygon :: HasV2 a => ClosedCurveOf a -> PolygonOf a
-toPolygon (ClosedCurveOf ps detail) = PolygonOf newPath
+toPolygon (ClosedCurveOf ps detail) = PolygonOf (NE.fromList $ NE.tail newPath)
  where
   newPath = NE.fromList $ iterateNLast
     detail
@@ -61,7 +58,7 @@ toPolygon (ClosedCurveOf ps detail) = PolygonOf newPath
   go _                = []
 
 fromPolygon :: PolygonOf a -> ClosedCurveOf a
-fromPolygon (PolygonOf p) = ClosedCurveOf p 4
+fromPolygon (PolygonOf p) = ClosedCurveOf p 5
 
 -- TODO: Consolidate
 iterateNLast :: Int -> (a -> a) -> a -> a

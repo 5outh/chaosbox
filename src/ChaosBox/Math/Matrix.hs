@@ -105,5 +105,3 @@ applyMatrix = flip transform
 --
 around :: V2 Double -> M33 Double -> M33 Double
 around v m = translation (-v) !*! m !*! translation v
-
--- mapRect (Matrix.apply (transform 10 `around` getCenter rect)) rect
