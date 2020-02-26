@@ -24,9 +24,6 @@ import           Linear.Matrix hiding (translation)
 import           Linear.V2
 import           Linear.V3
 
--- type M33 a = V3 (V3 a)
---
-
 -- brittany --exact-print-only
 
 affine :: a -> a -> a
