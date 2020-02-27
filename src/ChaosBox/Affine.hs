@@ -1,6 +1,7 @@
 {-# LANGUAGE TypeFamilies #-}
 module ChaosBox.Affine
   ( Affine(..)
+  , Transform2d(..)
   , defaultTransform
   , withCairoAffine
   , matrix
@@ -15,6 +16,8 @@ module ChaosBox.Affine
   , reflectedOrigin
   , reflectedX
   , reflectedY
+  -- * Combinators
+  , around
   )
 where
 
@@ -26,7 +29,18 @@ import           Control.Lens                    ((%~))
 import           Graphics.Rendering.Cairo        hiding (transform)
 import qualified Graphics.Rendering.Cairo.Matrix as CairoMatrix
 
-newtype Transform2d = Transform2d (M33 Double)
+-- | 2d transformation represented as a 3x3 Matrix
+--
+-- In 'Transform2d'\'s 'Semigroup' and 'Monoid' instances, 'mempty' is the
+-- 'identity' matrix and '<>' is matrix multiplication. This means
+-- 'Transform2d's created in this module can be combined with regular
+-- 'semigroup' append. For example, the following 'Transform2d' represents
+-- translating 5 units in the Y direction, then rotating in the Y direction by
+-- pi radians around the point (10, 0):
+--
+-- > around (V2 10 0) (rotated pi) <> translated (V2 0 5)
+--
+newtype Transform2d = Transform2d { getTransform2d :: M33 Double }
 
 instance Semigroup Transform2d where
   Transform2d a <> Transform2d b = Transform2d $ a !*! b
@@ -96,3 +110,6 @@ reflectedX = Transform2d Matrix.reflectX
 
 reflectedY :: Transform2d
 reflectedY = Transform2d Matrix.reflectY
+
+around :: V2 Double -> Transform2d -> Transform2d
+around v (Transform2d m) = Transform2d (Matrix.around v m)
