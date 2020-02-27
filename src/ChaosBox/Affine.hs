@@ -38,7 +38,7 @@ import qualified Graphics.Rendering.Cairo.Matrix as CairoMatrix
 -- translating 5 units in the Y direction, then rotating in the Y direction by
 -- pi radians around the point (10, 0):
 --
--- > around (V2 10 0) (rotated pi) <> translated (V2 0 5)
+-- > translated (V2 0 5) <> around (V2 10 0) (rotated pi)
 --
 newtype Transform2d = Transform2d { getTransform2d :: M33 Double }
 
