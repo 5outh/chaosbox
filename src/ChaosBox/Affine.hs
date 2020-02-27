@@ -3,6 +3,8 @@ module ChaosBox.Affine
   ( Affine(..)
   , defaultTransform
   , withCairoAffine
+  , matrix
+  , transformMatrix
   -- * Transformations
   , rotated
   , translated
@@ -24,26 +26,40 @@ import           Control.Lens                    ((%~))
 import           Graphics.Rendering.Cairo        hiding (transform)
 import qualified Graphics.Rendering.Cairo.Matrix as CairoMatrix
 
+newtype Transform2d = Transform2d (M33 Double)
+
+instance Semigroup Transform2d where
+  Transform2d a <> Transform2d b = Transform2d $ a !*! b
+
+instance Monoid Transform2d where
+  mempty = Transform2d identity
+
+matrix :: M33 Double -> Transform2d
+matrix = Transform2d
+
 -- | A class of items that are transformable via linear transformations
 class Affine a where
   type Transformed a :: *
   type Transformed a = a
-  transform :: M33 Double -> a -> Transformed a
+  transform :: Transform2d -> a -> Transformed a
+
+transformMatrix :: Affine a => M33 Double -> a -> Transformed a
+transformMatrix = transform . matrix
 
 -- | A useful default 'transform' for 'Functor's over 2D coordinates
 --
 -- Note: This only works if @Transformed (f a) == f a@
 --
-defaultTransform :: (Functor f, HasV2 a) => M33 Double -> f a -> f a
-defaultTransform m = fmap (_V2 %~ Matrix.applyMatrix m)
+defaultTransform :: (Functor f, HasV2 a) => Transform2d -> f a -> f a
+defaultTransform (Transform2d m) = fmap (_V2 %~ Matrix.applyMatrix m)
 
 -- | Render something with an 'M33' transformation matrix applied
 --
 -- @withCairoAffine m render@ resets the 'Matrix' to what it was before
 -- @render@ is executed afterwards.
 --
-withCairoAffine :: M33 Double -> Render () -> Render ()
-withCairoAffine (V3 (V3 a b c) (V3 d e f) _) render = do
+withCairoAffine :: Transform2d -> Render () -> Render ()
+withCairoAffine (Transform2d (V3 (V3 a b c) (V3 d e f) _)) render = do
   -- Note: Cairo's transformation matrix is column-major and does not contain a
   -- third row.
   let cairoMatrix = CairoMatrix.Matrix a d b e c f
@@ -54,29 +70,29 @@ withCairoAffine (V3 (V3 a b c) (V3 d e f) _) render = do
 
 -- Applied transformations
 
-rotated :: Affine a => Double -> a -> Transformed a
-rotated = transform . Matrix.rotation
+rotated :: Double -> Transform2d
+rotated = Transform2d . Matrix.rotation
 
-translated :: Affine a => V2 Double -> a -> Transformed a
-translated = transform . Matrix.translation
+translated :: V2 Double -> Transform2d
+translated = Transform2d . Matrix.translation
 
-scaled :: Affine a => V2 Double -> a -> Transformed a
-scaled = transform . Matrix.scalar
+scaled :: V2 Double -> Transform2d
+scaled = Transform2d . Matrix.scalar
 
-shearedX :: Affine a => Double -> a -> Transformed a
-shearedX = transform . Matrix.shearX
+shearedX :: Double -> Transform2d
+shearedX = Transform2d . Matrix.shearX
 
-shearedY :: Affine a => Double -> a -> Transformed a
-shearedY = transform . Matrix.shearY
+shearedY :: Double -> Transform2d
+shearedY = Transform2d . Matrix.shearY
 
-sheared :: Affine a => V2 Double -> a -> Transformed a
-sheared = transform . Matrix.shear
+sheared :: V2 Double -> Transform2d
+sheared = Transform2d . Matrix.shear
 
-reflectedOrigin :: Affine a => a -> Transformed a
-reflectedOrigin = transform Matrix.reflectOrigin
+reflectedOrigin :: Transform2d
+reflectedOrigin = Transform2d Matrix.reflectOrigin
 
-reflectedX :: Affine a => a -> Transformed a
-reflectedX = transform Matrix.reflectX
+reflectedX :: Transform2d
+reflectedX = Transform2d Matrix.reflectX
 
-reflectedY :: Affine a => a -> Transformed a
-reflectedY = transform Matrix.reflectY
+reflectedY :: Transform2d
+reflectedY = Transform2d Matrix.reflectY

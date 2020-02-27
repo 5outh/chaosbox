@@ -67,7 +67,7 @@ ellipsePoints EllipseOf {..} =
 toPolygon :: HasV2 a => EllipseOf a -> Maybe (PolygonOf a)
 toPolygon EllipseOf {..} =
   transform
-      (   Matrix.translation (ellipseCenter ^. _V2)
-      !*! Matrix.scalar (V2 ellipseWidth ellipseHeight)
+      (  translated (ellipseCenter ^. _V2)
+      <> scaled (V2 ellipseWidth ellipseHeight)
       )
     $ circle (ellipseCenter & set _V2 0) 1
