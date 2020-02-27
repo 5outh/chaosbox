@@ -2,6 +2,7 @@ module ChaosBox.Geometry.Curve
   ( CurveOf(..)
   , Curve
   , curve
+  , curveWithDetail
   , toPath
   , fromPath
   )
