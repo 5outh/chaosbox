@@ -13,6 +13,8 @@ import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Circle
 import           ChaosBox.Geometry.Polygon
+import qualified ChaosBox.Geometry.Rect    as Rect
+import           ChaosBox.HasAABB
 import           ChaosBox.HasV2
 import           ChaosBox.Math             (lerpMany)
 import qualified ChaosBox.Math.Matrix      as Matrix
@@ -29,6 +31,14 @@ data EllipseOf a = EllipseOf
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 type Ellipse = EllipseOf (V2 Double)
+
+instance HasV2 a => HasAABB (EllipseOf a) where
+  aabb EllipseOf {..} = Rect.bounds [tl, br]
+   where
+    c  = ellipseCenter ^. _V2
+    tl = c - V2 ellipseWidth ellipseHeight
+    br = c + V2 ellipseWidth ellipseHeight
+
 
 instance HasV2 a => Affine (EllipseOf a) where
   type Transformed (EllipseOf a) = Maybe (PolygonOf a)

@@ -6,19 +6,18 @@ module ChaosBox.Geometry.Arc
   )
 where
 
-import           ChaosBox.Prelude        hiding ( unit )
+import           ChaosBox.Prelude         hiding (unit)
 
-import           Control.Lens                   ( (^.)
-                                                , (.~)
-                                                , (&)
-                                                )
-import           ChaosBox.HasV2
-import           ChaosBox.Geometry.Angle
-import           ChaosBox.Geometry.Path
 import           ChaosBox.Affine
 import           ChaosBox.Draw
-import qualified Graphics.Rendering.Cairo      as Cairo
-import           ChaosBox.Math                  ( lerpMany )
+import           ChaosBox.Geometry.Angle
+import           ChaosBox.Geometry.Path
+import qualified ChaosBox.Geometry.Rect   as Rect
+import           ChaosBox.HasAABB
+import           ChaosBox.HasV2
+import           ChaosBox.Math            (lerpMany)
+import           Control.Lens             ((&), (.~), (^.))
+import qualified Graphics.Rendering.Cairo as Cairo
 
 -- | Arc (partial Circle)
 data ArcOf a = ArcOf
@@ -38,12 +37,23 @@ data ArcOf a = ArcOf
 type Arc = ArcOf (V2 Double)
 
 instance HasV2 a => Draw (ArcOf a) where
-  draw ArcOf {..} = Cairo.arc x y arcRadius (getAngle arcStart) (getAngle arcEnd)
+  draw ArcOf {..} = Cairo.arc x
+                              y
+                              arcRadius
+                              (getAngle arcStart)
+                              (getAngle arcEnd)
     where V2 x y = arcCenter ^. _V2
 
 instance HasV2 a => Affine (ArcOf a) where
   type Transformed (ArcOf a) = Maybe (PathOf a)
   transform m = fmap (transform m) . path . arcPoints
+
+instance HasV2 a => HasAABB (ArcOf a) where
+  aabb ArcOf {..} = Rect.bounds [p1, p2]
+   where
+    c  = arcCenter ^. _V2
+    p1 = c + unit arcStart ^* arcRadius
+    p2 = c + unit arcEnd ^* arcRadius
 
 arc :: a -> Double -> Angle -> Angle -> ArcOf a
 arc c r s e = ArcOf c r s e 100

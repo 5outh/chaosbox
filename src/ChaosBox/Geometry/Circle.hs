@@ -14,6 +14,8 @@ import           ChaosBox.Prelude          hiding (point)
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Polygon
+import qualified ChaosBox.Geometry.Rect    as Rect
+import           ChaosBox.HasAABB
 import           ChaosBox.HasV2
 import           Control.Lens              ((&), (.~), (^.))
 import           Graphics.Rendering.Cairo  hiding (transform)
@@ -23,6 +25,13 @@ data CircleOf a = CircleOf { circleCenter :: a, circleRadius :: Double, circleDe
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 type Circle = CircleOf (V2 Double)
+
+instance HasV2 a => HasAABB (CircleOf a) where
+  aabb CircleOf {..} = Rect.bounds [tl, br]
+   where
+    c  = circleCenter ^. _V2
+    tl = c - (circleRadius *^ (-1))
+    br = c + (circleRadius *^ 1)
 
 instance HasV2 a => Affine (CircleOf a) where
   type Transformed (CircleOf a) = Maybe (PolygonOf a)

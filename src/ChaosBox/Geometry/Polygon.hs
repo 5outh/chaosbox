@@ -9,6 +9,8 @@ import           ChaosBox.Prelude
 
 import           ChaosBox.Affine
 import           ChaosBox.Draw
+import qualified ChaosBox.Geometry.Rect   as Rect
+import           ChaosBox.HasAABB
 import           ChaosBox.HasV2
 import           Control.Lens             ((^.))
 import           Data.Foldable            (for_)
@@ -17,11 +19,14 @@ import qualified Data.List.NonEmpty       as NE
 import           Graphics.Rendering.Cairo hiding (Path)
 
 -- | A closed path
-newtype PolygonOf a = PolygonOf { getPolygonOf :: NonEmpty a }
+newtype PolygonOf a = PolygonOf { getPolygon :: NonEmpty a }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
   deriving newtype (Applicative, Monad)
 
 type Polygon = PolygonOf (V2 Double)
+
+instance HasV2 a => HasAABB (PolygonOf a) where
+  aabb = Rect.bounds . getPolygon
 
 instance HasV2 a => Affine (PolygonOf a) where
   transform = defaultTransform

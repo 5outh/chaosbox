@@ -11,8 +11,8 @@ import           Linear.V2
 class HasV2 a where
   _V2 :: Lens' a (V2 Double)
 
-instance a ~ Double => HasV2 (V2 a) where
+instance HasV2 (V2 Double) where
   _V2 = _xy
 
-instance a ~ Double => HasV2 (Complex a) where
+instance HasV2 (Complex Double) where
   _V2 = lens (\(a :+ b) -> V2 a b) (\_ (V2 x y) -> x :+ y)

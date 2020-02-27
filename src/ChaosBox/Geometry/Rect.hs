@@ -4,24 +4,17 @@ module ChaosBox.Geometry.Rect
   , Rect
   , rect
   , square
-  , toQuad
+  , bounds
   )
 where
 
 import           ChaosBox.Prelude
 
-import           ChaosBox.Affine
-import           Control.Lens                   ( (+~)
-                                                , (&)
-                                                , (^.)
-                                                )
-import           ChaosBox.HasV2
-import           ChaosBox.Geometry.Quad
 import           ChaosBox.Draw
-import           Graphics.Rendering.Cairo
-                                         hiding ( Path
-                                                , transform
-                                                )
+import           ChaosBox.HasV2
+import           Control.Lens             ((^.))
+import           Data.Foldable            (toList)
+import           Graphics.Rendering.Cairo hiding (Path, transform)
 
 -- | A Rectangle
 data RectOf a = RectOf
@@ -33,15 +26,9 @@ data RectOf a = RectOf
 
 type Rect = RectOf (V2 Double)
 
-instance HasV2 a => Affine (RectOf a) where
-  type Transformed (RectOf a) = QuadOf a
-  transform m = transform m . toQuad
-
 instance HasV2 a => Draw (RectOf a) where
-  draw RectOf {..} =
-    rectangle rectX rectY rectW rectH
-    where
-      V2 rectX rectY = rectTopLeft ^. _V2
+  draw RectOf {..} = rectangle rectX rectY rectW rectH
+    where V2 rectX rectY = rectTopLeft ^. _V2
 
 rect :: a -> Double -> Double -> RectOf a
 rect c w h = RectOf c w h
@@ -49,8 +36,11 @@ rect c w h = RectOf c w h
 square :: a -> Double -> RectOf a
 square c w = RectOf c w w
 
-toQuad :: HasV2 a => RectOf a -> QuadOf a
-toQuad RectOf {..} = QuadOf rectTopLeft
-                            (rectTopLeft & _V2 +~ V2 rectW 0)
-                            (rectTopLeft & _V2 +~ V2 rectW rectH)
-                            (rectTopLeft & _V2 +~ V2 0 rectH)
+-- | Get the bounds of a list of positioned objects.
+bounds :: (HasV2 a, Foldable f) => f a -> Rect
+bounds xs = rect tl w h
+ where
+  l        = toList xs
+  tl       = minimum $ map (^. _V2) l
+  br       = maximum $ map (^. _V2) l
+  (V2 w h) = br - tl

@@ -13,6 +13,8 @@ import           ChaosBox.Prelude
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Path
+import qualified ChaosBox.Geometry.Rect   as Rect
+import           ChaosBox.HasAABB
 import           ChaosBox.HasV2
 import           Control.Lens
 import           Data.List.NonEmpty       (NonEmpty)
@@ -24,6 +26,9 @@ data CurveOf a = CurveOf { getCurve :: NonEmpty a, curveIterations :: Int }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 type Curve = CurveOf (V2 Double)
+
+instance HasV2 a => HasAABB (CurveOf a) where
+  aabb = Rect.bounds . getCurve
 
 instance HasV2 a => Affine (CurveOf a) where
   transform = defaultTransform

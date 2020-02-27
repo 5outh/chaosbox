@@ -14,6 +14,8 @@ import           ChaosBox.Prelude
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Polygon
+import qualified ChaosBox.Geometry.Rect    as Rect
+import           ChaosBox.HasAABB
 import           ChaosBox.HasV2
 import           Control.Lens
 import           Data.List.NonEmpty        (NonEmpty)
@@ -21,13 +23,16 @@ import qualified Data.List.NonEmpty        as NE
 import           Graphics.Rendering.Cairo  (Render)
 
 -- | Closed Cubic B-Spline
-data ClosedCurveOf a = ClosedCurveOf { getClosedCurveOf :: NonEmpty a, closedCurveIterations :: Int }
+data ClosedCurveOf a = ClosedCurveOf { getClosedCurve :: NonEmpty a, closedCurveIterations :: Int }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 type ClosedCurve = ClosedCurveOf (V2 Double)
 
 closedCurve :: [a] -> Maybe (ClosedCurveOf a)
 closedCurve xs = ClosedCurveOf <$> NE.nonEmpty xs <*> pure 5
+
+instance HasV2 a => HasAABB (ClosedCurveOf a) where
+  aabb = Rect.bounds . getClosedCurve
 
 instance HasV2 a => Affine (ClosedCurveOf a) where
   transform = defaultTransform

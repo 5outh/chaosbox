@@ -27,6 +27,7 @@ default-extensions:
   - TypeFamilies
   - MultiParamTypeClasses
   - FlexibleContexts
+  - FlexibleInstances
 
 dependencies:
   - base >= 4.7 && < 5
