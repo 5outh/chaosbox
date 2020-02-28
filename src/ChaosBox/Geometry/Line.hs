@@ -10,8 +10,7 @@ import           ChaosBox.Prelude
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Path
-import qualified ChaosBox.Geometry.Rect        as Rect
-import           ChaosBox.HasAABB
+import           ChaosBox.AABB
 import           ChaosBox.Geometry.Class
 import           Data.List.NonEmpty
 
@@ -24,7 +23,7 @@ line :: a -> a -> LineOf a
 line = LineOf
 
 instance HasV2 a => HasAABB (LineOf a) where
-  aabb LineOf {..} = Rect.bounds [lineStart, lineEnd]
+  aabb LineOf {..} = boundary $ lineStart :| [lineEnd]
 
 instance HasV2 a => Affine (LineOf a) where
   transform = defaultTransform

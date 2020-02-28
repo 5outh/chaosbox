@@ -12,12 +12,13 @@ import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Polygon      ( polygon )
 import           ChaosBox.Geometry.Rect
-import           ChaosBox.HasAABB
+import           ChaosBox.AABB
 import           ChaosBox.Geometry.Class
 import           Control.Lens                   ( (&)
                                                 , (+~)
                                                 )
 import           Data.Foldable                  ( for_ )
+import           Data.List.NonEmpty             ( NonEmpty(..) )
 
 data QuadOf a = QuadOf
   { quadA :: a
@@ -31,7 +32,7 @@ instance HasV2 a => Affine (QuadOf a) where
   transform = defaultTransform
 
 instance HasV2 a => HasAABB (QuadOf a) where
-  aabb QuadOf {..} = bounds [quadA, quadB, quadC, quadD]
+  aabb QuadOf {..} = boundary $ quadA :| [quadB, quadC, quadD]
 
 -- To avoid cyclic dependencies this orphan instance must be located here
 instance HasV2 a => Affine (RectOf a) where

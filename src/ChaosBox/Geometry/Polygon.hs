@@ -9,8 +9,7 @@ import           ChaosBox.Prelude
 
 import           ChaosBox.Affine
 import           ChaosBox.Draw
-import qualified ChaosBox.Geometry.Rect        as Rect
-import           ChaosBox.HasAABB
+import           ChaosBox.AABB
 import           ChaosBox.Geometry.Class
 import           Control.Lens                   ( (^.) )
 import           Data.Foldable                  ( for_ )
@@ -27,7 +26,7 @@ newtype PolygonOf a = PolygonOf { getPolygon :: NonEmpty a }
 type Polygon = PolygonOf (V2 Double)
 
 instance HasV2 a => HasAABB (PolygonOf a) where
-  aabb = Rect.bounds . getPolygon
+  aabb = boundary . getPolygon
 
 instance HasV2 a => Affine (PolygonOf a) where
   transform = defaultTransform

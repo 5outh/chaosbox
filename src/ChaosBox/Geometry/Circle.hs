@@ -11,11 +11,11 @@ where
 
 import           ChaosBox.Prelude        hiding ( point )
 
+import           Data.List.NonEmpty             ( NonEmpty(..) )
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Polygon
-import qualified ChaosBox.Geometry.Rect        as Rect
-import           ChaosBox.HasAABB
+import           ChaosBox.AABB
 import           ChaosBox.Geometry.Class
 import           Control.Lens                   ( (&)
                                                 , (.~)
@@ -31,7 +31,7 @@ data CircleOf a = CircleOf { circleCenter :: a, circleRadius :: Double, circleDe
 type Circle = CircleOf (V2 Double)
 
 instance HasV2 a => HasAABB (CircleOf a) where
-  aabb CircleOf {..} = Rect.bounds [tl, br]
+  aabb CircleOf {..} = boundary $ tl :| [br]
    where
     c  = circleCenter ^. _V2
     tl = c - (circleRadius *^ (-1))

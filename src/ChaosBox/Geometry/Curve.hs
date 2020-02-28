@@ -13,11 +13,10 @@ import           ChaosBox.Prelude
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Path
-import qualified ChaosBox.Geometry.Rect        as Rect
-import           ChaosBox.HasAABB
+import           ChaosBox.AABB
 import           ChaosBox.Geometry.Class
 import           Control.Lens
-import           Data.List.NonEmpty             ( NonEmpty )
+import           Data.List.NonEmpty             ( NonEmpty(..) )
 import qualified Data.List.NonEmpty            as NE
 import           Graphics.Rendering.Cairo       ( Render )
 
@@ -28,7 +27,7 @@ data CurveOf a = CurveOf { getCurve :: NonEmpty a, curveIterations :: Int }
 type Curve = CurveOf (V2 Double)
 
 instance HasV2 a => HasAABB (CurveOf a) where
-  aabb = Rect.bounds . getCurve
+  aabb = boundary . getCurve
 
 instance HasV2 a => Affine (CurveOf a) where
   transform = defaultTransform

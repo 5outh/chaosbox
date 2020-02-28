@@ -8,12 +8,12 @@ where
 
 import           ChaosBox.Prelude        hiding ( unit )
 
+import           Data.List.NonEmpty             ( NonEmpty(..) )
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Angle
 import           ChaosBox.Geometry.Path
-import qualified ChaosBox.Geometry.Rect        as Rect
-import           ChaosBox.HasAABB
+import           ChaosBox.AABB
 import           ChaosBox.Geometry.Class
 import           ChaosBox.Math                  ( lerpMany )
 import           Control.Lens                   ( (&)
@@ -52,7 +52,7 @@ instance HasV2 a => Affine (ArcOf a) where
   transform m = fmap (transform m) . path . arcPoints
 
 instance HasV2 a => HasAABB (ArcOf a) where
-  aabb ArcOf {..} = Rect.bounds [p1, p2]
+  aabb ArcOf {..} = boundary $ p1 :| [p2]
    where
     c  = arcCenter ^. _V2
     p1 = c + unit arcStart ^* arcRadius

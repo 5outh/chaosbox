@@ -9,12 +9,12 @@ where
 
 import           ChaosBox.Prelude        hiding ( scaled )
 
+import           Data.List.NonEmpty             ( NonEmpty(..) )
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Circle
 import           ChaosBox.Geometry.Polygon
-import qualified ChaosBox.Geometry.Rect        as Rect
-import           ChaosBox.HasAABB
+import           ChaosBox.AABB
 import           ChaosBox.Geometry.Class
 import           ChaosBox.Math                  ( lerpMany )
 import qualified ChaosBox.Math.Matrix          as Matrix
@@ -36,7 +36,7 @@ data EllipseOf a = EllipseOf
 type Ellipse = EllipseOf (V2 Double)
 
 instance HasV2 a => HasAABB (EllipseOf a) where
-  aabb EllipseOf {..} = Rect.bounds [tl, br]
+  aabb EllipseOf {..} = boundary $ tl :| [ br]
    where
     c  = ellipseCenter ^. _V2
     tl = c - V2 ellipseWidth ellipseHeight
