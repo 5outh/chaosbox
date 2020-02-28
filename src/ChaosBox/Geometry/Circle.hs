@@ -9,16 +9,20 @@ module ChaosBox.Geometry.Circle
   )
 where
 
-import           ChaosBox.Prelude          hiding (point)
+import           ChaosBox.Prelude        hiding ( point )
 
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Polygon
-import qualified ChaosBox.Geometry.Rect    as Rect
+import qualified ChaosBox.Geometry.Rect        as Rect
 import           ChaosBox.HasAABB
-import           ChaosBox.HasV2
-import           Control.Lens              ((&), (.~), (^.))
-import           Graphics.Rendering.Cairo  hiding (transform)
+import           ChaosBox.Geometry.Class
+import           Control.Lens                   ( (&)
+                                                , (.~)
+                                                , (^.)
+                                                )
+import           Graphics.Rendering.Cairo
+                                         hiding ( transform )
 
 -- | A circle with radius 'circleRadius' centered at 'circleCenter'
 data CircleOf a = CircleOf { circleCenter :: a, circleRadius :: Double, circleDetail :: Int }

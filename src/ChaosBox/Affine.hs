@@ -23,7 +23,7 @@ where
 
 import           ChaosBox.Prelude                hiding (scaled)
 
-import           ChaosBox.HasV2
+import           ChaosBox.Geometry.Class         (HasV2 (..))
 import qualified ChaosBox.Math.Matrix            as Matrix
 import           Control.Lens                    ((%~))
 import           Graphics.Rendering.Cairo        hiding (transform)

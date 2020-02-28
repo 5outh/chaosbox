@@ -1,6 +1,7 @@
 # chaosbox
 
-`chaosbox` is a Haskell framework for generative art.
+`chaosbox` is a Haskell framework for generative art. It is in the early stages
+and is prone to a lot of API churn, so use at your own risk!
 
 The goal of this project is to provide a solid base for building 2d generative
 artwork. Let's look at a simple example of what it can do. We'll build

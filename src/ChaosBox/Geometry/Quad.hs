@@ -10,12 +10,14 @@ import           ChaosBox.Prelude
 
 import           ChaosBox.Affine
 import           ChaosBox.Draw
-import           ChaosBox.Geometry.Polygon (polygon)
+import           ChaosBox.Geometry.Polygon      ( polygon )
 import           ChaosBox.Geometry.Rect
 import           ChaosBox.HasAABB
-import           ChaosBox.HasV2
-import           Control.Lens              ((&), (+~))
-import           Data.Foldable             (for_)
+import           ChaosBox.Geometry.Class
+import           Control.Lens                   ( (&)
+                                                , (+~)
+                                                )
+import           Data.Foldable                  ( for_ )
 
 data QuadOf a = QuadOf
   { quadA :: a

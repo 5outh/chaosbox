@@ -55,31 +55,6 @@ dependencies:
 
 library:
     source-dirs: src
-    exposed-modules:
-      - ChaosBox
-      - ChaosBox.Affine
-      - ChaosBox.Color
-      - ChaosBox.Draw
-      - ChaosBox.Generate
-      - ChaosBox.Geometry
-      - ChaosBox.Geometry.Angle
-      - ChaosBox.Geometry.Arc
-      - ChaosBox.Geometry.Circle
-      - ChaosBox.Geometry.ClosedCurve
-      - ChaosBox.Geometry.Curve
-      - ChaosBox.Geometry.Ellipse
-      - ChaosBox.Geometry.Line
-      - ChaosBox.Geometry.Path
-      - ChaosBox.Geometry.Polygon
-      - ChaosBox.Geometry.Quad
-      - ChaosBox.Geometry.Rect
-      - ChaosBox.Geometry.Triangle
-      - ChaosBox.HasV2
-      - ChaosBox.Math
-      - ChaosBox.Math.Matrix
-      - ChaosBox.Noise
-      - ChaosBox.Pixel
-      - ChaosBox.Random
 
 executables:
   chaosbox-example:

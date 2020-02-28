@@ -10,9 +10,9 @@ import           ChaosBox.Prelude
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Path
-import qualified ChaosBox.Geometry.Rect as Rect
+import qualified ChaosBox.Geometry.Rect        as Rect
 import           ChaosBox.HasAABB
-import           ChaosBox.HasV2
+import           ChaosBox.Geometry.Class
 import           Data.List.NonEmpty
 
 data LineOf a = LineOf { lineStart :: a, lineEnd :: a}

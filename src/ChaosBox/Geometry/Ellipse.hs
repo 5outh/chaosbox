@@ -7,19 +7,22 @@ module ChaosBox.Geometry.Ellipse
   )
 where
 
-import           ChaosBox.Prelude          hiding (scaled)
+import           ChaosBox.Prelude        hiding ( scaled )
 
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Circle
 import           ChaosBox.Geometry.Polygon
-import qualified ChaosBox.Geometry.Rect    as Rect
+import qualified ChaosBox.Geometry.Rect        as Rect
 import           ChaosBox.HasAABB
-import           ChaosBox.HasV2
-import           ChaosBox.Math             (lerpMany)
-import qualified ChaosBox.Math.Matrix      as Matrix
-import           Control.Lens              (set, (&), (^.))
-import           Data.Foldable             (for_)
+import           ChaosBox.Geometry.Class
+import           ChaosBox.Math                  ( lerpMany )
+import qualified ChaosBox.Math.Matrix          as Matrix
+import           Control.Lens                   ( set
+                                                , (&)
+                                                , (^.)
+                                                )
+import           Data.Foldable                  ( for_ )
 
 -- | Axis-bound ellipse
 data EllipseOf a = EllipseOf

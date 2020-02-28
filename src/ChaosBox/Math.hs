@@ -12,6 +12,10 @@ import           ChaosBox.Math.Vector as X
 import           Data.Foldable        (toList)
 import           Data.List            (genericLength)
 
+-- | Linearly interpolate between two numbers
+--
+-- > lerp 0.5 0 10 == 5
+--
 lerp :: Num a => a -> a -> a -> a
 lerp perc a b = (perc - 1) * a + perc * b
 

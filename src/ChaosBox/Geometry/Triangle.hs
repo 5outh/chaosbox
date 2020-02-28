@@ -7,13 +7,16 @@ where
 
 import           ChaosBox.Prelude
 
+import           Data.Function                  ( on )
+import           Control.Lens                   ( (^.) )
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Polygon
-import qualified ChaosBox.Geometry.Rect    as Rect
+import qualified ChaosBox.Geometry.Rect        as Rect
 import           ChaosBox.HasAABB
-import           ChaosBox.HasV2
-import           Data.List.NonEmpty        (NonEmpty (..))
+import           ChaosBox.Geometry.Class
+import           Data.List.NonEmpty             ( NonEmpty(..) )
+import           Data.List                      ( sortBy )
 
 data TriangleOf a = TriangleOf
   { triangleA :: a
@@ -40,3 +43,24 @@ instance HasV2 a => Draw (TriangleOf a) where
 -- etc
 toPolygon :: TriangleOf a -> PolygonOf a
 toPolygon TriangleOf {..} = PolygonOf $ triangleA :| [triangleB, triangleC]
+
+instance HasV2 a => Boundary (TriangleOf a) where
+  containsPoint t p = b1 == b2 && b2 == b3
+   where
+    [t1, t2, t3] = sortOnPolarAngle $ map (^. _V2) $ trianglePath t
+    sign p1 p2 p3 =
+      (p1 ^. _x - p3 ^. _x)
+        * (p2 ^. _y - p3 ^. _y)
+        - (p2 ^. _x - p3 ^. _x)
+        * (p1 ^. _y - p3 ^. _y)
+    b1 = sign p t1 t2 < 0
+    b2 = sign p t2 t3 < 0
+    b3 = sign p t3 t1 < 0
+
+trianglePath TriangleOf {..} = [triangleA, triangleB, triangleC]
+
+sortOnPolarAngle :: (Fractional a, Ord a) => [V2 a] -> [V2 a]
+sortOnPolarAngle []       = []
+sortOnPolarAngle [x     ] = [x]
+sortOnPolarAngle (x : xs) = x : sortBy (compare `on` polarAngle x) xs
+  where polarAngle a b = negate $ (b ^. _x - a ^. _x) / (b ^. _y - a ^. _y)

@@ -14,13 +14,13 @@ import           ChaosBox.Prelude
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Polygon
-import qualified ChaosBox.Geometry.Rect    as Rect
+import qualified ChaosBox.Geometry.Rect        as Rect
 import           ChaosBox.HasAABB
-import           ChaosBox.HasV2
+import           ChaosBox.Geometry.Class
 import           Control.Lens
-import           Data.List.NonEmpty        (NonEmpty)
-import qualified Data.List.NonEmpty        as NE
-import           Graphics.Rendering.Cairo  (Render)
+import           Data.List.NonEmpty             ( NonEmpty )
+import qualified Data.List.NonEmpty            as NE
+import           Graphics.Rendering.Cairo       ( Render )
 
 -- | Closed Cubic B-Spline
 data ClosedCurveOf a = ClosedCurveOf { getClosedCurve :: NonEmpty a, closedCurveIterations :: Int }

@@ -9,14 +9,15 @@ import           ChaosBox.Prelude
 
 import           ChaosBox.Affine
 import           ChaosBox.Draw
-import qualified ChaosBox.Geometry.Rect   as Rect
+import qualified ChaosBox.Geometry.Rect        as Rect
 import           ChaosBox.HasAABB
-import           ChaosBox.HasV2
-import           Control.Lens             ((^.))
-import           Data.Foldable            (for_)
-import           Data.List.NonEmpty       (NonEmpty (..))
-import qualified Data.List.NonEmpty       as NE
-import           Graphics.Rendering.Cairo hiding (Path)
+import           ChaosBox.Geometry.Class
+import           Control.Lens                   ( (^.) )
+import           Data.Foldable                  ( for_ )
+import           Data.List.NonEmpty             ( NonEmpty(..) )
+import qualified Data.List.NonEmpty            as NE
+import           Graphics.Rendering.Cairo
+                                         hiding ( Path )
 
 newtype PathOf a = PathOf { getPathOf :: NonEmpty a}
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
