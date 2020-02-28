@@ -27,7 +27,7 @@ data CurveOf a = CurveOf { getCurve :: NonEmpty a, curveIterations :: Int }
 type Curve = CurveOf (V2 Double)
 
 instance HasV2 a => HasAABB (CurveOf a) where
-  aabb = boundary . getCurve
+  aabb = aabb . toPath
 
 instance HasV2 a => Affine (CurveOf a) where
   transform = defaultTransform
