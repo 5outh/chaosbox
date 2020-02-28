@@ -12,8 +12,6 @@ import           ChaosBox.Geometry.Class        ( HasV2(..) )
 import           Control.Lens                   ( (^.) )
 
 -- | An Axis-Aligned Bounding Box
---
--- This type is isomorphic to 'Rect', but 
 data AABB = AABB
   { aabbTopLeft :: V2 Double
   , aabbW       :: Double

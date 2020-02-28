@@ -19,13 +19,16 @@ module ChaosBox.Random
   -- * Higher-order functions
   , suchThat
   , unsafeSuchThat
+  , uniformPointIn
   -- * Re-Exports
   , MonadRandom.uniformMay
   , MonadRandom.weightedMay
   )
 where
 
+import           ChaosBox.AABB
 import           ChaosBox.Generate
+import           ChaosBox.Geometry.Class
 import           ChaosBox.Orphanage                  ()
 
 import           Control.Monad.Random                (MonadRandom)
@@ -38,6 +41,7 @@ import           Data.Random.Distribution.Bernoulli  (boolBernoulli)
 import           Data.Random.Distribution.Triangular (floatingTriangular)
 import           Data.RVar                           (sampleRVar)
 import           Data.Semigroup.Foldable
+import           Linear.V2
 
 -- | Sample a uniformly distributed element of a non-empty collection.
 uniform :: (Foldable1 f, MonadRandom m) => f a -> m a
@@ -146,3 +150,13 @@ unsafeSuchThat gen predicate = do
       error
         "Error in 'unsafeSuchThat': Maximum generation attempts (1000) exceeded."
     Just x -> pure x
+
+-- | Generate a uniformly distributed point within a bounded shape
+uniformPointIn
+  :: (Boundary a, HasAABB a, Monad m) => a -> GenerateT m (Maybe (V2 Double))
+uniformPointIn a = genPointInAABB (aabb a) `suchThat` containsPoint a
+ where
+  genPointInAABB (AABB (V2 tx ty) w h) = do
+    x <- MonadRandom.getRandomR (tx, tx + w)
+    y <- MonadRandom.getRandomR (ty, ty + h)
+    pure $ V2 x y
