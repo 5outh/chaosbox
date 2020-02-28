@@ -1,3 +1,4 @@
+-- | Utilities for creating CLI applications that interface with 'ChaosBox'
 module ChaosBox.CLI
   ( runChaosBoxWith
   , runChaosBoxIO
@@ -10,8 +11,8 @@ import           ChaosBox.Generate
 import           Control.Monad.Random
 import           Control.Monad.Reader
 import           Data.IORef
-import           Data.Maybe                    (fromMaybe)
-import           Data.Semigroup                ((<>))
+import           Data.Maybe                     ( fromMaybe )
+import           Data.Semigroup                 ( (<>) )
 import           Data.Time.Clock.POSIX
 import           GHC.Word
 import           Graphics.Rendering.Cairo
@@ -21,13 +22,22 @@ import           System.Random.Mersenne.Pure64
 
 data Opts = Opts
   { optSeed           :: Maybe Word64
+  -- ^ Random seed used for all PRNG.
   , optScale          :: Double
+  -- ^ Scale applied to user-space to produce final image
   , optWidth          :: Int
+  -- ^ Width in user-space
   , optHeight         :: Int
+  -- ^ Height in user-space
   , optRenderTimes    :: Int
+  -- ^ How many times to repeat rendering, helpful for fast experimentation
   , optName           :: String
+  -- ^ Name of the process. Images will be stored at
+  -- @images/${optName}-${optSeed}.png@
   , optRenderProgress :: Bool
+  -- Enable in-progress rendering via 'renderProgress'
   , optMetadataString :: Maybe String
+  -- Optional string to append to file name, useful for tagging
   }
 
 opts :: Parser Opts
@@ -48,12 +58,14 @@ optsInfo = info
   (opts <**> helper)
   (fullDesc <> progDesc "Generate art with ChaosBox" <> header "chaosbox")
 
+-- | Run 'ChaosBox' with 'Opts' parsed from the CLI
 runChaosBoxIO
   :: RandT PureMT (ReaderT GenerateCtx Render) a
   -- ^ Render function
   -> IO ()
 runChaosBoxIO = runChaosBoxIOWith id
 
+-- | Run 'ChaosBox' with 'Opts' parsed from the CLI, allowing overrides.
 runChaosBoxIOWith
   :: (Opts -> Opts)
   -- ^ Option modifier
@@ -64,6 +76,7 @@ runChaosBoxIOWith fn render = do
   options <- execParser optsInfo
   runChaosBoxWith (fn options) render
 
+-- | Run 'ChaosBox' with the given 'Opts'
 runChaosBoxWith
   :: Opts
   -- ^ Art options

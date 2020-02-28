@@ -65,7 +65,6 @@ library:
       - ChaosBox.Geometry.Angle
       - ChaosBox.Geometry.Arc
       - ChaosBox.Geometry.Circle
-      - ChaosBox.Geometry.Class
       - ChaosBox.Geometry.ClosedCurve
       - ChaosBox.Geometry.Curve
       - ChaosBox.Geometry.Ellipse
