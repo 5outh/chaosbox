@@ -31,7 +31,7 @@ closedCurve :: [a] -> Maybe (ClosedCurveOf a)
 closedCurve xs = ClosedCurveOf <$> NE.nonEmpty xs <*> pure 5
 
 instance HasV2 a => HasAABB (ClosedCurveOf a) where
-  aabb = boundary . getClosedCurve
+  aabb = aabb . toPolygon
 
 instance HasV2 a => Affine (ClosedCurveOf a) where
   transform = defaultTransform
