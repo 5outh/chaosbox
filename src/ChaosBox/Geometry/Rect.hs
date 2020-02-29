@@ -12,6 +12,7 @@ where
 
 import           ChaosBox.Prelude
 
+import           ChaosBox.Geometry.P2
 import           ChaosBox.AABB
 import           ChaosBox.Geometry.Class
 import           ChaosBox.Draw
@@ -29,7 +30,7 @@ data RectOf a = RectOf
   }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-type Rect = RectOf (V2 Double)
+type Rect = RectOf (P2)
 
 instance HasV2 a => HasAABB (RectOf a) where
   aabb (RectOf tl w h) =  AABB (tl ^. _V2) w h

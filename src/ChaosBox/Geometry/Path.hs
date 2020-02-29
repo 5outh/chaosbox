@@ -7,6 +7,7 @@ where
 
 import           ChaosBox.Prelude
 
+import           ChaosBox.Geometry.P2
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.AABB
@@ -23,7 +24,7 @@ newtype PathOf a = PathOf { getPath :: NonEmpty a}
   deriving newtype (Applicative, Monad)
 
 -- | An open path
-type Path = PathOf (V2 Double)
+type Path = PathOf (P2)
 
 instance HasV2 a => Affine (PathOf a) where
   transform = defaultTransform

@@ -10,7 +10,8 @@ module ChaosBox.Geometry.Angle
   )
 where
 
-import           Data.Fixed (mod')
+import           ChaosBox.Geometry.P2
+import           Data.Fixed           (mod')
 import           Linear.V2
 
 newtype Angle = Angle { getAngle :: Double }
@@ -32,7 +33,7 @@ fromDegrees :: Double -> Angle
 fromDegrees theta = fromRadians $ theta * pi / 180
 
 -- | The unit vector in the direction of 'Angle'
-unit :: Angle -> V2 Double
+unit :: Angle -> P2
 unit (Angle r) = angle r
 
 -- | Add radians to an 'Angle'

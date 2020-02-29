@@ -5,8 +5,7 @@ module ChaosBox.Geometry.Line
   )
 where
 
-import           ChaosBox.Prelude
-
+import           ChaosBox.Geometry.P2
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Path
@@ -17,7 +16,7 @@ import           Data.List.NonEmpty
 data LineOf a = LineOf { lineStart :: a, lineEnd :: a}
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-type Line = LineOf (V2 Double)
+type Line = LineOf (P2)
 
 line :: a -> a -> LineOf a
 line = LineOf

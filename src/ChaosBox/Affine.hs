@@ -24,6 +24,7 @@ where
 import           ChaosBox.Prelude                hiding (scaled)
 
 import           ChaosBox.Geometry.Class         (HasV2 (..))
+import           ChaosBox.Geometry.P2
 import qualified ChaosBox.Math.Matrix            as Matrix
 import           Control.Lens                    ((%~))
 import           Graphics.Rendering.Cairo        hiding (transform)
@@ -87,10 +88,10 @@ withCairoAffine (Transform2d (V3 (V3 a b c) (V3 d e f) _)) render = do
 rotated :: Double -> Transform2d
 rotated = Transform2d . Matrix.rotation
 
-translated :: V2 Double -> Transform2d
+translated :: P2 -> Transform2d
 translated = Transform2d . Matrix.translation
 
-scaled :: V2 Double -> Transform2d
+scaled :: P2 -> Transform2d
 scaled = Transform2d . Matrix.scalar
 
 shearedX :: Double -> Transform2d
@@ -99,7 +100,7 @@ shearedX = Transform2d . Matrix.shearX
 shearedY :: Double -> Transform2d
 shearedY = Transform2d . Matrix.shearY
 
-sheared :: V2 Double -> Transform2d
+sheared :: P2 -> Transform2d
 sheared = Transform2d . Matrix.shear
 
 reflectedOrigin :: Transform2d
@@ -111,5 +112,5 @@ reflectedX = Transform2d Matrix.reflectX
 reflectedY :: Transform2d
 reflectedY = Transform2d Matrix.reflectY
 
-around :: V2 Double -> Transform2d -> Transform2d
+around :: P2 -> Transform2d -> Transform2d
 around v (Transform2d m) = Transform2d (Matrix.around v m)

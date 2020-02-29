@@ -10,10 +10,11 @@ import           Linear.V2
 import           Data.List.NonEmpty
 import           ChaosBox.Geometry.Class        ( HasV2(..) )
 import           Control.Lens                   ( (^.) )
+import           ChaosBox.Geometry.P2
 
 -- | An Axis-Aligned Bounding Box
 data AABB = AABB
-  { aabbTopLeft :: V2 Double
+  { aabbTopLeft :: P2
   , aabbW       :: Double
   , aabbH       :: Double
   }

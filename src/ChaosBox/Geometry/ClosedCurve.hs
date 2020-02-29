@@ -9,8 +9,7 @@ module ChaosBox.Geometry.ClosedCurve
   )
 where
 
-import           ChaosBox.Prelude
-
+import           ChaosBox.Geometry.P2
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Polygon
@@ -25,7 +24,7 @@ import           Graphics.Rendering.Cairo       ( Render )
 data ClosedCurveOf a = ClosedCurveOf { getClosedCurve :: NonEmpty a, closedCurveIterations :: Int }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-type ClosedCurve = ClosedCurveOf (V2 Double)
+type ClosedCurve = ClosedCurveOf (P2)
 
 closedCurve :: [a] -> Maybe (ClosedCurveOf a)
 closedCurve xs = ClosedCurveOf <$> NE.nonEmpty xs <*> pure 5

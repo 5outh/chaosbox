@@ -11,6 +11,7 @@ where
 
 import           ChaosBox.Prelude        hiding ( point )
 
+import           ChaosBox.Geometry.P2
 import           Data.List.NonEmpty             ( NonEmpty(..) )
 import           ChaosBox.Affine
 import           ChaosBox.Draw
@@ -28,7 +29,7 @@ import           Graphics.Rendering.Cairo
 data CircleOf a = CircleOf { circleCenter :: a, circleRadius :: Double, circleDetail :: Int }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-type Circle = CircleOf (V2 Double)
+type Circle = CircleOf (P2)
 
 instance HasV2 a => HasAABB (CircleOf a) where
   aabb CircleOf {..} = boundary $ tl :| [br]

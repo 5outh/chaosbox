@@ -7,6 +7,7 @@ where
 
 import           ChaosBox.Prelude
 
+import           ChaosBox.Geometry.P2
 import           Data.Function                  ( on )
 import           Control.Lens                   ( (^.) )
 import           ChaosBox.Affine
@@ -24,7 +25,7 @@ data TriangleOf a = TriangleOf
   }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-type Triangle = TriangleOf (V2 Double)
+type Triangle = TriangleOf (P2)
 
 triangle :: a -> a -> a -> TriangleOf a
 triangle = TriangleOf

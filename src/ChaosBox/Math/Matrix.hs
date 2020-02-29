@@ -20,7 +20,8 @@ module ChaosBox.Math.Matrix
   )
 where
 
-import           Linear.Matrix hiding (translation)
+import           ChaosBox.Geometry.P2
+import           Linear.Matrix        hiding (translation)
 import           Linear.V2
 import           Linear.V3
 
@@ -45,13 +46,13 @@ rotation t = affine
   (-(sin t)) (cos t) 0
   0          0       1
 
-translation :: V2 Double -> M33 Double
+translation :: P2 -> M33 Double
 translation (V2 x y) = affine
   1 0 x
   0 1 y
   0 0 1
 
-scalar :: V2 Double -> M33 Double
+scalar :: P2 -> M33 Double
 scalar (V2 w h) = affine
   w 0 0
   0 h 0
@@ -69,7 +70,7 @@ shearY t = affine
   t 1 0
   0 0 1
 
-shear :: V2 Double -> M33 Double
+shear :: P2 -> M33 Double
 shear (V2 x y) = shearX x !*! shearY y
 
 reflectOrigin :: M33 Double
@@ -90,18 +91,18 @@ reflectY = affine
   0    1 0
   0    0 1
 
-transform :: V2 Double -> M33 Double -> V2 Double
+transform :: P2 -> M33 Double -> P2
 transform (V2 x y) m = V2 x0 y0
  where
   v0 = V3 x y 0
   V3 x0 y0 _ = m !* v0
 
-applyMatrix :: M33 Double -> V2 Double -> V2 Double
+applyMatrix :: M33 Double -> P2 -> P2
 applyMatrix = flip transform
 
 -- | Perform a linear transformation around a certain point
 --
 -- This is useful for rotation around the center, etc.
 --
-around :: V2 Double -> M33 Double -> M33 Double
+around :: P2 -> M33 Double -> M33 Double
 around v m = translation (-v) !*! m !*! translation v

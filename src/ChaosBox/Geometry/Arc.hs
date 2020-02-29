@@ -8,6 +8,7 @@ where
 
 import           ChaosBox.Prelude        hiding ( unit )
 
+import           ChaosBox.Geometry.P2
 import           Data.List.NonEmpty             ( NonEmpty(..) )
 import           ChaosBox.Affine
 import           ChaosBox.Draw
@@ -37,7 +38,7 @@ data ArcOf a = ArcOf
   }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-type Arc = ArcOf (V2 Double)
+type Arc = ArcOf (P2)
 
 instance HasV2 a => Draw (ArcOf a) where
   draw ArcOf {..} = Cairo.arc x

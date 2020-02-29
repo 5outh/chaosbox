@@ -6,6 +6,7 @@
 {-# LANGUAGE TypeFamilies          #-}
 module ChaosBox.Generate where
 
+import           ChaosBox.Geometry.P2
 import           Control.Arrow                 ((&&&))
 import           Control.Monad.Random
 import           Control.Monad.Reader
@@ -58,7 +59,7 @@ getSize = do
   (w, h) <- asks (gcWidth &&& gcHeight)
   pure (fromIntegral w, fromIntegral h)
 
-getCenterPoint :: Generate (V2 Double)
+getCenterPoint :: Generate (P2)
 getCenterPoint = do
   (w, h) <- asks (gcWidth &&& gcHeight)
   pure $ V2 (fromIntegral w / 2) (fromIntegral h / 2)

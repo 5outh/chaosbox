@@ -9,6 +9,7 @@ where
 
 import           ChaosBox.Prelude        hiding ( scaled )
 
+import           ChaosBox.Geometry.P2
 import           Data.List.NonEmpty             ( NonEmpty(..) )
 import           ChaosBox.Affine
 import           ChaosBox.Draw
@@ -33,7 +34,7 @@ data EllipseOf a = EllipseOf
   }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-type Ellipse = EllipseOf (V2 Double)
+type Ellipse = EllipseOf (P2)
 
 instance HasV2 a => HasAABB (EllipseOf a) where
   aabb EllipseOf {..} = boundary $ tl :| [ br]

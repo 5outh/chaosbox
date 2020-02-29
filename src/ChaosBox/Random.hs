@@ -29,6 +29,7 @@ where
 import           ChaosBox.AABB
 import           ChaosBox.Generate
 import           ChaosBox.Geometry.Class
+import           ChaosBox.Geometry.P2
 import           ChaosBox.Orphanage                  ()
 
 import           Control.Monad.Random                (MonadRandom)
@@ -153,7 +154,7 @@ unsafeSuchThat gen predicate = do
 
 -- | Generate a uniformly distributed point within a bounded shape
 uniformPointIn
-  :: (Boundary a, HasAABB a, Monad m) => a -> GenerateT m (Maybe (V2 Double))
+  :: (Boundary a, HasAABB a, Monad m) => a -> GenerateT m (Maybe (P2))
 uniformPointIn a = genPointInAABB (aabb a) `suchThat` containsPoint a
  where
   genPointInAABB (AABB (V2 tx ty) w h) = do

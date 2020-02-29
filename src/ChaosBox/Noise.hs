@@ -15,6 +15,7 @@ where
 import           Prelude              hiding (init)
 
 import           ChaosBox.Generate
+import           ChaosBox.Geometry.P2
 import           Control.Monad.Random
 import           Data.Vector          (Vector, init, (!))
 import qualified Data.Vector          as V
@@ -31,11 +32,11 @@ newNoise = do
   pure $ \x -> noise (x + seed)
 
 -- | Two dimensional simplex noise
-noise2 :: V2 Double -> Double
+noise2 :: P2 -> Double
 noise2 (V2 x y) = noise2D x y
 
 -- | Generate two dimensional simplex noise with a random seed.
-newNoise2 :: Generate (V2 Double -> Double)
+newNoise2 :: Generate (P2 -> Double)
 newNoise2 = do
   seed <- V2 <$> getRandom <*> getRandom
   pure $ \x -> noise2 (x + seed)

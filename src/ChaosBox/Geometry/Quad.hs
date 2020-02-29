@@ -8,6 +8,7 @@ where
 
 import           ChaosBox.Prelude
 
+import           ChaosBox.Geometry.P2
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Polygon      ( polygon )
@@ -42,7 +43,7 @@ instance HasV2 a => Affine (RectOf a) where
 instance HasV2 a => Draw (QuadOf a) where
   draw QuadOf {..} = for_ (polygon [quadA, quadB, quadC, quadD]) draw
 
-type Quad = QuadOf (V2 Double)
+type Quad = QuadOf (P2)
 
 quad :: a -> a -> a -> a -> QuadOf a
 quad = QuadOf

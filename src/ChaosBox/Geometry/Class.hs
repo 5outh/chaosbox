@@ -4,18 +4,19 @@ module ChaosBox.Geometry.Class
   )
 where
 
-import           Control.Lens (Lens', lens)
+import           ChaosBox.Geometry.P2
+import           Control.Lens         (Lens', lens)
 import           Data.Complex
 import           Linear.V2
 
 -- | Class of objects that can be queried for points
 class Boundary a where
-  containsPoint :: a -> V2 Double -> Bool
+  containsPoint :: a -> P2 -> Bool
 
 class HasV2 a where
-  _V2 :: Lens' a (V2 Double)
+  _V2 :: Lens' a (P2)
 
-instance HasV2 (V2 Double) where
+instance HasV2 (P2) where
   _V2 = _xy
 
 instance HasV2 (Complex Double) where

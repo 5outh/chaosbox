@@ -7,6 +7,7 @@ where
 
 import           ChaosBox.Prelude
 
+import           ChaosBox.Geometry.P2
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.AABB
@@ -23,7 +24,7 @@ newtype PolygonOf a = PolygonOf { getPolygon :: NonEmpty a }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
   deriving newtype (Applicative, Monad)
 
-type Polygon = PolygonOf (V2 Double)
+type Polygon = PolygonOf (P2)
 
 instance HasV2 a => HasAABB (PolygonOf a) where
   aabb = boundary . getPolygon
