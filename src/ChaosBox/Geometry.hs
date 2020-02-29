@@ -1,31 +1,20 @@
 
 {-# LANGUAGE TypeFamilies #-}
 module ChaosBox.Geometry
-  ( module ChaosBox.Geometry.Path
-  , module ChaosBox.Geometry.Polygon
-  , module ChaosBox.Geometry.Circle
-  , module ChaosBox.Geometry.Rect
-  , module ChaosBox.Geometry.Line
-  , module ChaosBox.Geometry.Angle
-  , module ChaosBox.Geometry.Ellipse
-  , module ChaosBox.Geometry.Quad
-  , module ChaosBox.Geometry.Triangle
-  , module ChaosBox.Geometry.Arc
-  , module ChaosBox.Geometry.Curve
-  , module ChaosBox.Geometry.ClosedCurve
+  ( module X
   )
 where
 
-import           ChaosBox.Geometry.Angle
-
-import           ChaosBox.Geometry.Arc
-import           ChaosBox.Geometry.Circle
-import           ChaosBox.Geometry.ClosedCurve
-import           ChaosBox.Geometry.Curve
-import           ChaosBox.Geometry.Ellipse
-import           ChaosBox.Geometry.Line
-import           ChaosBox.Geometry.Path
-import           ChaosBox.Geometry.Polygon
-import           ChaosBox.Geometry.Quad
-import           ChaosBox.Geometry.Rect
-import           ChaosBox.Geometry.Triangle
+import           ChaosBox.Geometry.Angle       as X
+import           ChaosBox.Geometry.Arc         as X
+import           ChaosBox.Geometry.Circle      as X
+import           ChaosBox.Geometry.ClosedCurve as X
+import           ChaosBox.Geometry.Curve       as X
+import           ChaosBox.Geometry.Ellipse     as X
+import           ChaosBox.Geometry.Line        as X
+import           ChaosBox.Geometry.P2          as X
+import           ChaosBox.Geometry.Path        as X
+import           ChaosBox.Geometry.Polygon     as X
+import           ChaosBox.Geometry.Quad        as X
+import           ChaosBox.Geometry.Rect        as X
+import           ChaosBox.Geometry.Triangle    as X

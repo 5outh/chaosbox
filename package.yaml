@@ -28,6 +28,7 @@ default-extensions:
   - MultiParamTypeClasses
   - FlexibleContexts
   - FlexibleInstances
+  - PatternSynonyms
 
 dependencies:
   - base >= 4.7 && < 5
