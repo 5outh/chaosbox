@@ -49,7 +49,7 @@ renderSketch = do
   -- Generate 20 points normally distributed around the center with standard
   -- deviation = w/4 in the x direction and standard deviation = h/4 in the y
   -- direction.
-  randomPath <- replicateM 20 $ normal center $ V2 (w / 4) (h / 4)
+  randomPath <- replicateM 20 $ normal center $ P2 (w / 4) (h / 4)
 
   -- The points in -- 'randomPath' are used as control points in a cyclic cubic
   -- B-Spline ('ClosedCurve') which is traced in black.
