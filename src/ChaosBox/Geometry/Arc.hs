@@ -40,7 +40,7 @@ data ArcOf a = ArcOf
 
 type Arc = ArcOf P2
 
-instance HasV2 a => Draw (ArcOf a) where
+instance HasP2 a => Draw (ArcOf a) where
   draw ArcOf {..} = Cairo.arc x
                               y
                               arcRadius
@@ -48,11 +48,11 @@ instance HasV2 a => Draw (ArcOf a) where
                               (getAngle arcEnd)
     where V2 x y = arcCenter ^. _V2
 
-instance HasV2 a => Affine (ArcOf a) where
+instance HasP2 a => Affine (ArcOf a) where
   type Transformed (ArcOf a) = Maybe (PathOf a)
   transform m = fmap (transform m) . path . arcPoints
 
-instance HasV2 a => HasAABB (ArcOf a) where
+instance HasP2 a => HasAABB (ArcOf a) where
   aabb ArcOf {..} = boundary $ p1 :| [p2]
    where
     c  = arcCenter ^. _V2
@@ -62,7 +62,7 @@ instance HasV2 a => HasAABB (ArcOf a) where
 arc :: a -> Double -> Angle -> Angle -> ArcOf a
 arc c r s e = ArcOf c r s e 100
 
-arcPoints :: HasV2 a => ArcOf a -> [a]
+arcPoints :: HasP2 a => ArcOf a -> [a]
 arcPoints ArcOf {..} = points
  where
   angles = lerpMany arcDetail arcStart arcEnd

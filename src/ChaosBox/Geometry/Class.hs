@@ -1,6 +1,6 @@
 module ChaosBox.Geometry.Class
   ( Boundary(..)
-  , HasV2(..)
+  , HasP2(..)
   )
 where
 
@@ -13,11 +13,11 @@ import           Linear.V2
 class Boundary a where
   containsPoint :: a -> P2 -> Bool
 
-class HasV2 a where
+class HasP2 a where
   _V2 :: Lens' a P2
 
-instance HasV2 P2 where
+instance HasP2 P2 where
   _V2 = _xy
 
-instance HasV2 (Complex Double) where
+instance HasP2 (Complex Double) where
   _V2 = lens (\(a :+ b) -> V2 a b) (\_ (V2 x y) -> x :+ y)

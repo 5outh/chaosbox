@@ -36,7 +36,7 @@ data EllipseOf a = EllipseOf
 
 type Ellipse = EllipseOf P2
 
-instance HasV2 a => HasAABB (EllipseOf a) where
+instance HasP2 a => HasAABB (EllipseOf a) where
   aabb EllipseOf {..} = boundary $ tl :| [ br]
    where
     c  = ellipseCenter ^. _V2
@@ -44,7 +44,7 @@ instance HasV2 a => HasAABB (EllipseOf a) where
     br = c + V2 ellipseWidth ellipseHeight
 
 
-instance HasV2 a => Affine (EllipseOf a) where
+instance HasP2 a => Affine (EllipseOf a) where
   type Transformed (EllipseOf a) = Maybe (PolygonOf a)
   transform m e = case toPolygon e of
     Nothing -> Nothing
@@ -54,11 +54,11 @@ instance HasV2 a => Affine (EllipseOf a) where
 ellipse :: a -> Double -> Double -> EllipseOf a
 ellipse c w h = EllipseOf c w h 200
 
-instance HasV2 a => Draw (EllipseOf a) where
+instance HasP2 a => Draw (EllipseOf a) where
   draw e = for_ (toPolygon e) draw
 
 -- | Sample 'N' evenly spaced points along the ellipse's path
-ellipsePoints :: HasV2 a => EllipseOf a -> [a]
+ellipsePoints :: HasP2 a => EllipseOf a -> [a]
 ellipsePoints EllipseOf {..} =
   map ((\p -> ellipseCenter & set _V2 p) . ellipsePoint)
     $ lerpMany ellipseDetail 0 (2 * pi)
@@ -68,7 +68,7 @@ ellipsePoints EllipseOf {..} =
     * Matrix.translation (ellipseCenter ^. _V2)
   ellipsePoint t = Matrix.applyMatrix mat $ V2 (x + cos t) (y + sin t)
 
-toPolygon :: HasV2 a => EllipseOf a -> Maybe (PolygonOf a)
+toPolygon :: HasP2 a => EllipseOf a -> Maybe (PolygonOf a)
 toPolygon EllipseOf {..} =
   transform
       (  translated (ellipseCenter ^. _V2)

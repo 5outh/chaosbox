@@ -8,7 +8,7 @@ where
 
 import           Linear.V2
 import           Data.List.NonEmpty
-import           ChaosBox.Geometry.Class        ( HasV2(..) )
+import           ChaosBox.Geometry.Class        ( HasP2(..) )
 import           Control.Lens                   ( (^.) )
 import           ChaosBox.Geometry.P2
 
@@ -24,7 +24,7 @@ class HasAABB shape where
   aabb :: shape -> AABB
 
 -- | Get the bounds of a list of positioned objects.
-boundary :: HasV2 a => NonEmpty a -> AABB
+boundary :: HasP2 a => NonEmpty a -> AABB
 boundary xs = AABB tl w h
  where
   l        = toList xs

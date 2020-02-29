@@ -21,11 +21,11 @@ type Line = LineOf P2
 line :: a -> a -> LineOf a
 line = LineOf
 
-instance HasV2 a => HasAABB (LineOf a) where
+instance HasP2 a => HasAABB (LineOf a) where
   aabb LineOf {..} = boundary $ lineStart :| [lineEnd]
 
-instance HasV2 a => Affine (LineOf a) where
+instance HasP2 a => Affine (LineOf a) where
   transform = defaultTransform
 
-instance HasV2 a => Draw (LineOf a) where
+instance HasP2 a => Draw (LineOf a) where
   draw LineOf {..} = draw $ PathOf (lineStart :| [lineEnd])

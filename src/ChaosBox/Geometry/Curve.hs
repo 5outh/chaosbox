@@ -25,20 +25,20 @@ data CurveOf a = CurveOf { getCurve :: NonEmpty a, curveIterations :: Int }
 
 type Curve = CurveOf P2
 
-instance HasV2 a => HasAABB (CurveOf a) where
+instance HasP2 a => HasAABB (CurveOf a) where
   aabb = aabb . toPath
 
-instance HasV2 a => Affine (CurveOf a) where
+instance HasP2 a => Affine (CurveOf a) where
   transform = defaultTransform
 
-instance HasV2 a => Draw (CurveOf a) where
+instance HasP2 a => Draw (CurveOf a) where
   draw = drawWithDetail
 
 -- | Draw with a specified level of detail (default 5; smaller is less detailed)
-drawWithDetail :: HasV2 a => CurveOf a -> Render ()
+drawWithDetail :: HasP2 a => CurveOf a -> Render ()
 drawWithDetail = draw . toPath
 
-toPath :: HasV2 a => CurveOf a -> PathOf a
+toPath :: HasP2 a => CurveOf a -> PathOf a
 toPath (CurveOf ps detail) = PathOf
   (NE.fromList $ iterateNLast detail (go . expand) (NE.toList ps))
  where

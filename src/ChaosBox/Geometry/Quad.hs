@@ -29,18 +29,18 @@ data QuadOf a = QuadOf
   }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-instance HasV2 a => Affine (QuadOf a) where
+instance HasP2 a => Affine (QuadOf a) where
   transform = defaultTransform
 
-instance HasV2 a => HasAABB (QuadOf a) where
+instance HasP2 a => HasAABB (QuadOf a) where
   aabb QuadOf {..} = boundary $ quadA :| [quadB, quadC, quadD]
 
 -- To avoid cyclic dependencies this orphan instance must be located here
-instance HasV2 a => Affine (RectOf a) where
+instance HasP2 a => Affine (RectOf a) where
   type Transformed (RectOf a) = QuadOf a
   transform m = transform m . fromRect
 
-instance HasV2 a => Draw (QuadOf a) where
+instance HasP2 a => Draw (QuadOf a) where
   draw QuadOf {..} = for_ (polygon [quadA, quadB, quadC, quadD]) draw
 
 type Quad = QuadOf P2
@@ -48,7 +48,7 @@ type Quad = QuadOf P2
 quad :: a -> a -> a -> a -> QuadOf a
 quad = QuadOf
 
-fromRect :: HasV2 a => RectOf a -> QuadOf a
+fromRect :: HasP2 a => RectOf a -> QuadOf a
 fromRect RectOf {..} = QuadOf rectTopLeft
                               (rectTopLeft & _V2 +~ V2 rectW 0)
                               (rectTopLeft & _V2 +~ V2 rectW rectH)

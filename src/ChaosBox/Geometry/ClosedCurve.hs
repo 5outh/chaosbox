@@ -29,20 +29,20 @@ type ClosedCurve = ClosedCurveOf P2
 closedCurve :: [a] -> Maybe (ClosedCurveOf a)
 closedCurve xs = ClosedCurveOf <$> NE.nonEmpty xs <*> pure 5
 
-instance HasV2 a => HasAABB (ClosedCurveOf a) where
+instance HasP2 a => HasAABB (ClosedCurveOf a) where
   aabb = aabb . toPolygon
 
-instance HasV2 a => Affine (ClosedCurveOf a) where
+instance HasP2 a => Affine (ClosedCurveOf a) where
   transform = defaultTransform
 
-instance HasV2 a => Draw (ClosedCurveOf a) where
+instance HasP2 a => Draw (ClosedCurveOf a) where
   draw = drawWithDetail
 
 -- | Draw with a specified level of detail (default 5; smaller is less detailed)
-drawWithDetail :: HasV2 a => ClosedCurveOf a -> Render ()
+drawWithDetail :: HasP2 a => ClosedCurveOf a -> Render ()
 drawWithDetail = draw . toPolygon
 
-toPolygon :: HasV2 a => ClosedCurveOf a -> PolygonOf a
+toPolygon :: HasP2 a => ClosedCurveOf a -> PolygonOf a
 toPolygon (ClosedCurveOf ps detail) = PolygonOf (NE.fromList $ NE.tail newPath)
  where
   newPath = NE.fromList $ iterateNLast

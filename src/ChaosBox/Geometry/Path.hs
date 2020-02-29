@@ -26,16 +26,16 @@ newtype PathOf a = PathOf { getPath :: NonEmpty a}
 -- | An open path
 type Path = PathOf P2
 
-instance HasV2 a => Affine (PathOf a) where
+instance HasP2 a => Affine (PathOf a) where
   transform = defaultTransform
 
-instance HasV2 a => Draw (PathOf a) where
+instance HasP2 a => Draw (PathOf a) where
   draw (PathOf (start :| rest)) = do
     newPath
     moveTo (start ^. _V2 . _x) (start ^. _V2 . _y)
     for_ (map (^. _V2) rest) (\(V2 x y) -> lineTo x y)
 
-instance HasV2 a => HasAABB (PathOf a) where
+instance HasP2 a => HasAABB (PathOf a) where
   aabb = boundary . getPath
 
 path :: [a] -> Maybe (PathOf a)

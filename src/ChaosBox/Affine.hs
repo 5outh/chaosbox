@@ -23,7 +23,7 @@ where
 
 import           ChaosBox.Prelude                hiding (scaled)
 
-import           ChaosBox.Geometry.Class         (HasV2 (..))
+import           ChaosBox.Geometry.Class         (HasP2 (..))
 import           ChaosBox.Geometry.P2
 import qualified ChaosBox.Math.Matrix            as Matrix
 import           Control.Lens                    ((%~))
@@ -65,7 +65,7 @@ transformMatrix = transform . matrix
 --
 -- Note: This only works if @Transformed (f a) == f a@
 --
-defaultTransform :: (Functor f, HasV2 a) => Transform2d -> f a -> f a
+defaultTransform :: (Functor f, HasP2 a) => Transform2d -> f a -> f a
 defaultTransform (Transform2d m) = fmap (_V2 %~ Matrix.applyMatrix m)
 
 -- | Render something with an 'M33' transformation matrix applied

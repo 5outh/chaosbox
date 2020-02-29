@@ -26,13 +26,13 @@ newtype PolygonOf a = PolygonOf { getPolygon :: NonEmpty a }
 
 type Polygon = PolygonOf P2
 
-instance HasV2 a => HasAABB (PolygonOf a) where
+instance HasP2 a => HasAABB (PolygonOf a) where
   aabb = boundary . getPolygon
 
-instance HasV2 a => Affine (PolygonOf a) where
+instance HasP2 a => Affine (PolygonOf a) where
   transform = defaultTransform
 
-instance HasV2 a => Draw (PolygonOf a) where
+instance HasP2 a => Draw (PolygonOf a) where
   draw (PolygonOf (v :| rest)) = do
     let V2 startX startY = v ^. _V2
     newPath

@@ -30,13 +30,13 @@ type Triangle = TriangleOf P2
 triangle :: a -> a -> a -> TriangleOf a
 triangle = TriangleOf
 
-instance HasV2 a => HasAABB (TriangleOf a) where
+instance HasP2 a => HasAABB (TriangleOf a) where
   aabb = aabb . toPolygon
 
-instance HasV2 a => Affine (TriangleOf a) where
+instance HasP2 a => Affine (TriangleOf a) where
   transform = defaultTransform
 
-instance HasV2 a => Draw (TriangleOf a) where
+instance HasP2 a => Draw (TriangleOf a) where
   draw = draw . toPolygon
 
 -- TODO: This should exist in a typeclass IsPolygon or triangleToPolygon etc
@@ -44,7 +44,7 @@ instance HasV2 a => Draw (TriangleOf a) where
 toPolygon :: TriangleOf a -> PolygonOf a
 toPolygon TriangleOf {..} = PolygonOf $ triangleA :| [triangleB, triangleC]
 
-instance HasV2 a => Boundary (TriangleOf a) where
+instance HasP2 a => Boundary (TriangleOf a) where
   containsPoint t p = b1 == b2 && b2 == b3
    where
     [t1, t2, t3] = sortOnPolarAngle $ map (^. _V2) $ triangleList t

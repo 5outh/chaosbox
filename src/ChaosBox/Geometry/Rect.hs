@@ -32,14 +32,14 @@ data RectOf a = RectOf
 
 type Rect = RectOf P2
 
-instance HasV2 a => HasAABB (RectOf a) where
+instance HasP2 a => HasAABB (RectOf a) where
   aabb (RectOf tl w h) =  AABB (tl ^. _V2) w h
 
-instance HasV2 a => Draw (RectOf a) where
+instance HasP2 a => Draw (RectOf a) where
   draw RectOf {..} = rectangle rectX rectY rectW rectH
     where V2 rectX rectY = rectTopLeft ^. _V2
 
-instance HasV2 a => Boundary (RectOf a) where
+instance HasP2 a => Boundary (RectOf a) where
   RectOf{..} `containsPoint` (V2 x y) = x >= tlx && x < brx && y >= tly && y <= bry
    where
     V2 tlx tly = rectTopLeft ^. _V2

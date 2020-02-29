@@ -31,20 +31,20 @@ data CircleOf a = CircleOf { circleCenter :: a, circleRadius :: Double, circleDe
 
 type Circle = CircleOf P2
 
-instance HasV2 a => HasAABB (CircleOf a) where
+instance HasP2 a => HasAABB (CircleOf a) where
   aabb CircleOf {..} = boundary $ tl :| [br]
    where
     c  = circleCenter ^. _V2
     tl = c - (circleRadius *^ (-1))
     br = c + (circleRadius *^ 1)
 
-instance HasV2 a => Affine (CircleOf a) where
+instance HasP2 a => Affine (CircleOf a) where
   type Transformed (CircleOf a) = Maybe (PolygonOf a)
   transform m c = case toPolygon c of
     Nothing -> Nothing
     Just p  -> Just $ transform m p
 
-instance HasV2 a => Draw (CircleOf a) where
+instance HasP2 a => Draw (CircleOf a) where
   draw CircleOf {..} = do
     let V2 x y = circleCenter ^. _V2
     moveTo (x + circleRadius) y
@@ -57,10 +57,10 @@ circle v r = CircleOf v r 200
 point :: a -> CircleOf a
 point center = CircleOf center 0.5 200
 
-toPolygon :: HasV2 a => CircleOf a -> Maybe (PolygonOf a)
+toPolygon :: HasP2 a => CircleOf a -> Maybe (PolygonOf a)
 toPolygon = polygon . circlePoints
 
-circlePoints :: HasV2 a => CircleOf a -> [a]
+circlePoints :: HasP2 a => CircleOf a -> [a]
 circlePoints CircleOf {..} = tail $ flip map points $ \v ->
   circleCenter & _V2 .~ v
  where
@@ -68,5 +68,5 @@ circlePoints CircleOf {..} = tail $ flip map points $ \v ->
   intervals = [0, step .. (2 * pi)]
   points = map ((+ circleCenter ^. _V2) . (^* circleRadius) . angle) intervals
 
-pointsOnCircle :: HasV2 a => Int -> CircleOf a -> [a]
+pointsOnCircle :: HasP2 a => Int -> CircleOf a -> [a]
 n `pointsOnCircle` c = circlePoints $ c { circleDetail = n }
