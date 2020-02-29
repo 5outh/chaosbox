@@ -38,7 +38,7 @@ data ArcOf a = ArcOf
   }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-type Arc = ArcOf (P2)
+type Arc = ArcOf P2
 
 instance HasV2 a => Draw (ArcOf a) where
   draw ArcOf {..} = Cairo.arc x

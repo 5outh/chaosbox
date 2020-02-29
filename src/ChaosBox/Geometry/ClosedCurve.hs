@@ -24,7 +24,7 @@ import           Graphics.Rendering.Cairo       ( Render )
 data ClosedCurveOf a = ClosedCurveOf { getClosedCurve :: NonEmpty a, closedCurveIterations :: Int }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-type ClosedCurve = ClosedCurveOf (P2)
+type ClosedCurve = ClosedCurveOf P2
 
 closedCurve :: [a] -> Maybe (ClosedCurveOf a)
 closedCurve xs = ClosedCurveOf <$> NE.nonEmpty xs <*> pure 5

@@ -24,7 +24,7 @@ newtype PathOf a = PathOf { getPath :: NonEmpty a}
   deriving newtype (Applicative, Monad)
 
 -- | An open path
-type Path = PathOf (P2)
+type Path = PathOf P2
 
 instance HasV2 a => Affine (PathOf a) where
   transform = defaultTransform

@@ -23,7 +23,7 @@ import           Graphics.Rendering.Cairo       ( Render )
 data CurveOf a = CurveOf { getCurve :: NonEmpty a, curveIterations :: Int }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-type Curve = CurveOf (P2)
+type Curve = CurveOf P2
 
 instance HasV2 a => HasAABB (CurveOf a) where
   aabb = aabb . toPath

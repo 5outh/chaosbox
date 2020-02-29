@@ -25,7 +25,7 @@ data TriangleOf a = TriangleOf
   }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-type Triangle = TriangleOf (P2)
+type Triangle = TriangleOf P2
 
 triangle :: a -> a -> a -> TriangleOf a
 triangle = TriangleOf

@@ -24,7 +24,7 @@ newtype PolygonOf a = PolygonOf { getPolygon :: NonEmpty a }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
   deriving newtype (Applicative, Monad)
 
-type Polygon = PolygonOf (P2)
+type Polygon = PolygonOf P2
 
 instance HasV2 a => HasAABB (PolygonOf a) where
   aabb = boundary . getPolygon

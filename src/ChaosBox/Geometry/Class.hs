@@ -14,9 +14,9 @@ class Boundary a where
   containsPoint :: a -> P2 -> Bool
 
 class HasV2 a where
-  _V2 :: Lens' a (P2)
+  _V2 :: Lens' a P2
 
-instance HasV2 (P2) where
+instance HasV2 P2 where
   _V2 = _xy
 
 instance HasV2 (Complex Double) where

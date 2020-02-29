@@ -29,7 +29,7 @@ import           Graphics.Rendering.Cairo
 data CircleOf a = CircleOf { circleCenter :: a, circleRadius :: Double, circleDetail :: Int }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-type Circle = CircleOf (P2)
+type Circle = CircleOf P2
 
 instance HasV2 a => HasAABB (CircleOf a) where
   aabb CircleOf {..} = boundary $ tl :| [br]

@@ -43,7 +43,7 @@ instance HasV2 a => Affine (RectOf a) where
 instance HasV2 a => Draw (QuadOf a) where
   draw QuadOf {..} = for_ (polygon [quadA, quadB, quadC, quadD]) draw
 
-type Quad = QuadOf (P2)
+type Quad = QuadOf P2
 
 quad :: a -> a -> a -> a -> QuadOf a
 quad = QuadOf

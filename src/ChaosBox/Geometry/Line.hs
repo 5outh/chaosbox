@@ -16,7 +16,7 @@ import           Data.List.NonEmpty
 data LineOf a = LineOf { lineStart :: a, lineEnd :: a}
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-type Line = LineOf (P2)
+type Line = LineOf P2
 
 line :: a -> a -> LineOf a
 line = LineOf

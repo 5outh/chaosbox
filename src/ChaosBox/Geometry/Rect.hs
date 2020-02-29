@@ -30,7 +30,7 @@ data RectOf a = RectOf
   }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-type Rect = RectOf (P2)
+type Rect = RectOf P2
 
 instance HasV2 a => HasAABB (RectOf a) where
   aabb (RectOf tl w h) =  AABB (tl ^. _V2) w h

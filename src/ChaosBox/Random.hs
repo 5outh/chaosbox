@@ -154,7 +154,7 @@ unsafeSuchThat gen predicate = do
 
 -- | Generate a uniformly distributed point within a bounded shape
 uniformPointIn
-  :: (Boundary a, HasAABB a, Monad m) => a -> GenerateT m (Maybe (P2))
+  :: (Boundary a, HasAABB a, Monad m) => a -> GenerateT m (Maybe P2)
 uniformPointIn a = genPointInAABB (aabb a) `suchThat` containsPoint a
  where
   genPointInAABB (AABB (V2 tx ty) w h) = do

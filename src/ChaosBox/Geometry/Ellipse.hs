@@ -34,7 +34,7 @@ data EllipseOf a = EllipseOf
   }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
-type Ellipse = EllipseOf (P2)
+type Ellipse = EllipseOf P2
 
 instance HasV2 a => HasAABB (EllipseOf a) where
   aabb EllipseOf {..} = boundary $ tl :| [ br]

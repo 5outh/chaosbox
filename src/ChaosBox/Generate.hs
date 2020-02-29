@@ -59,7 +59,7 @@ getSize = do
   (w, h) <- asks (gcWidth &&& gcHeight)
   pure (fromIntegral w, fromIntegral h)
 
-getCenterPoint :: Generate (P2)
+getCenterPoint :: Generate P2
 getCenterPoint = do
   (w, h) <- asks (gcWidth &&& gcHeight)
   pure $ V2 (fromIntegral w / 2) (fromIntegral h / 2)
