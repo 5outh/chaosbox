@@ -1,6 +1,7 @@
 module ChaosBox.Geometry.Line
   ( LineOf(..)
   , Line
+  , pattern Line
   , line
   )
 where
@@ -17,6 +18,9 @@ data LineOf a = LineOf { lineStart :: a, lineEnd :: a}
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 type Line = LineOf P2
+
+pattern Line :: P2 -> P2 -> Line
+pattern Line s e = LineOf s e
 
 line :: a -> a -> LineOf a
 line = LineOf
