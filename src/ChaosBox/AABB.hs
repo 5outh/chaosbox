@@ -1,4 +1,4 @@
--- | Minimal axis-alignedbounding boxes by an axis-aligned bounding box
+-- | Minimally axis-aligned bounding boxes
 module ChaosBox.AABB
   ( HasAABB(..)
   , AABB(..)
