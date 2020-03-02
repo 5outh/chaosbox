@@ -1,23 +1,24 @@
 module ChaosBox.Geometry.Polygon
   ( PolygonOf(..)
   , Polygon
+  , pattern Polygon
+  , polygonOf
   , polygon
   )
 where
 
 import           ChaosBox.Prelude
 
-import           ChaosBox.Geometry.P2
+import           ChaosBox.AABB
 import           ChaosBox.Affine
 import           ChaosBox.Draw
-import           ChaosBox.AABB
 import           ChaosBox.Geometry.Class
-import           Control.Lens                   ( (^.) )
-import           Data.Foldable                  ( for_ )
-import           Data.List.NonEmpty             ( NonEmpty(..) )
-import qualified Data.List.NonEmpty            as NE
-import           Graphics.Rendering.Cairo
-                                         hiding ( Path )
+import           ChaosBox.Geometry.P2
+import           Control.Lens             ((^.))
+import           Data.Foldable            (for_)
+import           Data.List.NonEmpty       (NonEmpty (..))
+import qualified Data.List.NonEmpty       as NE
+import           Graphics.Rendering.Cairo hiding (Path)
 
 -- | A closed path
 newtype PolygonOf a = PolygonOf { getPolygon :: NonEmpty a }
@@ -25,6 +26,9 @@ newtype PolygonOf a = PolygonOf { getPolygon :: NonEmpty a }
   deriving newtype (Applicative, Monad)
 
 type Polygon = PolygonOf P2
+
+pattern Polygon :: NonEmpty P2 -> Polygon
+pattern Polygon a = PolygonOf a
 
 instance HasP2 a => HasAABB (PolygonOf a) where
   aabb = boundary . getPolygon
@@ -40,5 +44,8 @@ instance HasP2 a => Draw (PolygonOf a) where
     for_ (map (^. _V2) rest) (\(V2 x y) -> lineTo x y)
     closePath
 
-polygon :: [a] -> Maybe (PolygonOf a)
-polygon xs = PolygonOf <$> NE.nonEmpty xs
+polygonOf :: [a] -> Maybe (PolygonOf a)
+polygonOf xs = PolygonOf <$> NE.nonEmpty xs
+
+polygon :: [P2] -> Maybe Polygon
+polygon = polygonOf

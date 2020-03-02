@@ -2,24 +2,22 @@
 module ChaosBox.Geometry.Quad
   ( QuadOf(..)
   , Quad
-  , quad
+  , pattern Quad
   )
 where
 
 import           ChaosBox.Prelude
 
-import           ChaosBox.Geometry.P2
+import           ChaosBox.AABB
 import           ChaosBox.Affine
 import           ChaosBox.Draw
-import           ChaosBox.Geometry.Polygon      ( polygon )
-import           ChaosBox.Geometry.Rect
-import           ChaosBox.AABB
 import           ChaosBox.Geometry.Class
-import           Control.Lens                   ( (&)
-                                                , (+~)
-                                                )
-import           Data.Foldable                  ( for_ )
-import           Data.List.NonEmpty             ( NonEmpty(..) )
+import           ChaosBox.Geometry.P2
+import           ChaosBox.Geometry.Polygon (polygonOf)
+import           ChaosBox.Geometry.Rect
+import           Control.Lens              ((&), (+~))
+import           Data.Foldable             (for_)
+import           Data.List.NonEmpty        (NonEmpty (..))
 
 data QuadOf a = QuadOf
   { quadA :: a
@@ -28,6 +26,11 @@ data QuadOf a = QuadOf
   , quadD :: a
   }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
+
+type Quad = QuadOf P2
+
+pattern Quad :: P2 -> P2 -> P2 -> P2 -> Quad
+pattern Quad a b c d = QuadOf a b c d
 
 instance HasP2 a => Affine (QuadOf a) where
   transform = defaultTransform
@@ -41,12 +44,7 @@ instance HasP2 a => Affine (RectOf a) where
   transform m = transform m . fromRect
 
 instance HasP2 a => Draw (QuadOf a) where
-  draw QuadOf {..} = for_ (polygon [quadA, quadB, quadC, quadD]) draw
-
-type Quad = QuadOf P2
-
-quad :: a -> a -> a -> a -> QuadOf a
-quad = QuadOf
+  draw QuadOf {..} = for_ (polygonOf [quadA, quadB, quadC, quadD]) draw
 
 fromRect :: HasP2 a => RectOf a -> QuadOf a
 fromRect RectOf {..} = QuadOf rectTopLeft

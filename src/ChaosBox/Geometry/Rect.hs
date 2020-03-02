@@ -2,8 +2,9 @@
 module ChaosBox.Geometry.Rect
   ( RectOf(..)
   , Rect
+  , pattern Rect
   -- * Smart constructors
-  , rect
+  , squareOf
   , square
   -- * Conversions
   , fromAABB
@@ -12,15 +13,12 @@ where
 
 import           ChaosBox.Prelude
 
-import           ChaosBox.Geometry.P2
 import           ChaosBox.AABB
-import           ChaosBox.Geometry.Class
 import           ChaosBox.Draw
-import           Control.Lens                   ( (^.) )
-import           Graphics.Rendering.Cairo
-                                         hiding ( Path
-                                                , transform
-                                                )
+import           ChaosBox.Geometry.Class
+import           ChaosBox.Geometry.P2
+import           Control.Lens             ((^.))
+import           Graphics.Rendering.Cairo hiding (Path, transform)
 
 -- | A Rectangle
 data RectOf a = RectOf
@@ -29,8 +27,6 @@ data RectOf a = RectOf
   , rectH       :: Double
   }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
-
-type Rect = RectOf P2
 
 instance HasP2 a => HasAABB (RectOf a) where
   aabb (RectOf tl w h) =  AABB (tl ^. _V2) w h
@@ -45,11 +41,16 @@ instance HasP2 a => Boundary (RectOf a) where
     V2 tlx tly = rectTopLeft ^. _V2
     V2 brx bry = rectTopLeft ^. _V2 + V2 rectW rectH
 
-rect :: a -> Double -> Double -> RectOf a
-rect c w h = RectOf c w h
+squareOf :: a -> Double -> RectOf a
+squareOf c w = RectOf c w w
 
-square :: a -> Double -> RectOf a
-square c w = RectOf c w w
+square :: P2 -> Double -> Rect
+square = squareOf
+
+type Rect = RectOf P2
+
+pattern Rect :: P2 -> Double -> Double -> Rect
+pattern Rect c w h = RectOf c w h
 
 fromAABB :: AABB -> Rect
 fromAABB (AABB tl w h) = RectOf tl w h

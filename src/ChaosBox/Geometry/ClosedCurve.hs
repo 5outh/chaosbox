@@ -2,23 +2,25 @@
 module ChaosBox.Geometry.ClosedCurve
   ( ClosedCurveOf(..)
   , ClosedCurve
+  , pattern ClosedCurve
   , closedCurve
+  , closedCurveOf
   , drawWithDetail
   , fromPolygon
   , toPolygon
   )
 where
 
-import           ChaosBox.Geometry.P2
+import           ChaosBox.AABB
 import           ChaosBox.Affine
 import           ChaosBox.Draw
-import           ChaosBox.Geometry.Polygon
-import           ChaosBox.AABB
 import           ChaosBox.Geometry.Class
+import           ChaosBox.Geometry.P2
+import           ChaosBox.Geometry.Polygon
 import           Control.Lens
-import           Data.List.NonEmpty             ( NonEmpty )
-import qualified Data.List.NonEmpty            as NE
-import           Graphics.Rendering.Cairo       ( Render )
+import           Data.List.NonEmpty        (NonEmpty)
+import qualified Data.List.NonEmpty        as NE
+import           Graphics.Rendering.Cairo  (Render)
 
 -- | Closed Cubic B-Spline
 data ClosedCurveOf a = ClosedCurveOf { getClosedCurve :: NonEmpty a, closedCurveIterations :: Int }
@@ -26,8 +28,14 @@ data ClosedCurveOf a = ClosedCurveOf { getClosedCurve :: NonEmpty a, closedCurve
 
 type ClosedCurve = ClosedCurveOf P2
 
-closedCurve :: [a] -> Maybe (ClosedCurveOf a)
-closedCurve xs = ClosedCurveOf <$> NE.nonEmpty xs <*> pure 5
+pattern ClosedCurve :: NonEmpty P2 -> Int -> ClosedCurve
+pattern ClosedCurve a i = ClosedCurveOf a i
+
+closedCurveOf :: [a] -> Maybe (ClosedCurveOf a)
+closedCurveOf xs = ClosedCurveOf <$> NE.nonEmpty xs <*> pure 5
+
+closedCurve :: [P2] -> Maybe ClosedCurve
+closedCurve = closedCurveOf @P2
 
 instance HasP2 a => HasAABB (ClosedCurveOf a) where
   aabb = aabb . toPolygon

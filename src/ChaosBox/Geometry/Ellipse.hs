@@ -2,28 +2,27 @@
 module ChaosBox.Geometry.Ellipse
   ( EllipseOf(..)
   , Ellipse
+  , pattern Ellipse
   , ellipse
+  , ellipseOf
   , ellipsePoints
   )
 where
 
-import           ChaosBox.Prelude        hiding ( scaled )
+import           ChaosBox.Prelude          hiding (scaled)
 
-import           ChaosBox.Geometry.P2
-import           Data.List.NonEmpty             ( NonEmpty(..) )
+import           ChaosBox.AABB
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Circle
-import           ChaosBox.Geometry.Polygon
-import           ChaosBox.AABB
 import           ChaosBox.Geometry.Class
-import           ChaosBox.Math                  ( lerpMany )
-import qualified ChaosBox.Math.Matrix          as Matrix
-import           Control.Lens                   ( set
-                                                , (&)
-                                                , (^.)
-                                                )
-import           Data.Foldable                  ( for_ )
+import           ChaosBox.Geometry.P2
+import           ChaosBox.Geometry.Polygon
+import           ChaosBox.Math             (lerpMany)
+import qualified ChaosBox.Math.Matrix      as Matrix
+import           Control.Lens              (set, (&), (^.))
+import           Data.Foldable             (for_)
+import           Data.List.NonEmpty        (NonEmpty (..))
 
 -- | Axis-bound ellipse
 data EllipseOf a = EllipseOf
@@ -35,6 +34,9 @@ data EllipseOf a = EllipseOf
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 type Ellipse = EllipseOf P2
+
+pattern Ellipse :: P2 -> Double -> Double -> Int -> Ellipse
+pattern Ellipse c w h d = EllipseOf c w h d
 
 instance HasP2 a => HasAABB (EllipseOf a) where
   aabb EllipseOf {..} = boundary $ tl :| [ br]
@@ -51,7 +53,11 @@ instance HasP2 a => Affine (EllipseOf a) where
     Just p  -> Just $ transform m p
 
 -- | An ellipse with default detail (200)
-ellipse :: a -> Double -> Double -> EllipseOf a
+ellipseOf :: a -> Double -> Double -> EllipseOf a
+ellipseOf c w h = EllipseOf c w h 200
+
+-- | An ellipse with default detail (200)
+ellipse :: P2 -> Double -> Double -> Ellipse
 ellipse c w h = EllipseOf c w h 200
 
 instance HasP2 a => Draw (EllipseOf a) where
@@ -74,4 +80,4 @@ toPolygon EllipseOf {..} =
       (  translated (ellipseCenter ^. _V2)
       <> scaled (V2 ellipseWidth ellipseHeight)
       )
-    $ circle (ellipseCenter & set _V2 0) 1
+    $ circleOf (ellipseCenter & set _V2 0) 1

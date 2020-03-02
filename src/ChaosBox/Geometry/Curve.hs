@@ -1,29 +1,34 @@
 module ChaosBox.Geometry.Curve
   ( CurveOf(..)
   , Curve
+  , pattern Curve
   , curve
+  , curveOf
   , curveWithDetail
   , toPath
   , fromPath
   )
 where
 
-import           ChaosBox.Geometry.P2
+import           ChaosBox.AABB
 import           ChaosBox.Affine
 import           ChaosBox.Draw
-import           ChaosBox.Geometry.Path
-import           ChaosBox.AABB
 import           ChaosBox.Geometry.Class
+import           ChaosBox.Geometry.P2
+import           ChaosBox.Geometry.Path
 import           Control.Lens
-import           Data.List.NonEmpty             ( NonEmpty(..) )
-import qualified Data.List.NonEmpty            as NE
-import           Graphics.Rendering.Cairo       ( Render )
+import           Data.List.NonEmpty       (NonEmpty (..))
+import qualified Data.List.NonEmpty       as NE
+import           Graphics.Rendering.Cairo (Render)
 
 -- | Cubic B-Spline
 data CurveOf a = CurveOf { getCurve :: NonEmpty a, curveIterations :: Int }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 type Curve = CurveOf P2
+
+pattern Curve :: NonEmpty P2 -> Int -> Curve
+pattern Curve a i = CurveOf a i
 
 instance HasP2 a => HasAABB (CurveOf a) where
   aabb = aabb . toPath
@@ -63,8 +68,11 @@ fromPath (PathOf p) = CurveOf p 5
 iterateNLast :: Int -> (a -> a) -> a -> a
 iterateNLast n f x = last . take n $ iterate f x
 
-curve :: [a] -> Maybe (CurveOf a)
-curve xs = CurveOf <$> NE.nonEmpty xs <*> pure 5
+curveOf :: [a] -> Maybe (CurveOf a)
+curveOf xs = CurveOf <$> NE.nonEmpty xs <*> pure 5
+
+curve :: [P2] -> Maybe Curve
+curve = curveOf @P2
 
 curveWithDetail :: [a] -> Int -> Maybe (CurveOf a)
 curveWithDetail xs detail = CurveOf <$> NE.nonEmpty xs <*> pure detail

@@ -1,27 +1,26 @@
 module ChaosBox.Geometry.Arc
   ( ArcOf(..)
   , Arc
+  , pattern Arc
   , arc
+  , arcOf
   , arcPoints
   )
 where
 
-import           ChaosBox.Prelude        hiding ( unit )
+import           ChaosBox.Prelude         hiding (unit)
 
-import           ChaosBox.Geometry.P2
-import           Data.List.NonEmpty             ( NonEmpty(..) )
+import           ChaosBox.AABB
 import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Angle
-import           ChaosBox.Geometry.Path
-import           ChaosBox.AABB
 import           ChaosBox.Geometry.Class
-import           ChaosBox.Math                  ( lerpMany )
-import           Control.Lens                   ( (&)
-                                                , (.~)
-                                                , (^.)
-                                                )
-import qualified Graphics.Rendering.Cairo      as Cairo
+import           ChaosBox.Geometry.P2
+import           ChaosBox.Geometry.Path
+import           ChaosBox.Math            (lerpMany)
+import           Control.Lens             ((&), (.~), (^.))
+import           Data.List.NonEmpty       (NonEmpty (..))
+import qualified Graphics.Rendering.Cairo as Cairo
 
 -- | Arc (partial Circle)
 data ArcOf a = ArcOf
@@ -40,6 +39,9 @@ data ArcOf a = ArcOf
 
 type Arc = ArcOf P2
 
+pattern Arc :: P2 -> Double -> Angle -> Angle -> Int -> Arc
+pattern Arc a r s e d = ArcOf a r s e d
+
 instance HasP2 a => Draw (ArcOf a) where
   draw ArcOf {..} = Cairo.arc x
                               y
@@ -50,7 +52,7 @@ instance HasP2 a => Draw (ArcOf a) where
 
 instance HasP2 a => Affine (ArcOf a) where
   type Transformed (ArcOf a) = Maybe (PathOf a)
-  transform m = fmap (transform m) . path . arcPoints
+  transform m = fmap (transform m) . pathOf . arcPoints
 
 instance HasP2 a => HasAABB (ArcOf a) where
   aabb ArcOf {..} = boundary $ p1 :| [p2]
@@ -59,8 +61,13 @@ instance HasP2 a => HasAABB (ArcOf a) where
     p1 = c + unit arcStart ^* arcRadius
     p2 = c + unit arcEnd ^* arcRadius
 
-arc :: a -> Double -> Angle -> Angle -> ArcOf a
-arc c r s e = ArcOf c r s e 100
+-- | An 'Arc' with default detail (200)
+arcOf :: a -> Double -> Angle -> Angle -> ArcOf a
+arcOf c r s e = ArcOf c r s e 200
+
+-- | An 'Arc' with default detail (200)
+arc :: P2 -> Double -> Angle -> Angle -> Arc
+arc = arcOf @P2
 
 arcPoints :: HasP2 a => ArcOf a -> [a]
 arcPoints ArcOf {..} = points

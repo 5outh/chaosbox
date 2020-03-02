@@ -1,22 +1,22 @@
 module ChaosBox.Geometry.Triangle
   ( TriangleOf(..)
   , Triangle
-  , triangle
+  , pattern Triangle
   )
 where
 
 import           ChaosBox.Prelude
 
-import           ChaosBox.Geometry.P2
-import           Data.Function                  ( on )
-import           Control.Lens                   ( (^.) )
+import           ChaosBox.AABB
 import           ChaosBox.Affine
 import           ChaosBox.Draw
-import           ChaosBox.Geometry.Polygon
-import           ChaosBox.AABB
 import           ChaosBox.Geometry.Class
-import           Data.List.NonEmpty             ( NonEmpty(..) )
-import           Data.List                      ( sortBy )
+import           ChaosBox.Geometry.P2
+import           ChaosBox.Geometry.Polygon
+import           Control.Lens              ((^.))
+import           Data.Function             (on)
+import           Data.List                 (sortBy)
+import           Data.List.NonEmpty        (NonEmpty (..))
 
 data TriangleOf a = TriangleOf
   { triangleA :: a
@@ -24,11 +24,6 @@ data TriangleOf a = TriangleOf
   , triangleC :: a
   }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
-
-type Triangle = TriangleOf P2
-
-triangle :: a -> a -> a -> TriangleOf a
-triangle = TriangleOf
 
 instance HasP2 a => HasAABB (TriangleOf a) where
   aabb = aabb . toPolygon
@@ -38,6 +33,11 @@ instance HasP2 a => Affine (TriangleOf a) where
 
 instance HasP2 a => Draw (TriangleOf a) where
   draw = draw . toPolygon
+
+type Triangle = TriangleOf P2
+
+pattern Triangle :: P2 -> P2 -> P2 -> Triangle
+pattern Triangle a b c = TriangleOf a b c
 
 -- TODO: This should exist in a typeclass IsPolygon or triangleToPolygon etc
 -- etc
