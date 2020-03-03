@@ -6,11 +6,13 @@
 {-# LANGUAGE TypeFamilies          #-}
 module ChaosBox.Generate where
 
+import           ChaosBox.AABB
 import           ChaosBox.Geometry.P2
 import           Control.Arrow                 ((&&&))
 import           Control.Monad.Random
 import           Control.Monad.Reader
 import           Data.IORef
+import           Data.List.NonEmpty            (NonEmpty (..))
 import           Data.Random.Internal.Source
 import           Data.Random.Source            as Source
 import           GHC.Word                      (Word64)
@@ -51,7 +53,7 @@ type Generate a = GenerateT Render a
 
 $(monadRandom [d|
   instance Monad m => Source.MonadRandom (RandT PureMT (ReaderT GenerateCtx m)) where
-    getRandomWord64 = liftRandT (\g -> pure $ randomWord64 g)
+    getRandomWord64 = liftRandT (pure . randomWord64)
   |])
 
 getSize :: Num a => Generate (a, a)
@@ -92,6 +94,12 @@ runGenerate surface ctx@GenerateCtx {..} doRender =
     cairo $ scale gcScale gcScale
     doRender
 
--- | Lift a Cairo action into a Generate action
+-- | Lift a 'Render' (cairo) action into a 'Generate' action
 cairo :: Render a -> Generate a
 cairo = lift . lift
+
+-- | Get the bounding 'AABB' for the image surface
+getBounds :: Generate AABB
+getBounds = do
+  (w, h) <- getSize
+  pure $ boundary $ 0 :| [P2 w h]
