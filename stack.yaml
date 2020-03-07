@@ -4,5 +4,5 @@ packages:
 - .
 extra-deps:
   - random-extras-0.19
-  - cairo-0.13.6.1
   - gtk2hs-buildtools-0.13.5.4
+  - gi-cairo-render-0.0.1@sha256:ff2ccc309c021c2c023fa0d380375ef36cff2df93e0c78ed733f052dd1aa9782,3502

@@ -12,8 +12,11 @@ import           Data.Foldable (for_)
 -- @@@
 --
 main :: IO ()
-main = runChaosBoxIOWith (\opts -> opts { optWidth = 8, optHeight = 10 })
-                         renderSketch
+main = do
+  opts <- getDefaultOpts
+  runChaosBoxInteractive
+    (opts { optWidth = 8, optHeight = 10, optScale = 100 })
+    renderSketch
 
 renderSketch :: Generate ()
 renderSketch = do
