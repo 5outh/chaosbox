@@ -21,7 +21,7 @@ import           ChaosBox.Geometry.P2
 import           ChaosBox.Geometry.Polygon
 import           Control.Lens              ((&), (.~), (^.))
 import           Data.List.NonEmpty        (NonEmpty (..))
-import           Graphics.Rendering.Cairo  hiding (transform)
+import           GI.Cairo.Render           hiding (transform)
 
 -- | A circle with radius 'circleRadius' centered at 'circleCenter'
 data CircleOf a = CircleOf { circleCenter :: a, circleRadius :: Double, circleDetail :: Int }

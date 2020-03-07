@@ -16,7 +16,7 @@ import           Data.List.NonEmpty            (NonEmpty (..))
 import           Data.Random.Internal.Source
 import           Data.Random.Source            as Source
 import           GHC.Word                      (Word64)
-import           Graphics.Rendering.Cairo
+import           GI.Cairo.Render
 import           Linear.V2
 import           System.Random.Mersenne.Pure64
 import           Text.Printf

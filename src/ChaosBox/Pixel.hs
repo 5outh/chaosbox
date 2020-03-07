@@ -1,12 +1,12 @@
 {-# LANGUAGE DataKinds           #-}
-{-# LANGUAGE DeriveFunctor       #-}
+
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE FlexibleInstances   #-}
-{-# LANGUAGE LambdaCase          #-}
+
 {-# LANGUAGE PolyKinds           #-}
 {-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TupleSections       #-}
+
 {-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE TypeOperators       #-}
 module ChaosBox.Pixel
@@ -19,16 +19,17 @@ module ChaosBox.Pixel
   )
 where
 
-import           ChaosBox.Color           (rgb255)
+import           ChaosBox.Color       (rgb255)
 
-import           Data.Array.MArray        (readArray)
+import           Data.Array.MArray    (readArray)
 import           Data.Bits
 import           Data.Colour.RGBSpace
-import           Data.Sequence            (Seq)
-import qualified Data.Sequence            as Seq
+import           Data.Maybe           (fromMaybe)
+import           Data.Sequence        (Seq)
+import qualified Data.Sequence        as Seq
 import           Data.Traversable
 import           Data.Word
-import           Graphics.Rendering.Cairo hiding (Path)
+import           GI.Cairo.Render      hiding (Path)
 import           Linear.V2
 
 newtype Pixel = Pixel { getPixel :: RGB Double }
@@ -38,19 +39,21 @@ newtype PixelArray = PixelArray{ getPixelArray :: Seq (Seq Pixel) }
  deriving (Show, Eq)
 
 readPixelAt :: V2 Int -> PixelArray -> Pixel
-readPixelAt (V2 x y) pixelArray = case readColumn x pixelArray Seq.!? y of
-  Nothing -> error $ "Column " <> show y <> " out of bounds"
-  Just px -> px
+readPixelAt (V2 x y) pixelArray =
+  fromMaybe (error $ "Column " <> show y <> " out of bounds")
+    $      readColumn x pixelArray
+    Seq.!? y
 
 readColumn :: Int -> PixelArray -> Seq Pixel
-readColumn y PixelArray {..} = case getPixelArray Seq.!? y of
-  Nothing  -> error $ "Column " <> show y <> " out of bounds"
-  Just col -> col
+readColumn y PixelArray {..} =
+  fromMaybe (error $ "Column " <> show y <> " out of bounds")
+    $      getPixelArray
+    Seq.!? y
 
 readRow :: Int -> PixelArray -> Seq Pixel
-readRow x PixelArray {..} = case traverse (Seq.!? x) getPixelArray of
-  Nothing  -> error $ "Row " <> show x <> " out of bounds"
-  Just row -> row
+readRow x PixelArray {..} =
+  fromMaybe (error $ "Row " <> show x <> " out of bounds")
+    $ traverse (Seq.!? x) getPixelArray
 
 -- | Parse pixels from a png file with transparency into a 2d array
 --
@@ -74,8 +77,8 @@ parsePixelsFromFile filePath = PixelArray <$> do
   let xs = Seq.fromList [0, 1 .. width - 1]
       ys = Seq.fromList [0, 1 .. height - 1]
 
-  for xs $ \x -> do
-    for ys $ \y -> Pixel . lowerRGB <$> pixelAt (V2 x y) stride pixels
+  for xs
+    $ \x -> for ys $ \y -> Pixel . lowerRGB <$> pixelAt (V2 x y) stride pixels
 
 pixelIndex :: V2 Int -> Int -> Int
 pixelIndex (V2 x y) stride = y * (stride `div` 4) + x
@@ -93,7 +96,7 @@ toRGBA word = RGBA (c red) (c green) (c blue) (c alpha)
  where
   alpha = (0xFF000000 .&. word) `shiftR` (8 * 3)
   red   = (0x00FF0000 .&. word) `shiftR` (8 * 2)
-  green = (0x0000FF00 .&. word) `shiftR` (8 * 1)
+  green = (0x0000FF00 .&. word) `shiftR` 8
   blue  = 0x000000FF .&. word
 
   c     = fromIntegral . toInteger

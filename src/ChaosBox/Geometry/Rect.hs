@@ -17,8 +17,8 @@ import           ChaosBox.AABB
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Class
 import           ChaosBox.Geometry.P2
-import           Control.Lens             ((^.))
-import           Graphics.Rendering.Cairo hiding (Path, transform)
+import           Control.Lens            ((^.))
+import           GI.Cairo.Render         hiding (Path, transform)
 
 -- | A Rectangle
 data RectOf a = RectOf

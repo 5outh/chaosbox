@@ -3,7 +3,7 @@ module ChaosBox.Draw
   )
 where
 
-import           Graphics.Rendering.Cairo
+import           GI.Cairo.Render
 
 -- | Class of drawable items.
 --

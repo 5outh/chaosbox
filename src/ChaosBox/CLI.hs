@@ -11,11 +11,11 @@ import           ChaosBox.Generate
 import           Control.Monad.Random
 import           Control.Monad.Reader
 import           Data.IORef
-import           Data.Maybe                     ( fromMaybe )
-import           Data.Semigroup                 ( (<>) )
+import           Data.Maybe                    (fromMaybe)
+import           Data.Semigroup                ((<>))
 import           Data.Time.Clock.POSIX
 import           GHC.Word
-import           Graphics.Rendering.Cairo
+import           GI.Cairo.Render
 import           Options.Applicative
 import           System.Directory
 import           System.Random.Mersenne.Pure64
