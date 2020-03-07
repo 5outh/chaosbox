@@ -21,14 +21,15 @@ module ChaosBox.Affine
   )
 where
 
-import           ChaosBox.Prelude                hiding (scaled)
+import           ChaosBox.Prelude        hiding (scaled)
 
-import           ChaosBox.Geometry.Class         (HasP2 (..))
+import           ChaosBox.Geometry.Class (HasP2 (..))
 import           ChaosBox.Geometry.P2
-import qualified ChaosBox.Math.Matrix            as Matrix
-import           Control.Lens                    ((%~))
-import           Graphics.Rendering.Cairo        hiding (transform)
-import qualified Graphics.Rendering.Cairo.Matrix as CairoMatrix
+import qualified ChaosBox.Math.Matrix    as Matrix
+import           Control.Lens            ((%~))
+import           GI.Cairo.Render         hiding (transform)
+import qualified GI.Cairo.Render.Matrix  as CairoMatrix
+-- import qualified Graphics.Rendering.Cairo.Matrix as CairoMatrix
 
 -- | 2d transformation represented as a 3x3 Matrix
 --

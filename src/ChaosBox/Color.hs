@@ -30,8 +30,8 @@ import           ChaosBox.Generate
 import           Data.Colour.RGBSpace     as X
 import           Data.Colour.RGBSpace.HSV
 import           Data.Colour.SRGB
-import           Graphics.Rendering.Cairo hiding (setSourceRGB)
-import qualified Graphics.Rendering.Cairo as Cairo
+import           GI.Cairo.Render          hiding (setSourceRGB)
+import qualified GI.Cairo.Render          as Cairo
 
 data HSV = HSV
   { hsvHue        :: Double

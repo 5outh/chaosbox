@@ -14,11 +14,11 @@ import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Class
 import           ChaosBox.Geometry.P2
-import           Control.Lens             ((^.))
-import           Data.Foldable            (for_)
-import           Data.List.NonEmpty       (NonEmpty (..))
-import qualified Data.List.NonEmpty       as NE
-import           Graphics.Rendering.Cairo hiding (Path)
+import           Control.Lens            ((^.))
+import           Data.Foldable           (for_)
+import           Data.List.NonEmpty      (NonEmpty (..))
+import qualified Data.List.NonEmpty      as NE
+import           GI.Cairo.Render         hiding (Path)
 
 -- | A closed path
 newtype PolygonOf a = PolygonOf { getPolygon :: NonEmpty a }

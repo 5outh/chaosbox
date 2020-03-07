@@ -17,9 +17,9 @@ import           ChaosBox.Geometry.Class
 import           ChaosBox.Geometry.P2
 import           ChaosBox.Geometry.Path
 import           Control.Lens
-import           Data.List.NonEmpty       (NonEmpty (..))
-import qualified Data.List.NonEmpty       as NE
-import           Graphics.Rendering.Cairo (Render)
+import           Data.List.NonEmpty      (NonEmpty (..))
+import qualified Data.List.NonEmpty      as NE
+import           GI.Cairo.Render         (Render)
 
 -- | Cubic B-Spline
 data CurveOf a = CurveOf { getCurve :: NonEmpty a, curveIterations :: Int }

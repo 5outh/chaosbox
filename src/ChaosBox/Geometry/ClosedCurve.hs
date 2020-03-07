@@ -20,7 +20,7 @@ import           ChaosBox.Geometry.Polygon
 import           Control.Lens
 import           Data.List.NonEmpty        (NonEmpty)
 import qualified Data.List.NonEmpty        as NE
-import           Graphics.Rendering.Cairo  (Render)
+import           GI.Cairo.Render           (Render)
 
 -- | Closed Cubic B-Spline
 data ClosedCurveOf a = ClosedCurveOf { getClosedCurve :: NonEmpty a, closedCurveIterations :: Int }

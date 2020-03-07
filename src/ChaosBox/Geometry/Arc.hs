@@ -8,7 +8,7 @@ module ChaosBox.Geometry.Arc
   )
 where
 
-import           ChaosBox.Prelude         hiding (unit)
+import           ChaosBox.Prelude        hiding (unit)
 
 import           ChaosBox.AABB
 import           ChaosBox.Affine
@@ -17,10 +17,10 @@ import           ChaosBox.Geometry.Angle
 import           ChaosBox.Geometry.Class
 import           ChaosBox.Geometry.P2
 import           ChaosBox.Geometry.Path
-import           ChaosBox.Math            (lerpMany)
-import           Control.Lens             ((&), (.~), (^.))
-import           Data.List.NonEmpty       (NonEmpty (..))
-import qualified Graphics.Rendering.Cairo as Cairo
+import           ChaosBox.Math           (lerpMany)
+import           Control.Lens            ((&), (.~), (^.))
+import           Data.List.NonEmpty      (NonEmpty (..))
+import qualified GI.Cairo.Render         as Cairo
 
 -- | Arc (partial Circle)
 data ArcOf a = ArcOf
