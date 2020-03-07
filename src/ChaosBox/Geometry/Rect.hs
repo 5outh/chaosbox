@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE ViewPatterns #-}
 module ChaosBox.Geometry.Rect
   ( RectOf(..)
   , Rect
@@ -54,3 +54,32 @@ pattern Rect c w h = RectOf c w h
 
 fromAABB :: AABB -> Rect
 fromAABB (AABB tl w h) = RectOf tl w h
+
+--
+-- There are a LOT of ways this can happen. let's enumerate them
+--
+-- 1. do not intersect at all: tlb and brb does not fit within x or y coordinates of tla
+-- 3. top line intersects through the horizontal segments
+-- 4. bottom line intersects through the horizontal segments
+-- 5. left line intersects through the vertical segments
+-- 6. right line intersects through the vertical segments
+--
+-- 2. intersect through a corner (one for each)
+
+-- +---------+
+-- |         |
+-- |         |
+-- |     +---*-----+
+-- |     |   |     |
+-- +-----*---+     |
+--       |         |
+--       |         |
+--       |         |
+--       +---------+
+--
+
+-- TODO
+-- instance (HasP2 a, HasP2 b) => Intersects (RectOf a) (RectOf b) where
+  -- intersectionPoints (fmap getP2 -> RectOf tla@(P2 tlax tlay) wa ha) (fmap getP2 -> RectOf tlb@(P2 tlbx tlby) wb hb) = undefined
+    -- where
+     -- doesNotIntersect = undefined
