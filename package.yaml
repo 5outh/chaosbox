@@ -33,7 +33,6 @@ default-extensions:
 dependencies:
   - base >= 4.7 && < 5
   - directory
-  - cairo
   - colour
   - linear
   - MonadRandom
@@ -53,6 +52,8 @@ dependencies:
   - rvar
   - semigroupoids
   - lens
+  - sdl2
+  - gi-cairo-render
 
 library:
     source-dirs: src
