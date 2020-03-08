@@ -2,8 +2,20 @@ module Main where
 
 import           ChaosBox
 
-import           Control.Monad (replicateM)
-import           Data.Foldable (for_)
+import           ChaosBox.Math                 (lerp)
+import           Control.Concurrent
+import           Control.Lens
+import           Control.Monad                 (replicateM)
+import           Control.Monad.Loops
+import           Control.Monad.Random
+import           Control.Monad.Reader
+import           Data.Foldable                 (for_)
+import           Data.IORef
+import qualified Data.List.NonEmpty            as NE
+import qualified SDL
+import           System.Random.Mersenne.Pure64
+
+framesPerSecond = 60
 
 -- Run this example with
 --
@@ -14,28 +26,74 @@ import           Data.Foldable (for_)
 main :: IO ()
 main = do
   opts <- getDefaultOpts
+  -- TODO: is there a way for this to be async???
   runChaosBoxInteractive
     (opts { optWidth = 8, optHeight = 10, optScale = 100 })
     renderSketch
 
-renderSketch :: Generate ()
+renderSketch :: RandT PureMT (ReaderT GenerateCtx Render) ()
 renderSketch = do
   setup
 
   (w, h)     <- getSize
 
   center     <- getCenterPoint
-  randomPath <- replicateM 20 $ normal center $ P2 (w / 4) (h / 4)
+  randomPath <- fmap NE.fromList . replicateM 1 $ normal center $ P2 (w / 4)
+                                                                     (h / 4)
 
-  cairo $ for_ (closedCurve randomPath) $ \p -> draw p *> stroke
+  rect    <- getBounds
+
+  pathRef <- liftIO $ newIORef randomPath
+  liftIO $ SDL.setMouseLocationMode SDL.AbsoluteLocation
+  windowScale <- asks gcScale
+  noise       <- newNoise2
+
+  loop $ do
+    ps@(p NE.:| _) <- liftIO $ readIORef pathRef
+
+    SDL.P mouseLoc <- liftIO SDL.getAbsoluteMouseLocation
+    checkButtons   <- liftIO SDL.getMouseButtons
+
+    let c = if checkButtons SDL.ButtonLeft
+          then
+            let targetLoc = fmap ((/ windowScale) . fromIntegral) mouseLoc
+            in  lerp 0.05 p targetLoc
+          else p
+
+    mNext <-
+      normal c (fromIntegral (mouseLoc ^. _y) * pure (noise (c / 300)) * 0.001)
+        `suchThat` \q -> rect `aabbContains` q
+
+    case mNext of
+      Nothing   -> pure ()
+      Just next -> do
+        let newPath = next `NE.cons` ps
+        liftIO $ writeIORef pathRef newPath
+
+        fillScreenRGB white
+        cairo $ do
+          setSourceRGB black
+          draw (CurveOf newPath 3) *> stroke
+
+        mWindow <- asks gcWindow
+        liftIO $ threadDelay (round $ 1000000 * (1 / framesPerSecond))
+        for_ mWindow SDL.updateWindowSurface
 
 setup :: Generate ()
 setup = do
   cairo $ do
-    setLineWidth 0.05
+    setLineWidth 0.01
     setLineJoin LineJoinRound
     setLineCap LineCapRound
 
   fillScreenRGB white
 
   cairo $ setSourceRGB black
+
+
+-- TODO: probably want to peep the event and actually handle the others
+shouldQuitM = do
+  events <- liftIO SDL.pollEvents
+  pure $ elem SDL.QuitEvent $ map SDL.eventPayload events
+
+loop f = untilM_ f shouldQuitM

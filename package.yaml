@@ -54,6 +54,8 @@ dependencies:
   - lens
   - sdl2
   - gi-cairo-render
+  - conduit
+  - monad-loops
 
 library:
     source-dirs: src
