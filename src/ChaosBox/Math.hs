@@ -17,7 +17,7 @@ import           Data.List            (genericLength)
 -- > lerp 0.5 0 10 == 5
 --
 lerp :: Num a => a -> a -> a -> a
-lerp perc a b = (perc - 1) * a + perc * b
+lerp perc a b = (1 - perc) * a + perc * b
 
 -- | N lerps between two points, exclusive on upper bound
 lerpMany :: (Num a, Fractional a, Enum a) => Int -> a -> a -> [a]

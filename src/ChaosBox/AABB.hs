@@ -3,14 +3,15 @@ module ChaosBox.AABB
   ( HasAABB(..)
   , AABB(..)
   , boundary
+  , aabbContains
   )
 where
 
-import           Linear.V2
-import           Data.List.NonEmpty
-import           ChaosBox.Geometry.Class        ( HasP2(..) )
-import           Control.Lens                   ( (^.) )
+import           ChaosBox.Geometry.Class (HasP2 (..))
 import           ChaosBox.Geometry.P2
+import           Control.Lens            ((^.))
+import           Data.List.NonEmpty
+import           Linear.V2
 
 -- | An Axis-Aligned Bounding Box
 data AABB = AABB
@@ -31,3 +32,8 @@ boundary xs = AABB tl w h
   tl       = minimum $ fmap (^. _V2) l
   br       = maximum $ fmap (^. _V2) l
   (V2 w h) = br - tl
+
+aabbContains :: AABB -> P2 -> Bool
+aabbContains AABB {..} (P2 x y) =
+  x >= x0 && x < x0 + aabbW && y >= y0 && y < y0 + aabbH
+  where V2 x0 y0 = aabbTopLeft

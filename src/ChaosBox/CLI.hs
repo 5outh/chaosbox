@@ -11,6 +11,7 @@ module ChaosBox.CLI
 where
 
 import           ChaosBox.Generate
+import           Control.Concurrent
 import           Control.Monad                 (unless)
 import           Control.Monad.Random
 import           Control.Monad.Reader
@@ -131,6 +132,7 @@ runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
                         progressRef
                         beforeSaveHookRef
                         surface
+                        Nothing
 
   void . renderWith surface . flip runReaderT ctx . flip runRandT stdGen $ do
     cairo $ scale optScale optScale
@@ -163,7 +165,7 @@ runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
 runChaosBoxInteractive
   :: Opts
   -- ^ Art options
-  -> RandT PureMT (ReaderT GenerateCtx Render) a
+  -> RandT PureMT (ReaderT GenerateCtx Render) ()
   -- ^ Render function
   -> IO ()
 runChaosBoxInteractive Opts {..} doRender = replicateM_ optRenderTimes $ do
@@ -214,22 +216,20 @@ runChaosBoxInteractive Opts {..} doRender = replicateM_ optRenderTimes $ do
                         progressRef
                         beforeSaveHookRef
                         canvas
+                        (Just window)
   -- renderWith canvas demo1
 
   -- withImageSurfaceForData pixels FormatRGB24 600 600 (600 * 4)
     -- $ \canvas -> renderWith canvas demo2
 
-  SDL.updateWindowSurface window
-
   void . renderWith canvas . flip runReaderT ctx . flip runRandT stdGen $ do
     cairo $ scale optScale optScale
-    -- NOTE: this render function is not interactive, it just runs
     void doRender
 
-    ref   <- asks gcBeforeSaveHook
-    mHook <- liftIO $ readIORef ref
+        -- ref <- asks gcBeforeSaveHook
+        -- mHook <- liftIO $ readIORef ref
 
-    fromMaybe (pure ()) mHook
+        -- fromMaybe (pure ()) mHook
 
   SDL.updateWindowSurface window
 
@@ -251,7 +251,7 @@ runChaosBoxInteractive Opts {..} doRender = replicateM_ optRenderTimes $ do
 
   surfaceWriteToPNG canvas filename
   surfaceWriteToPNG canvas latest
-  idle
+  forkIO idle
  where
   idle = do
     events <- liftIO SDL.pollEvents

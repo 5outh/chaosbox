@@ -18,6 +18,7 @@ import           Data.Random.Source            as Source
 import           GHC.Word                      (Word64)
 import           GI.Cairo.Render
 import           Linear.V2
+import qualified SDL
 import           System.Random.Mersenne.Pure64
 import           Text.Printf
 
@@ -41,6 +42,8 @@ data GenerateCtx = GenerateCtx
   -- ^ Action to perform before saving the image.
   , gcCairoSurface   :: Surface
   -- ^ Raw mutable cairo Surface
+  , gcWindow         :: Maybe SDL.Window
+  -- ^ SDL 'Window' to display image in
   }
 
 beforeSave :: Generate () -> Generate ()
