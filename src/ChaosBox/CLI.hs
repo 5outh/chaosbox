@@ -10,7 +10,9 @@ module ChaosBox.CLI
   )
 where
 
+
 import           ChaosBox.Generate
+
 import           Control.Concurrent
 import           Control.Monad                 (unless)
 import           Control.Monad.Random
@@ -42,10 +44,10 @@ data Opts = Opts
   , optName           :: String
   -- ^ Name of the process. Images will be stored at
   -- @images/${optName}-${optSeed}.png@
-  , optRenderProgress :: Bool
-  -- Enable in-progress rendering via 'renderProgress'
   , optMetadataString :: Maybe String
   -- Optional string to append to file name, useful for tagging
+  , optFps            :: Int
+  -- ^ How many frames a video should render per second
   }
 
 getDefaultOpts :: IO Opts
@@ -57,8 +59,8 @@ getDefaultOpts = do
             , optHeight         = 100
             , optRenderTimes    = 1
             , optName           = "sketch"
-            , optRenderProgress = True
             , optMetadataString = Nothing
+            , optFps            = 30
             }
 
 opts :: Parser Opts
@@ -71,8 +73,8 @@ opts =
                (long "height" <> short 'h' <> metavar "HEIGHT" <> value 100)
     <*> option auto (long "times" <> metavar "TIMES" <> value 1)
     <*> strOption (long "name" <> metavar "NAME" <> value "sketch")
-    <*> switch (long "render-progress" <> short 'r')
     <*> optional (strOption (long "metadata" <> metavar "METADATA"))
+    <*> option auto (long "fps" <> metavar "FPS" <> value 30)
 
 optsInfo :: ParserInfo Opts
 optsInfo = info
@@ -121,18 +123,26 @@ runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
   createDirectoryIfMissing False $ "./images/" <> optName
   createDirectoryIfMissing False $ "./images/" <> optName <> "/progress"
 
-  beforeSaveHookRef <- newIORef Nothing
+  beforeSaveHookRef   <- newIORef Nothing
 
-  let ctx = GenerateCtx optWidth
-                        optHeight
-                        seed
-                        optScale
-                        optName
-                        optRenderProgress
-                        progressRef
-                        beforeSaveHookRef
-                        surface
-                        Nothing
+  lastRenderedTimeRef <- newIORef 0
+
+  let
+    ctx = GenerateCtx
+      { gcWidth          = optWidth
+      , gcHeight         = optHeight
+      , gcSeed           = seed
+      , gcScale          = optScale
+      , gcName           = optName
+      , gcProgress       = progressRef
+      , gcBeforeSaveHook = beforeSaveHookRef
+      , gcCairoSurface   = surface
+      , gcWindow         = Nothing
+      , gcVideoManager   = VideoManager
+                             { vmFps                 = optFps
+                             , vmLastRenderedTimeRef = lastRenderedTimeRef
+                             }
+      }
 
   void . renderWith surface . flip runReaderT ctx . flip runRandT stdGen $ do
     cairo $ scale optScale optScale
@@ -176,12 +186,6 @@ runChaosBoxInteractive Opts {..} doRender = replicateM_ optRenderTimes $ do
   let stdGen       = pureMT seed
       screenWidth  = round $ fromIntegral optWidth * optScale
       screenHeight = round $ fromIntegral optHeight * optScale
-
-      -- screenWidth = 600
-      -- screenHeight = 600
-
-
-  -- surface     <- createImageSurface FormatARGB32 screenWidth screenHeight
   progressRef <- newIORef 0
 
   -- Create directories if they don't exist
@@ -193,7 +197,7 @@ runChaosBoxInteractive Opts {..} doRender = replicateM_ optRenderTimes $ do
 
   SDL.initialize [SDL.InitVideo]
   window <- SDL.createWindow
-    "SDL / Cairo Example"
+    "ChaosBox"
     SDL.defaultWindow { SDL.windowInitialSize = V2 screenWidth screenHeight }
   SDL.showWindow window
   screenSurface <- SDL.getWindowSurface window
@@ -207,29 +211,28 @@ runChaosBoxInteractive Opts {..} doRender = replicateM_ optRenderTimes $ do
                                       (fromIntegral screenHeight)
                                       (fromIntegral $ screenWidth * 4)
 
-  let ctx = GenerateCtx optWidth
-                        optHeight
-                        seed
-                        optScale
-                        optName
-                        optRenderProgress
-                        progressRef
-                        beforeSaveHookRef
-                        canvas
-                        (Just window)
-  -- renderWith canvas demo1
+  lastRenderedTimeRef <- newIORef 0
 
-  -- withImageSurfaceForData pixels FormatRGB24 600 600 (600 * 4)
-    -- $ \canvas -> renderWith canvas demo2
+  let
+    ctx = GenerateCtx
+      { gcWidth          = optWidth
+      , gcHeight         = optHeight
+      , gcSeed           = seed
+      , gcScale          = optScale
+      , gcName           = optName
+      , gcProgress       = progressRef
+      , gcBeforeSaveHook = beforeSaveHookRef
+      , gcCairoSurface   = canvas
+      , gcWindow         = Just window
+      , gcVideoManager   = VideoManager
+                             { vmFps                 = optFps
+                             , vmLastRenderedTimeRef = lastRenderedTimeRef
+                             }
+      }
 
   void . renderWith canvas . flip runReaderT ctx . flip runRandT stdGen $ do
     cairo $ scale optScale optScale
     void doRender
-
-        -- ref <- asks gcBeforeSaveHook
-        -- mHook <- liftIO $ readIORef ref
-
-        -- fromMaybe (pure ()) mHook
 
   SDL.updateWindowSurface window
 
