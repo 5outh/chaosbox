@@ -34,8 +34,6 @@ data GenerateCtx = GenerateCtx
   -- size of the output
   , gcName           :: String
   -- ^ Name of the current project
-  , gcRenderProgress :: Bool
-  -- ^ Should it render intermediate progress images?
   , gcProgress       :: IORef Int
   -- ^ Current progress "tick"
   , gcBeforeSaveHook :: IORef (Maybe (Generate ()))
@@ -44,6 +42,15 @@ data GenerateCtx = GenerateCtx
   -- ^ Raw mutable cairo Surface
   , gcWindow         :: Maybe SDL.Window
   -- ^ SDL 'Window' to display image in
+  , gcVideoManager   :: VideoManager
+  -- ^ Video manager
+  }
+
+data VideoManager = VideoManager
+  { vmFps                 :: Int
+  -- ^ How many frames to render per second
+  , vmLastRenderedTimeRef :: IORef Integer
+  -- ^ The number of picoseconds since the last frame was rendered
   }
 
 beforeSave :: Generate () -> Generate ()
@@ -71,25 +78,23 @@ getCenterPoint = do
 
 renderProgress :: Generate ()
 renderProgress = do
-  doRender <- asks gcRenderProgress
-  when doRender $ do
-    let padInt :: Int -> String
-        padInt = printf "%.8v"
+  let padInt :: Int -> String
+      padInt = printf "%.8v"
 
-    (name, progressRef) <- asks (gcName &&& gcProgress)
-    progress            <- liftIO $ readIORef progressRef
+  (name, progressRef) <- asks (gcName &&& gcProgress)
+  progress            <- liftIO $ readIORef progressRef
 
-    cairo . withTargetSurface $ \surface -> do
-      liftIO . putStrLn $ "Rendering progress surface #" <> show progress
-      liftIO
-        $  surfaceWriteToPNG surface
-        $  "images/"
-        <> name
-        <> "/progress/"
-        <> padInt progress
-        <> ".png"
+  cairo . withTargetSurface $ \surface -> do
+    liftIO . putStrLn $ "Rendering progress surface #" <> show progress
+    liftIO
+      $  surfaceWriteToPNG surface
+      $  "images/"
+      <> name
+      <> "/progress/"
+      <> padInt progress
+      <> ".png"
 
-    liftIO $ modifyIORef progressRef (+ 1)
+  liftIO $ modifyIORef progressRef (+ 1)
 
 runGenerate :: Surface -> GenerateCtx -> Generate a -> IO (a, PureMT)
 runGenerate surface ctx@GenerateCtx {..} doRender =

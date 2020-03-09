@@ -3,19 +3,15 @@ module Main where
 import           ChaosBox
 
 import           ChaosBox.Math                 (lerp)
-import           Control.Concurrent
+import           ChaosBox.Video
 import           Control.Lens
 import           Control.Monad                 (replicateM)
-import           Control.Monad.Loops
 import           Control.Monad.Random
 import           Control.Monad.Reader
-import           Data.Foldable                 (for_)
 import           Data.IORef
 import qualified Data.List.NonEmpty            as NE
 import qualified SDL
 import           System.Random.Mersenne.Pure64
-
-framesPerSecond = 60
 
 -- Run this example with
 --
@@ -48,7 +44,7 @@ renderSketch = do
   windowScale <- asks gcScale
   noise       <- newNoise2
 
-  loop $ do
+  renderLoop $ do
     ps@(p NE.:| _) <- liftIO $ readIORef pathRef
 
     SDL.P mouseLoc <- liftIO SDL.getAbsoluteMouseLocation
@@ -63,7 +59,6 @@ renderSketch = do
     mNext <- Just <$> normal
       c
       (fromIntegral (mouseLoc ^. _y) * pure (noise (c / 300)) * 0.001)
-        -- `suchThat` \q -> rect `aabbContains` q
 
     case mNext of
       Nothing   -> pure ()
@@ -76,25 +71,11 @@ renderSketch = do
           setSourceRGB black
           draw (PolygonOf newPath) *> fill
 
-        mWindow <- asks gcWindow
-        liftIO $ threadDelay (round $ 1000000 * (1 / framesPerSecond))
-        for_ mWindow SDL.updateWindowSurface
-
 setup :: Generate ()
 setup = do
+  fillScreenRGB white
   cairo $ do
     setLineWidth 0.02
     setLineJoin LineJoinRound
     setLineCap LineCapRound
-
-  fillScreenRGB white
-
-  cairo $ setSourceRGB black
-
-
--- TODO: probably want to peep the event and actually handle the others
-shouldQuitM = do
-  events <- liftIO SDL.pollEvents
-  pure $ elem SDL.QuitEvent $ map SDL.eventPayload events
-
-loop f = untilM_ f shouldQuitM
+    setSourceRGB black
