@@ -28,7 +28,7 @@ main = do
   opts <- getDefaultOpts
   -- TODO: is there a way for this to be async???
   runChaosBoxInteractive
-    (opts { optWidth = 8, optHeight = 10, optScale = 100 })
+    (opts { optWidth = 10, optHeight = 10, optScale = 60 })
     renderSketch
 
 renderSketch :: RandT PureMT (ReaderT GenerateCtx Render) ()
@@ -60,20 +60,21 @@ renderSketch = do
             in  lerp 0.05 p targetLoc
           else p
 
-    mNext <-
-      normal c (fromIntegral (mouseLoc ^. _y) * pure (noise (c / 300)) * 0.001)
-        `suchThat` \q -> rect `aabbContains` q
+    mNext <- Just <$> normal
+      c
+      (fromIntegral (mouseLoc ^. _y) * pure (noise (c / 300)) * 0.001)
+        -- `suchThat` \q -> rect `aabbContains` q
 
     case mNext of
       Nothing   -> pure ()
       Just next -> do
-        let newPath = next `NE.cons` ps
+        let newPath = NE.fromList $ NE.take 400 $ next `NE.cons` ps
         liftIO $ writeIORef pathRef newPath
 
         fillScreenRGB white
         cairo $ do
           setSourceRGB black
-          draw (CurveOf newPath 3) *> stroke
+          draw (PolygonOf newPath) *> fill
 
         mWindow <- asks gcWindow
         liftIO $ threadDelay (round $ 1000000 * (1 / framesPerSecond))
@@ -82,7 +83,7 @@ renderSketch = do
 setup :: Generate ()
 setup = do
   cairo $ do
-    setLineWidth 0.01
+    setLineWidth 0.02
     setLineJoin LineJoinRound
     setLineCap LineCapRound
 
