@@ -6,17 +6,17 @@
 {-# LANGUAGE TypeFamilies          #-}
 module ChaosBox.Generate where
 
-import           Control.Monad.Base
 import           ChaosBox.AABB
 import           ChaosBox.Geometry.P2
-import           Control.Arrow                  ( (&&&) )
+import           Control.Arrow                 ((&&&))
+import           Control.Monad.Base
 import           Control.Monad.Random
 import           Control.Monad.Reader
 import           Data.IORef
-import           Data.List.NonEmpty             ( NonEmpty(..) )
+import           Data.List.NonEmpty            (NonEmpty (..))
 import           Data.Random.Internal.Source
 import           Data.Random.Source            as Source
-import           GHC.Word                       ( Word64 )
+import           GHC.Word                      (Word64)
 import           GI.Cairo.Render
 import           Linear.V2
 import qualified SDL
@@ -45,7 +45,12 @@ data GenerateCtx = GenerateCtx
   -- ^ SDL 'Window' to display image in
   , gcVideoManager   :: VideoManager
   -- ^ Video manager
+  , gcEventHandler   :: IORef EventHandler
+  -- ^ Mutable Event Handler
   }
+
+-- Note: event handlers will be kleisli-composed together to handle many events
+newtype EventHandler = EventHandler { ehHandleEvent :: SDL.Event -> Generate () }
 
 data VideoManager = VideoManager
   { vmFps                 :: Int

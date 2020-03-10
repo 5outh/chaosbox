@@ -1,18 +1,23 @@
 module ChaosBox.Video
   ( renderFrame
   , renderLoop
+  , eventLoop
+  , registerEventHandler
+  , onClick
   )
 where
 
 import           ChaosBox
 
 import           Control.Concurrent     (threadDelay)
+import           Control.Monad          (unless, void, when)
 import           Control.Monad.IO.Class
 import           Control.Monad.Loops    (untilM_)
 import           Control.Monad.Reader   (asks)
 import           Data.Foldable          (for_)
-import           Data.IORef
+import           Data.IORef.Lifted
 import qualified SDL
+import           SDL.Event
 import           System.CPUTime
 
 -- |
@@ -22,6 +27,40 @@ renderLoop act = (act >> renderFrame) `untilM_` shouldQuitM
   shouldQuitM = do
     events <- liftIO SDL.pollEvents
     pure $ elem SDL.QuitEvent $ map SDL.eventPayload events
+
+eventLoop :: Generate a -> Generate ()
+eventLoop act = loop
+ where
+  loop = do
+    EventHandler {..} <- readIORef =<< asks gcEventHandler
+    events            <- liftIO SDL.pollEvents
+    -- liftIO $ print events
+    for_ events ehHandleEvent
+    unless (SDL.QuitEvent `elem` map SDL.eventPayload events) $ do
+      void act
+      renderFrame
+      loop
+
+registerEventHandler :: (SDL.Event -> Generate ()) -> Generate ()
+registerEventHandler handleEvent = do
+  eventHandlerRef <- asks gcEventHandler
+  modifyIORef eventHandlerRef $ \EventHandler {..} ->
+    EventHandler $ \event -> ehHandleEvent event >> handleEvent event
+
+onClick :: (P2 -> Generate ()) -> Generate ()
+onClick act = registerEventHandler $ \event -> case eventPayload event of
+  MouseButtonEvent MouseButtonEventData {..} -> do
+    windowScale <- asks gcScale
+    when
+        (  mouseButtonEventMotion
+        == Pressed
+        && mouseButtonEventButton
+        == ButtonLeft
+        )
+      $ do
+          let SDL.P mouseLoc = mouseButtonEventPos
+          act mouseLoc
+  _ -> pure ()
 
 renderFrame :: MonadIO m => GenerateT m ()
 renderFrame = do

@@ -14,12 +14,12 @@ where
 import           ChaosBox.Generate
 
 import           Control.Concurrent
-import           Control.Monad                  ( unless )
+import           Control.Monad                 (unless)
 import           Control.Monad.Random
 import           Control.Monad.Reader
 import           Data.IORef
-import           Data.Maybe                     ( fromMaybe )
-import           Data.Semigroup                 ( (<>) )
+import           Data.Maybe                    (fromMaybe)
+import           Data.Semigroup                ((<>))
 import           Data.Time.Clock.POSIX
 import           GHC.Word
 import           GI.Cairo.Render
@@ -27,7 +27,7 @@ import           Options.Applicative
 import           System.Directory
 import           System.Random.Mersenne.Pure64
 
-import           Foreign.Ptr                    ( castPtr )
+import           Foreign.Ptr                   (castPtr)
 import           SDL
 
 data Opts = Opts
@@ -53,16 +53,15 @@ data Opts = Opts
 getDefaultOpts :: IO Opts
 getDefaultOpts = do
   seed <- round . (* 1000) <$> getPOSIXTime
-  pure Opts
-    { optSeed           = Just seed
-    , optScale          = 1
-    , optWidth          = 100
-    , optHeight         = 100
-    , optRenderTimes    = 1
-    , optName           = "sketch"
-    , optMetadataString = Nothing
-    , optFps            = 30
-    }
+  pure Opts { optSeed           = Just seed
+            , optScale          = 1
+            , optWidth          = 100
+            , optHeight         = 100
+            , optRenderTimes    = 1
+            , optName           = "sketch"
+            , optMetadataString = Nothing
+            , optFps            = 30
+            }
 
 opts :: Parser Opts
 opts =
@@ -84,7 +83,7 @@ optsInfo = info
 
 -- | Run 'ChaosBox' with 'Opts' parsed from the CLI
 runChaosBoxIO
-  :: RandT PureMT (ReaderT GenerateCtx Render) a
+  :: Generate a
   -- ^ Render function
   -> IO ()
 runChaosBoxIO = runChaosBoxIOWith id
@@ -93,7 +92,7 @@ runChaosBoxIO = runChaosBoxIOWith id
 runChaosBoxIOWith
   :: (Opts -> Opts)
   -- ^ Option modifier
-  -> RandT PureMT (ReaderT GenerateCtx Render) a
+  -> Generate a
   -- ^ Render function
   -> IO ()
 runChaosBoxIOWith fn render = do
@@ -104,7 +103,7 @@ runChaosBoxIOWith fn render = do
 runChaosBoxWith
   :: Opts
   -- ^ Art options
-  -> RandT PureMT (ReaderT GenerateCtx Render) a
+  -> Generate a
   -- ^ Render function
   -> IO ()
 runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
@@ -127,22 +126,25 @@ runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
   beforeSaveHookRef   <- newIORef Nothing
 
   lastRenderedTimeRef <- newIORef 0
+  gcEventHandlerRef   <- newIORef (EventHandler $ const $ pure ())
 
-  let ctx = GenerateCtx
-        { gcWidth          = optWidth
-        , gcHeight         = optHeight
-        , gcSeed           = seed
-        , gcScale          = optScale
-        , gcName           = optName
-        , gcProgress       = progressRef
-        , gcBeforeSaveHook = beforeSaveHookRef
-        , gcCairoSurface   = surface
-        , gcWindow         = Nothing
-        , gcVideoManager   = VideoManager
-          { vmFps                 = optFps
-          , vmLastRenderedTimeRef = lastRenderedTimeRef
-          }
-        }
+  let
+    ctx = GenerateCtx
+      { gcWidth          = optWidth
+      , gcHeight         = optHeight
+      , gcSeed           = seed
+      , gcScale          = optScale
+      , gcName           = optName
+      , gcProgress       = progressRef
+      , gcBeforeSaveHook = beforeSaveHookRef
+      , gcCairoSurface   = surface
+      , gcWindow         = Nothing
+      , gcVideoManager   = VideoManager
+                             { vmFps                 = optFps
+                             , vmLastRenderedTimeRef = lastRenderedTimeRef
+                             }
+      , gcEventHandler   = gcEventHandlerRef
+      }
 
   void . renderWith surface . flip runReaderT ctx . flip runRandT stdGen $ do
     cairo $ scale optScale optScale
@@ -175,7 +177,7 @@ runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
 runChaosBoxInteractive
   :: Opts
   -- ^ Art options
-  -> RandT PureMT (ReaderT GenerateCtx Render) ()
+  -> Generate ()
   -- ^ Render function
   -> IO ()
 runChaosBoxInteractive Opts {..} doRender = replicateM_ optRenderTimes $ do
@@ -214,22 +216,25 @@ runChaosBoxInteractive Opts {..} doRender = replicateM_ optRenderTimes $ do
                                       (fromIntegral $ screenWidth * 4)
 
   lastRenderedTimeRef <- newIORef 0
+  gcEventHandlerRef   <- newIORef (EventHandler $ const $ pure ())
 
-  let ctx = GenerateCtx
-        { gcWidth          = optWidth
-        , gcHeight         = optHeight
-        , gcSeed           = seed
-        , gcScale          = optScale
-        , gcName           = optName
-        , gcProgress       = progressRef
-        , gcBeforeSaveHook = beforeSaveHookRef
-        , gcCairoSurface   = canvas
-        , gcWindow         = Just window
-        , gcVideoManager   = VideoManager
-          { vmFps                 = optFps
-          , vmLastRenderedTimeRef = lastRenderedTimeRef
-          }
-        }
+  let
+    ctx = GenerateCtx
+      { gcWidth          = optWidth
+      , gcHeight         = optHeight
+      , gcSeed           = seed
+      , gcScale          = optScale
+      , gcName           = optName
+      , gcProgress       = progressRef
+      , gcBeforeSaveHook = beforeSaveHookRef
+      , gcCairoSurface   = canvas
+      , gcWindow         = Just window
+      , gcVideoManager   = VideoManager
+                             { vmFps                 = optFps
+                             , vmLastRenderedTimeRef = lastRenderedTimeRef
+                             }
+      , gcEventHandler   = gcEventHandlerRef
+      }
 
   void . renderWith canvas . flip runReaderT ctx . flip runRandT stdGen $ do
     cairo $ scale optScale optScale
