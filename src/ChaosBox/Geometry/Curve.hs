@@ -29,6 +29,7 @@ type Curve = CurveOf P2
 
 pattern Curve :: NonEmpty P2 -> Int -> Curve
 pattern Curve a i = CurveOf a i
+{-# COMPLETE Curve #-}
 
 instance HasP2 a => HasAABB (CurveOf a) where
   aabb = aabb . toPath

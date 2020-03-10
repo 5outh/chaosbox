@@ -31,6 +31,7 @@ type Quad = QuadOf P2
 
 pattern Quad :: P2 -> P2 -> P2 -> P2 -> Quad
 pattern Quad a b c d = QuadOf a b c d
+{-# COMPLETE Quad #-}
 
 instance HasP2 a => Affine (QuadOf a) where
   transform = defaultTransform

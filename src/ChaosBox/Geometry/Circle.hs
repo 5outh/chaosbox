@@ -31,6 +31,7 @@ type Circle = CircleOf P2
 
 pattern Circle :: P2 -> Double -> Int -> Circle
 pattern Circle a r d = CircleOf a r d
+{-# COMPLETE Circle #-}
 
 instance HasP2 a => HasAABB (CircleOf a) where
   aabb CircleOf {..} = boundary $ tl :| [br]

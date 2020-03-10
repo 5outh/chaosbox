@@ -21,3 +21,4 @@ type P2 = V2 Double
 --
 pattern P2 :: Double -> Double -> P2
 pattern P2 x y = V2 x y
+{-# COMPLETE P2 #-}

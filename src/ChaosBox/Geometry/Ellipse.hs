@@ -37,6 +37,7 @@ type Ellipse = EllipseOf P2
 
 pattern Ellipse :: P2 -> Double -> Double -> Int -> Ellipse
 pattern Ellipse c w h d = EllipseOf c w h d
+{-# COMPLETE Ellipse #-}
 
 instance HasP2 a => HasAABB (EllipseOf a) where
   aabb EllipseOf {..} = boundary $ tl :| [ br]

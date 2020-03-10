@@ -29,6 +29,7 @@ type Polygon = PolygonOf P2
 
 pattern Polygon :: NonEmpty P2 -> Polygon
 pattern Polygon a = PolygonOf a
+{-# COMPLETE Polygon #-}
 
 instance HasP2 a => HasAABB (PolygonOf a) where
   aabb = boundary . getPolygon
