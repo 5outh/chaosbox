@@ -41,7 +41,6 @@ renderSketch = do
 
   -- onClick $ pure . lerp 0.05 p
   onClick $ writeIORef clickedPointRef . Just
-  registerEventHandler $ \event -> liftIO $ print event
 
   eventLoop $ do
     ps@(p NE.:| _) <- readIORef pathRef
