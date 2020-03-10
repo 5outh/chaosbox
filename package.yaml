@@ -55,8 +55,9 @@ dependencies:
   - lens
   - sdl2
   - gi-cairo-render
-  - conduit
   - monad-loops
+  - lifted-base
+  - transformers-base
 
 library:
     source-dirs: src
