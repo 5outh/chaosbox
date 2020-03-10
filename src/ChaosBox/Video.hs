@@ -47,6 +47,10 @@ registerEventHandler handleEvent = do
   modifyIORef eventHandlerRef $ \EventHandler {..} ->
     EventHandler $ \event -> ehHandleEvent event >> handleEvent event
 
+-- | Print every 'SDL.Event' flowing through 'ChaosBox'
+debugEvents :: Generate ()
+debugEvents = registerEventHandler $ \event -> liftIO $ print event
+
 onClick :: (P2 -> Generate ()) -> Generate ()
 onClick act = registerEventHandler $ \event -> case eventPayload event of
   MouseButtonEvent MouseButtonEventData {..} -> do
