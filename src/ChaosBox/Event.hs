@@ -10,6 +10,8 @@ import           Control.Monad.IO.Class
 import           Control.Monad.Reader   (asks)
 import qualified SDL
 
+-- FIXME: This only works if events have already been polled and is not
+-- granular enough
 onClick :: MonadIO m => (P2 -> GenerateT m a) -> GenerateT m (Maybe a)
 onClick act = do
   windowScale    <- asks gcScale

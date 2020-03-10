@@ -6,16 +6,17 @@
 {-# LANGUAGE TypeFamilies          #-}
 module ChaosBox.Generate where
 
+import           Control.Monad.Base
 import           ChaosBox.AABB
 import           ChaosBox.Geometry.P2
-import           Control.Arrow                 ((&&&))
+import           Control.Arrow                  ( (&&&) )
 import           Control.Monad.Random
 import           Control.Monad.Reader
 import           Data.IORef
-import           Data.List.NonEmpty            (NonEmpty (..))
+import           Data.List.NonEmpty             ( NonEmpty(..) )
 import           Data.Random.Internal.Source
 import           Data.Random.Source            as Source
-import           GHC.Word                      (Word64)
+import           GHC.Word                       ( Word64 )
 import           GI.Cairo.Render
 import           Linear.V2
 import qualified SDL
@@ -65,6 +66,9 @@ $(monadRandom [d|
   instance Monad m => Source.MonadRandom (RandT PureMT (ReaderT GenerateCtx m)) where
     getRandomWord64 = liftRandT (pure . randomWord64)
   |])
+
+instance MonadBase IO m => MonadBase IO (RandT PureMT (ReaderT GenerateCtx m)) where
+  liftBase = liftBaseDefault
 
 getSize :: Num a => Generate (a, a)
 getSize = do

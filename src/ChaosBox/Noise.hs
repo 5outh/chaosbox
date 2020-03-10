@@ -1,8 +1,8 @@
 -- Much of this module was adapted from
 -- <https://github.com/weswigham/simplex/tree/master/haskell wesigham's Simplex Noise implemenation>
 module ChaosBox.Noise
-  ( noise
-  , newNoise
+  ( noise1
+  , newNoise1
   , noise2
   , newNoise2
   , noise3
@@ -22,14 +22,14 @@ import qualified Data.Vector          as V
 import           Linear
 
 -- | One dimensional simplex noise
-noise :: Double -> Double
-noise x = noise2D x 0
+noise1 :: Double -> Double
+noise1 x = noise2D x 0
 
 -- | Generate one dimensional simplex noise with a random seed.
-newNoise :: Generate (Double -> Double)
-newNoise = do
+newNoise1 :: Generate (Double -> Double)
+newNoise1 = do
   seed <- getRandom
-  pure $ \x -> noise (x + seed)
+  pure $ \x -> noise1 (x + seed)
 
 -- | Two dimensional simplex noise
 noise2 :: P2 -> Double

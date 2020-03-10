@@ -2,17 +2,15 @@ module Main where
 
 import           ChaosBox
 
-import ChaosBox.Video
 import           ChaosBox.Event
 import           ChaosBox.Math                 (lerp)
+import           ChaosBox.Video
 import           Control.Monad                 (replicateM)
-import           Control.Monad.Loops
 import           Control.Monad.Random
 import           Control.Monad.Reader
-import           Data.IORef
+import           Data.IORef.Lifted
 import qualified Data.List.NonEmpty            as NE
 import           Data.Maybe                    (fromMaybe)
-import qualified SDL
 import           System.Random.Mersenne.Pure64
 
 -- Run this example with
@@ -39,32 +37,30 @@ renderSketch = do
   randomPath <- fmap NE.fromList . replicateM 1 $ normal center $ P2 (w / 4)
                                                                      (h / 4)
 
-  pathRef <- liftIO $ newIORef randomPath
+  pathRef <- newIORef randomPath
   noise   <- newNoise2
 
   renderLoop $ do
-    ps@(p NE.:| _) <- liftIO $ readIORef pathRef
+    ps@(p NE.:| _) <- readIORef pathRef
 
     mPoint         <- onClick $ pure . lerp 0.05 p
 
     let c = fromMaybe p mPoint
-    next <- normal c 0.1
+    nextPoint <- normal c (P2 (noise c) (noise c))
 
-    let newPath = NE.fromList $ NE.take 400 $ next `NE.cons` ps
-    liftIO $ writeIORef pathRef newPath
+    let nextPath = NE.fromList $ NE.take 400 $ nextPoint `NE.cons` ps
+    writeIORef pathRef $ nextPath
 
     fillScreenRGB white
     cairo $ do
       setSourceRGB black
-      draw (PolygonOf newPath) *> fill
+      draw (Polygon nextPath) *> fill
 
 setup :: Generate ()
 setup = do
+  fillScreenRGB white
   cairo $ do
     setLineWidth 0.02
     setLineJoin LineJoinRound
     setLineCap LineCapRound
-
-  fillScreenRGB white
-
-  cairo $ setSourceRGB black
+    setSourceRGB black
