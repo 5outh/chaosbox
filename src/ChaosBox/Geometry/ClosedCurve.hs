@@ -30,6 +30,7 @@ type ClosedCurve = ClosedCurveOf P2
 
 pattern ClosedCurve :: NonEmpty P2 -> Int -> ClosedCurve
 pattern ClosedCurve a i = ClosedCurveOf a i
+{-# COMPLETE ClosedCurve #-}
 
 closedCurveOf :: [a] -> Maybe (ClosedCurveOf a)
 closedCurveOf xs = ClosedCurveOf <$> NE.nonEmpty xs <*> pure 5

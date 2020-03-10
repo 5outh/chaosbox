@@ -29,6 +29,7 @@ type Path = PathOf P2
 
 pattern Path :: NonEmpty P2 -> Path
 pattern Path a = PathOf a
+{-# COMPLETE Path #-}
 
 instance HasP2 a => Affine (PathOf a) where
   transform = defaultTransform

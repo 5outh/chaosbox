@@ -41,6 +41,7 @@ type Arc = ArcOf P2
 
 pattern Arc :: P2 -> Double -> Angle -> Angle -> Int -> Arc
 pattern Arc a r s e d = ArcOf a r s e d
+{-# COMPLETE Arc #-}
 
 instance HasP2 a => Draw (ArcOf a) where
   draw ArcOf {..} = Cairo.arc x

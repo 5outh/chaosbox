@@ -38,6 +38,7 @@ type Triangle = TriangleOf P2
 
 pattern Triangle :: P2 -> P2 -> P2 -> Triangle
 pattern Triangle a b c = TriangleOf a b c
+{-# COMPLETE Triangle #-}
 
 -- TODO: This should exist in a typeclass IsPolygon or triangleToPolygon etc
 -- etc

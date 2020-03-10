@@ -24,6 +24,7 @@ type Line = LineOf P2
 
 pattern Line :: P2 -> P2 -> Line
 pattern Line s e = LineOf s e
+{-# COMPLETE Line #-}
 
 instance HasP2 a => HasAABB (LineOf a) where
   aabb LineOf {..} = boundary $ lineStart :| [lineEnd]

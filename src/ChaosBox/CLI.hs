@@ -14,12 +14,12 @@ where
 import           ChaosBox.Generate
 
 import           Control.Concurrent
-import           Control.Monad                 (unless)
+import           Control.Monad                  ( unless )
 import           Control.Monad.Random
 import           Control.Monad.Reader
 import           Data.IORef
-import           Data.Maybe                    (fromMaybe)
-import           Data.Semigroup                ((<>))
+import           Data.Maybe                     ( fromMaybe )
+import           Data.Semigroup                 ( (<>) )
 import           Data.Time.Clock.POSIX
 import           GHC.Word
 import           GI.Cairo.Render
@@ -27,7 +27,7 @@ import           Options.Applicative
 import           System.Directory
 import           System.Random.Mersenne.Pure64
 
-import           Foreign.Ptr                   (castPtr)
+import           Foreign.Ptr                    ( castPtr )
 import           SDL
 
 data Opts = Opts
@@ -53,15 +53,16 @@ data Opts = Opts
 getDefaultOpts :: IO Opts
 getDefaultOpts = do
   seed <- round . (* 1000) <$> getPOSIXTime
-  pure Opts { optSeed           = Just seed
-            , optScale          = 1
-            , optWidth          = 100
-            , optHeight         = 100
-            , optRenderTimes    = 1
-            , optName           = "sketch"
-            , optMetadataString = Nothing
-            , optFps            = 30
-            }
+  pure Opts
+    { optSeed           = Just seed
+    , optScale          = 1
+    , optWidth          = 100
+    , optHeight         = 100
+    , optRenderTimes    = 1
+    , optName           = "sketch"
+    , optMetadataString = Nothing
+    , optFps            = 30
+    }
 
 opts :: Parser Opts
 opts =
@@ -127,22 +128,21 @@ runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
 
   lastRenderedTimeRef <- newIORef 0
 
-  let
-    ctx = GenerateCtx
-      { gcWidth          = optWidth
-      , gcHeight         = optHeight
-      , gcSeed           = seed
-      , gcScale          = optScale
-      , gcName           = optName
-      , gcProgress       = progressRef
-      , gcBeforeSaveHook = beforeSaveHookRef
-      , gcCairoSurface   = surface
-      , gcWindow         = Nothing
-      , gcVideoManager   = VideoManager
-                             { vmFps                 = optFps
-                             , vmLastRenderedTimeRef = lastRenderedTimeRef
-                             }
-      }
+  let ctx = GenerateCtx
+        { gcWidth          = optWidth
+        , gcHeight         = optHeight
+        , gcSeed           = seed
+        , gcScale          = optScale
+        , gcName           = optName
+        , gcProgress       = progressRef
+        , gcBeforeSaveHook = beforeSaveHookRef
+        , gcCairoSurface   = surface
+        , gcWindow         = Nothing
+        , gcVideoManager   = VideoManager
+          { vmFps                 = optFps
+          , vmLastRenderedTimeRef = lastRenderedTimeRef
+          }
+        }
 
   void . renderWith surface . flip runReaderT ctx . flip runRandT stdGen $ do
     cairo $ scale optScale optScale
@@ -198,7 +198,9 @@ runChaosBoxInteractive Opts {..} doRender = replicateM_ optRenderTimes $ do
   SDL.initialize [SDL.InitVideo]
   window <- SDL.createWindow
     "ChaosBox"
-    SDL.defaultWindow { SDL.windowInitialSize = V2 screenWidth screenHeight }
+    SDL.defaultWindow { SDL.windowInitialSize = V2 screenWidth screenHeight
+                      , SDL.windowHighDPI     = True
+                      }
   SDL.showWindow window
   screenSurface <- SDL.getWindowSurface window
   let white = V4 maxBound maxBound maxBound maxBound
@@ -213,22 +215,21 @@ runChaosBoxInteractive Opts {..} doRender = replicateM_ optRenderTimes $ do
 
   lastRenderedTimeRef <- newIORef 0
 
-  let
-    ctx = GenerateCtx
-      { gcWidth          = optWidth
-      , gcHeight         = optHeight
-      , gcSeed           = seed
-      , gcScale          = optScale
-      , gcName           = optName
-      , gcProgress       = progressRef
-      , gcBeforeSaveHook = beforeSaveHookRef
-      , gcCairoSurface   = canvas
-      , gcWindow         = Just window
-      , gcVideoManager   = VideoManager
-                             { vmFps                 = optFps
-                             , vmLastRenderedTimeRef = lastRenderedTimeRef
-                             }
-      }
+  let ctx = GenerateCtx
+        { gcWidth          = optWidth
+        , gcHeight         = optHeight
+        , gcSeed           = seed
+        , gcScale          = optScale
+        , gcName           = optName
+        , gcProgress       = progressRef
+        , gcBeforeSaveHook = beforeSaveHookRef
+        , gcCairoSurface   = canvas
+        , gcWindow         = Just window
+        , gcVideoManager   = VideoManager
+          { vmFps                 = optFps
+          , vmLastRenderedTimeRef = lastRenderedTimeRef
+          }
+        }
 
   void . renderWith canvas . flip runReaderT ctx . flip runRandT stdGen $ do
     cairo $ scale optScale optScale
