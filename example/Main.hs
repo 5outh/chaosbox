@@ -7,7 +7,6 @@ import           ChaosBox.Video
 import           Control.Monad                 (replicateM)
 import           Control.Monad.Random
 import           Control.Monad.Reader
-import           Data.Foldable                 (for_)
 import           Data.IORef.Lifted
 import qualified Data.List.NonEmpty            as NE
 import           System.Random.Mersenne.Pure64
@@ -38,14 +37,7 @@ renderSketch = do
 
   pathRef         <- newIORef randomPath
   noise           <- newNoise2
-
-  clickedPointRef <- newIORef Nothing
-  onMouseDown $ writeIORef clickedPointRef . Just
-  onMouseUp $ \_ -> writeIORef clickedPointRef Nothing
-  -- only update when mouse is down
-  onMouseMotion $ \p -> do
-    mPoint <- readIORef clickedPointRef
-    for_ mPoint $ \_ -> writeIORef clickedPointRef (Just p)
+  clickedPointRef <- syncHeldMousePosition ButtonLeft
 
   debugEvents
 
