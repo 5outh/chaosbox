@@ -7,6 +7,7 @@ import           ChaosBox.Video
 import           Control.Monad                 (replicateM)
 import           Control.Monad.Random
 import           Control.Monad.Reader
+import           Data.Foldable                 (for_)
 import           Data.IORef.Lifted
 import qualified Data.List.NonEmpty            as NE
 import           System.Random.Mersenne.Pure64
@@ -37,10 +38,16 @@ renderSketch = do
 
   pathRef         <- newIORef randomPath
   noise           <- newNoise2
-  clickedPointRef <- newIORef Nothing
 
-  -- onClick $ pure . lerp 0.05 p
-  onClick $ writeIORef clickedPointRef . Just
+  clickedPointRef <- newIORef Nothing
+  onMouseDown $ writeIORef clickedPointRef . Just
+  onMouseUp $ \_ -> writeIORef clickedPointRef Nothing
+  -- only update when mouse is down
+  onMouseMotion $ \p -> do
+    mPoint <- readIORef clickedPointRef
+    for_ mPoint $ \_ -> writeIORef clickedPointRef (Just p)
+
+  debugEvents
 
   eventLoop $ do
     ps@(p NE.:| _) <- readIORef pathRef
@@ -50,7 +57,7 @@ renderSketch = do
           Nothing -> p
           Just p0 -> lerp 0.05 p p0
 
-    nextPoint <- normal c (P2 (noise c) (noise c))
+    nextPoint <- normal c (P2 (noise (c / 100)) (noise (c / 100)))
 
     let nextPath = NE.fromList $ NE.take 400 $ nextPoint `NE.cons` ps
     writeIORef pathRef nextPath
@@ -59,8 +66,6 @@ renderSketch = do
     cairo $ do
       setSourceRGB black
       draw (Polygon nextPath) *> fill
-
-    writeIORef clickedPointRef Nothing
 
 setup :: Generate ()
 setup = do
