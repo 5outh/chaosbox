@@ -3,18 +3,24 @@ module ChaosBox.Video
   , renderLoop
   , eventLoop
   , registerEventHandler
-  , onClick
+  , onMouseDown
+  , onMouseUp
+  , onMouseMotion
+  , debugEvents
   )
 where
 
 import           ChaosBox
 
-import           Control.Concurrent     (threadDelay)
-import           Control.Monad          (unless, void, when)
+import           Control.Concurrent             ( threadDelay )
+import           Control.Monad                  ( unless
+                                                , void
+                                                , when
+                                                )
 import           Control.Monad.IO.Class
-import           Control.Monad.Loops    (untilM_)
-import           Control.Monad.Reader   (asks)
-import           Data.Foldable          (for_)
+import           Control.Monad.Loops            ( untilM_ )
+import           Control.Monad.Reader           ( asks )
+import           Data.Foldable                  ( for_ )
 import           Data.IORef.Lifted
 import qualified SDL
 import           SDL.Event
@@ -51,8 +57,8 @@ registerEventHandler handleEvent = do
 debugEvents :: Generate ()
 debugEvents = registerEventHandler $ \event -> liftIO $ print event
 
-onClick :: (P2 -> Generate ()) -> Generate ()
-onClick act = registerEventHandler $ \event -> case eventPayload event of
+onMouseDown :: (P2 -> Generate ()) -> Generate ()
+onMouseDown act = registerEventHandler $ \event -> case eventPayload event of
   MouseButtonEvent MouseButtonEventData {..} -> do
     windowScale <- asks gcScale
     when
@@ -63,7 +69,31 @@ onClick act = registerEventHandler $ \event -> case eventPayload event of
         )
       $ do
           let SDL.P mouseLoc = mouseButtonEventPos
-          act mouseLoc
+          act (fmap ((/ windowScale) . fromIntegral) mouseLoc)
+  _ -> pure ()
+
+onMouseUp :: (P2 -> Generate ()) -> Generate ()
+onMouseUp act = registerEventHandler $ \event -> case eventPayload event of
+  MouseButtonEvent MouseButtonEventData {..} -> do
+    windowScale <- asks gcScale
+    when
+        (  mouseButtonEventMotion
+        == Released
+        && mouseButtonEventButton
+        == ButtonLeft
+        )
+      $ do
+          let SDL.P mouseLoc = mouseButtonEventPos
+          act (fmap ((/ windowScale) . fromIntegral) mouseLoc)
+  _ -> pure ()
+
+onMouseMotion :: (P2 -> Generate ()) -> Generate ()
+onMouseMotion act = registerEventHandler $ \event -> case eventPayload event of
+  MouseMotionEvent MouseMotionEventData {..} -> do
+    windowScale <- asks gcScale
+    when (ButtonLeft `elem` mouseMotionEventState) $ do
+      let SDL.P mouseLoc = mouseMotionEventPos
+      act (fmap ((/ windowScale) . fromIntegral) mouseLoc)
   _ -> pure ()
 
 renderFrame :: MonadIO m => GenerateT m ()
