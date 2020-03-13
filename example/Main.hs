@@ -35,24 +35,35 @@ renderSketch = do
   randomPath <- fmap NE.fromList . replicateM 1 $ normal center $ P2 (w / 4)
                                                                      (h / 4)
 
-  pathRef         <- newIORef randomPath
-  noise           <- newNoise2
-  clickedPointRef <- syncHeldMousePosition ButtonLeft
+  pathRef           <- newIORef randomPath
+  noise             <- newNoise2
+  -- in frp lingo, this is a "behavior"
+  heldMousePosition <- syncHeldMousePosition ButtonLeft
 
   debugEvents
 
+  -- Generate a -> Generate (IORef a)
+  -- pathRef <- syncOnTick . withBehaviorM pathRef $ \ps@(p NE.:| _) -> do
+    -- c         <- withBehavior heldMousePosition $ maybe p (lerp 0.05 p)
+    -- nextPoint <- normal c (P2 (noise (c / 100)) (noise (c / 100)))
+    -- pure $ NE.fromList $ NE.take 400 $ nextPoint `NE.cons` ps
   eventLoop $ do
+    -- can we refactor this to use behavior stuff?
+    -- we want to:
+    -- on tick:
+    --   - get 'c' using heldMousePosition
+    --   - add 'nextPoint' to list
     ps@(p NE.:| _) <- readIORef pathRef
-    clickedPoint   <- readIORef clickedPointRef
 
-    let c = case clickedPoint of
-          Nothing -> p
-          Just p0 -> lerp 0.05 p p0
+    c              <- withBehavior heldMousePosition $ maybe p (lerp 0.05 p)
 
-    nextPoint <- normal c (P2 (noise (c / 100)) (noise (c / 100)))
+    nextPoint      <- normal c (P2 (noise (c / 100)) (noise (c / 100)))
 
     let nextPath = NE.fromList $ NE.take 400 $ nextPoint `NE.cons` ps
     writeIORef pathRef nextPath
+
+    -- or this
+    -- nextPath <- withBehavior pathRef id
 
     fillScreenRGB white
     cairo $ do
