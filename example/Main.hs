@@ -43,15 +43,15 @@ renderSketch = do
   debugEvents
 
   eventLoop $ do
-    nextPath <- forRefM pathRef $ \ps@(p NE.:| _) -> do
-      c         <- forRef mousePositionRef $ maybe p (lerp 0.05 p)
-      nextPoint <- normal c (P2 (noise (c / 100)) (noise (c / 100)))
+    nextPath <- modifyIORefM pathRef $ \ps@(p NE.:| _) -> do
+      c         <- readIORefWith (maybe p (lerp 0.05 p)) mousePositionRef
+      nextPoint <- normal c (P2 (noise (c / 100) * 0.3) (noise (c / 100) * 0.3))
       pure $ NE.fromList $ NE.take 400 $ nextPoint `NE.cons` ps
 
     fillScreenRGB white
     cairo $ do
       setSourceRGB black
-      draw (Polygon nextPath) *> fill
+      draw (ClosedCurve nextPath 6) *> fill
 
 setup :: Generate ()
 setup = do

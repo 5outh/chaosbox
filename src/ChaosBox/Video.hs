@@ -16,10 +16,12 @@ module ChaosBox.Video
   -- * Debugging
   , debugEvents
   -- * 'IORef' combinators
-  , forRef
-  , forRefM
-  -- * Random utilities that should be moved
+  , readIORefWith
+  , forIORef
+  , readIORefWithM
+  , forIORefM
   , modifyIORefM
+  , modifyIORefM_
   -- * Re-exports
   , MouseButton(..)
   )
@@ -182,18 +184,27 @@ renderFrame = do
       SDL.updateWindowSurface window
       writeIORef vmLastRenderedTimeRef now
 
-modifyIORefM :: MonadBase IO m => IORef a -> (a -> m a) -> m ()
+modifyIORefM :: MonadBase IO m => IORef a -> (a -> m a) -> m a
 modifyIORefM ref f = do
   a <- readIORef ref
   b <- f a
-  writeIORef ref b
+  b <$ writeIORef ref b
 
-forRef :: MonadBase IO m => IORef t -> (t -> b) -> m b
-forRef b f = do
+modifyIORefM_ :: MonadBase IO m => IORef a -> (a -> m a) -> m ()
+modifyIORefM_ ref = void . modifyIORefM ref
+
+readIORefWith :: MonadBase IO m => (t -> b) -> IORef t -> m b
+readIORefWith f b = do
   b0 <- readIORef b
   pure (f b0)
 
-forRefM :: MonadBase IO m => IORef t -> (t -> m b) -> m b
-forRefM b f = do
+forIORef :: MonadBase IO m => IORef t -> (t -> b) -> m b
+forIORef = flip readIORefWith
+
+readIORefWithM :: MonadBase IO m =>  (t -> m b) ->  IORef t -> m b
+readIORefWithM f b = do
   b0 <- readIORef b
   f b0
+
+forIORefM :: MonadBase IO m =>  IORef t -> (t -> m b) -> m b
+forIORefM = flip readIORefWithM
