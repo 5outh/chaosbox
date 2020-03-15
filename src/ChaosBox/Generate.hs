@@ -29,12 +29,12 @@ import           ChaosBox.Orphanage             ( )
 import           ChaosBox.AABB
 import           ChaosBox.Geometry.P2
 
+import           Control.Monad.Base
 import           System.Directory
 import           Control.Arrow                  ( (&&&) )
-import           Control.Monad.Base
 import           Control.Monad.Random
 import           Control.Monad.Reader
-import           Data.IORef
+import           UnliftIO.IORef
 import           Data.List.NonEmpty             ( NonEmpty(..) )
 import           Data.Random.Internal.Source
 import           Data.Random.Source            as Source
@@ -99,9 +99,12 @@ data VideoManager = VideoManager
 beforeSave :: Generate () -> Generate ()
 beforeSave hook = do
   beforeSaveHookRef <- asks gcBeforeSaveHook
-  liftIO $ writeIORef beforeSaveHookRef (Just hook)
+  writeIORef beforeSaveHookRef (Just hook)
 
 type GenerateT m a = RandT PureMT (ReaderT GenerateCtx m) a
+
+instance MonadBase Render m => MonadBase Render (RandT PureMT (ReaderT GenerateCtx m)) where
+  liftBase = liftBaseDefault
 
 -- | The main 'ChaosBox' Monad
 --
@@ -117,9 +120,6 @@ $(monadRandom [d|
   instance Monad m => Source.MonadRandom (RandT PureMT (ReaderT GenerateCtx m)) where
     getRandomWord64 = liftRandT (pure . randomWord64)
   |])
-
-instance MonadBase IO m => MonadBase IO (RandT PureMT (ReaderT GenerateCtx m)) where
-  liftBase = liftBaseDefault
 
 getSize :: Num a => Generate (a, a)
 getSize = do
@@ -138,7 +138,7 @@ renderProgress = do
   let padInt :: Int -> String
       padInt = printf "%.8v"
 
-  progress <- liftIO $ readIORef progressRef
+  progress <- readIORef progressRef
 
   cairo . withTargetSurface $ \surface -> do
     liftIO . putStrLn $ "Rendering progress surface #" <> show progress
@@ -150,7 +150,7 @@ renderProgress = do
       <> padInt progress
       <> ".png"
 
-  liftIO $ modifyIORef progressRef (+ 1)
+  modifyIORef progressRef (+ 1)
 
 runGenerate :: Surface -> GenerateCtx -> Generate a -> IO (a, PureMT)
 runGenerate surface ctx@GenerateCtx {..} doRender =
@@ -159,8 +159,8 @@ runGenerate surface ctx@GenerateCtx {..} doRender =
     doRender
 
 -- | Lift a 'Render' (cairo) action into a 'GenerateT' action
-cairo :: Render a -> Generate a
-cairo = lift . lift
+cairo :: MonadBase Render m => Render a -> GenerateT m a
+cairo = lift . lift . liftBase
 
 -- | Get the bounding 'ChaosBox.Geometry.AABB' for the screen or image
 getBounds :: Generate AABB

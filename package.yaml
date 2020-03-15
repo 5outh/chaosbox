@@ -57,7 +57,7 @@ dependencies:
   - sdl2
   - gi-cairo-render
   - monad-loops
-  - lifted-base
+  - unliftio
   - transformers-base
 
 library:

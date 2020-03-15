@@ -86,11 +86,10 @@ import           Control.Monad                  ( unless
                                                 , void
                                                 , when
                                                 )
-import           Control.Monad.Base
 import           Control.Monad.IO.Class
 import           Control.Monad.Reader
 import           Data.Foldable                  ( for_ )
-import           Data.IORef.Lifted
+import           UnliftIO.IORef
 import qualified SDL
 import           SDL.Event
 import           System.CPUTime
@@ -112,7 +111,7 @@ import           System.CPUTime
 eventLoop :: Generate a -> Generate ()
 eventLoop act = do
   bindKey SDL.ScancodeS $ do
-    str <- replicateM 6 $ unsafeUniform ['a'..'z']
+    str <- replicateM 6 $ unsafeUniform ['a' .. 'z']
     saveImageWith (Just str)
   -- TODO: This isn't perfect, could bind the key down event directly to the
   -- "quit" action
@@ -126,7 +125,7 @@ eventLoop act = do
     ehHandleEvent Tick
 
     -- Handle all 'SDL.Event's
-    events            <- liftIO SDL.pollEvents
+    events <- liftIO SDL.pollEvents
     for_ events (ehHandleEvent . SDLEvent)
     shouldQuit <- readIORef shouldQuitRef
     unless (SDL.QuitEvent `elem` map SDL.eventPayload events || shouldQuit) $ do
@@ -147,9 +146,9 @@ debugEvents = registerEventHandler $ \event -> liftIO $ print event
 
 -- | Perform some action once per 'Tick'
 everyTick :: Generate () -> Generate ()
-everyTick act = registerEventHandler  $ \case
+everyTick act = registerEventHandler $ \case
   Tick -> act
-  _ -> pure ()
+  _    -> pure ()
 
 -- | Do something when the specified 'MouseButton' is 'Pressed'
 onMouseDown :: MouseButton -> (P2 -> Generate ()) -> Generate ()
@@ -217,7 +216,12 @@ onKeyUp :: SDL.Scancode -> Generate () -> Generate ()
 onKeyUp scancode act = registerEventHandler . overSDLEvent $ \event ->
   case eventPayload event of
     KeyboardEvent KeyboardEventData {..}
-      | (SDL.keysymScancode keyboardEventKeysym == scancode && keyboardEventKeyMotion == Released) -> act
+      | (  SDL.keysymScancode keyboardEventKeysym
+        == scancode
+        && keyboardEventKeyMotion
+        == Released
+        )
+      -> act
     _ -> pure ()
 
 -- | Do something when a key is 'Pressed'
@@ -225,7 +229,12 @@ onKeyDown :: SDL.Scancode -> Generate () -> Generate ()
 onKeyDown scancode act = registerEventHandler . overSDLEvent $ \event ->
   case eventPayload event of
     KeyboardEvent KeyboardEventData {..}
-      | (SDL.keysymScancode keyboardEventKeysym == scancode && keyboardEventKeyMotion == Pressed) -> act
+      | (  SDL.keysymScancode keyboardEventKeysym
+        == scancode
+        && keyboardEventKeyMotion
+        == Pressed
+        )
+      -> act
     _ -> pure ()
 
 -- | Alias for 'onKeyDown'
@@ -291,34 +300,34 @@ renderFrame = do
       writeIORef vmLastRenderedTimeRef now
 
 -- | Monadic 'modifyIORef' which returns the value written.
-modifyIORefM :: MonadBase IO m => IORef a -> (a -> m a) -> m a
+modifyIORefM :: MonadIO m => IORef a -> (a -> m a) -> m a
 modifyIORefM ref f = do
   a <- readIORef ref
   b <- f a
   b <$ writeIORef ref b
 
 -- | Monadic 'modifyIORef'
-modifyIORefM_ :: MonadBase IO m => IORef a -> (a -> m a) -> m ()
+modifyIORefM_ :: MonadIO m => IORef a -> (a -> m a) -> m ()
 modifyIORefM_ ref = void . modifyIORefM ref
 
 -- | 'readIORef', running a function on the output
-readIORefWith :: MonadBase IO m => (t -> b) -> IORef t -> m b
+readIORefWith :: MonadIO m => (t -> b) -> IORef t -> m b
 readIORefWith f b = do
   b0 <- readIORef b
   pure (f b0)
 
 -- | Flipped 'readIORef', sometimes reads better
-forIORef :: MonadBase IO m => IORef t -> (t -> b) -> m b
+forIORef :: MonadIO m => IORef t -> (t -> b) -> m b
 forIORef = flip readIORefWith
 
 -- | Monadic 'readIORefWith'
-readIORefWithM :: MonadBase IO m =>  (t -> m b) ->  IORef t -> m b
+readIORefWithM :: MonadIO m => (t -> m b) -> IORef t -> m b
 readIORefWithM f b = do
   b0 <- readIORef b
   f b0
 
 -- | Flipped 'readIORefWithM', sometimes reads better
-forIORefM :: MonadBase IO m =>  IORef t -> (t -> m b) -> m b
+forIORefM :: MonadIO m => IORef t -> (t -> m b) -> m b
 forIORefM = flip readIORefWithM
 
 -- Utilities
