@@ -1,14 +1,3 @@
-{-# LANGUAGE DataKinds           #-}
-
-{-# LANGUAGE FlexibleContexts    #-}
-{-# LANGUAGE FlexibleInstances   #-}
-
-{-# LANGUAGE PolyKinds           #-}
-{-# LANGUAGE RecordWildCards     #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-
-{-# LANGUAGE TypeApplications    #-}
-{-# LANGUAGE TypeOperators       #-}
 module ChaosBox.Pixel
   ( parsePixelsFromFile
   , readPixelAt
@@ -19,17 +8,17 @@ module ChaosBox.Pixel
   )
 where
 
-import           ChaosBox.Color       (rgb255)
+import           ChaosBox.Color                 ( rgb255 )
 
-import           Data.Array.MArray    (readArray)
+import           Data.Array.MArray              ( readArray )
 import           Data.Bits
 import           Data.Colour.RGBSpace
-import           Data.Maybe           (fromMaybe)
-import           Data.Sequence        (Seq)
-import qualified Data.Sequence        as Seq
+import           Data.Maybe                     ( fromMaybe )
+import           Data.Sequence                  ( Seq )
+import qualified Data.Sequence                 as Seq
 import           Data.Traversable
 import           Data.Word
-import           GI.Cairo.Render      hiding (Path)
+import           GI.Cairo.Render         hiding ( Path )
 import           Linear.V2
 
 newtype Pixel = Pixel { getPixel :: RGB Double }
@@ -57,13 +46,13 @@ readRow x PixelArray {..} =
 
 -- | Parse pixels from a png file with transparency into a 2d array
 --
--- @@@
+-- @
 -- pixels <- parsePixelsFromFile "image.png"
 -- let
 --  firstColumn = pixels ! 0 -- Leftmost column of image.
 --  firstRow = fmap (! 0) pixels -- Top row of image.
 --  pixel = pixels ! 5 ! 0 -- Pixel at (0,5)
--- @@@
+-- @
 --
 parsePixelsFromFile :: FilePath -> IO PixelArray
 parsePixelsFromFile filePath = PixelArray <$> do

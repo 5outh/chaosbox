@@ -17,6 +17,8 @@ import           ChaosBox.Geometry as X
 import           ChaosBox.Noise    as X
 import           ChaosBox.Pixel    as X
 import           ChaosBox.Random   as X
-import           GI.Cairo.Render   as Ext hiding (Path, arc, setSourceRGB,
-                                           transform)
+import           GI.Cairo.Render   as Ext (LineCap (..), LineJoin (..), Render,
+                                           fill, fillPreserve, setLineCap,
+                                           setLineJoin, setLineWidth, stroke,
+                                           strokePreserve)
 import           Linear.V2         as Ext

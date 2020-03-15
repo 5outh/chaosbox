@@ -24,5 +24,9 @@ instance Distribution Normal a => Distribution Normal (V2 a) where
 instance Distribution StdUniform a => Distribution StdUniform (V2 a) where
   rvarT StdUniform = V2 <$> rvarT StdUniform <*> rvarT StdUniform
 
+-- TODO: Which of these makes more sense?
 instance MonadBase IO Render where
   liftBase = liftIO
+
+-- instance MonadBase Render Render where
+  -- liftBase = id

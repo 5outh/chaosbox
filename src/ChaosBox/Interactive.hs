@@ -1,8 +1,55 @@
 {-# LANGUAGE UndecidableInstances #-}
-module ChaosBox.Video
-  ( renderFrame
-  , eventLoop
+-- | The Interactive Guts of ChaosBox
+--
+-- This module contains the bits and pieces needed to wire up an interactive
+-- ChaosBox program. Internally, ChaosBox renders a @cairo@ 'Surface' to an
+-- 'SDL.window'. To make a program interactive, 'ChaosBox' requires the user to
+-- write an 'eventLoop'. This 'eventLoop' has two key functions:
+--
+-- 1. It renders a single frame at the user-provided fps
+-- 2. It processes all new 'ChaosBoxEvent's each frame
+--
+-- ChaosBox heavily leverages 'SDL', so most 'ChaosBoxEvent's are just
+-- 'SDL.Event's (See 'SDLEvent'). This module provides some basic
+-- functionality for registering event handlers for various user actions, like
+-- keyboard and mouse input.
+--
+-- Because an event loop is naturally stateful, 'IORef's are a key player in
+-- interactive ChaosBox programs. A typical interactive ChaosBox program
+-- might look something like this:
+--
+-- @
+-- center <- getCenterPoint
+-- let centerCircle = Circle center 0
+-- circleRef <- newIORef centerCircle
+--
+-- onMouseDown $ \p -> do
+--  modifyIORefM_ circleRef $ \c -> do
+--    newCenter <- normal p 1
+--    let newRadius = circleRadius c + 0.1
+--    pure $ Circle newCenter newRadius
+--
+-- cairo $ setSourceRGB black
+-- eventLoop $ do
+--   c <- readIORef circleRef
+--   cairo $ do
+--     draw c *> stroke
+-- @
+--
+-- This will draw a 'Circle' each time the mouse is clicked. The center of that
+-- 'Circle' will be nearby where the user clicks, and each new circle drawn
+-- will have a radius @0.1@ units larger than the previous circle drawn.
+--
+-- See 'eventLoop' for more information, including a list of default event
+-- handlers / key bindings.
+--
+module ChaosBox.Interactive
+  (
+  -- * Dealing with events
+    eventLoop
   , registerEventHandler
+  -- * kOne-off rendering
+  , renderFrame
   -- * Mouse events
   , onMouseDown
   , onMouseUp
@@ -55,6 +102,13 @@ import           System.CPUTime
 -- frame rate and handle each event according to any event handlers (registered
 -- with 'registerEventHandler' or a variety of other functions in this module).
 --
+-- Beyond handling any user-specified events, there are a couple of default
+-- behaviors registered here:
+--
+--  - One 'Tick' is processed per loop.
+--  - Pressing @s@ saves the current image on-screen.
+--  - Pressing @q@ or clicking the @x@ button will immediately quit 'ChaosBox'.
+--
 eventLoop :: Generate a -> Generate ()
 eventLoop act = do
   bindKey SDL.ScancodeS $ do
@@ -91,12 +145,13 @@ registerEventHandler handleEvent = do
 debugEvents :: Generate ()
 debugEvents = registerEventHandler $ \event -> liftIO $ print event
 
+-- | Perform some action once per 'Tick'
 everyTick :: Generate () -> Generate ()
 everyTick act = registerEventHandler  $ \case
   Tick -> act
   _ -> pure ()
 
--- | Do something when a 'MouseButton' is initially 'Pressed'
+-- | Do something when the specified 'MouseButton' is 'Pressed'
 onMouseDown :: MouseButton -> (P2 -> Generate ()) -> Generate ()
 onMouseDown button act = registerEventHandler . overSDLEvent $ \event ->
   case eventPayload event of
@@ -127,9 +182,10 @@ onMouseUp button act = registerEventHandler . overSDLEvent $ \event ->
             act (fmap ((/ windowScale) . fromIntegral) mouseLoc)
     _ -> pure ()
 
--- | Do something when the mouse moves
+-- | Do something with the mouse's user-space position when the mouse moves
 --
--- For example, this will print the location of the mouse every time it moves:
+-- For example, this registers an event handler that prints the mouse's
+-- position every time it moves:
 --
 -- @onMouseMotion act (\p -> liftIO (print p))@
 --
@@ -156,11 +212,7 @@ heldMousePosition button = newSignal Nothing $ \ref -> do
     mPoint <- readIORef ref
     for_ mPoint $ \_ -> writeIORef ref (Just p)
 
-newSignal :: a -> (IORef a -> Generate ()) -> Generate (IORef a)
-newSignal def act = do
-  ref <- newIORef def
-  ref <$ act ref
-
+-- | Do something when a key is 'Released'
 onKeyUp :: SDL.Scancode -> Generate () -> Generate ()
 onKeyUp scancode act = registerEventHandler . overSDLEvent $ \event ->
   case eventPayload event of
@@ -168,6 +220,7 @@ onKeyUp scancode act = registerEventHandler . overSDLEvent $ \event ->
       | (SDL.keysymScancode keyboardEventKeysym == scancode && keyboardEventKeyMotion == Released) -> act
     _ -> pure ()
 
+-- | Do something when a key is 'Pressed'
 onKeyDown :: SDL.Scancode -> Generate () -> Generate ()
 onKeyDown scancode act = registerEventHandler . overSDLEvent $ \event ->
   case eventPayload event of
@@ -179,16 +232,19 @@ onKeyDown scancode act = registerEventHandler . overSDLEvent $ \event ->
 bindKey :: SDL.Scancode -> Generate () -> Generate ()
 bindKey = onKeyDown
 
+-- | Return a an 'IORef' containing whether a key is currently 'Pressed'
 syncKeyDown :: SDL.Scancode -> Generate (IORef Bool)
 syncKeyDown scancode = newSignal False $ \ref -> do
   onKeyDown scancode $ writeIORef ref True
   onKeyUp scancode $ writeIORef ref False
 
+-- | Return a an 'IORef' containing whether a key is currently 'Released'
 syncKeyUp :: SDL.Scancode -> Generate (IORef Bool)
 syncKeyUp scancode = newSignal True $ \ref -> do
   onKeyDown scancode $ writeIORef ref False
   onKeyUp scancode $ writeIORef ref True
 
+-- | Do something each 'Tick' while a key is 'Pressed'
 whileKeyDown :: SDL.Scancode -> Generate () -> Generate ()
 whileKeyDown scancode act = do
   isKeyDown <- syncKeyDown scancode
@@ -196,6 +252,7 @@ whileKeyDown scancode act = do
     isDown <- readIORef isKeyDown
     when isDown act
 
+-- | Do something each 'Tick' while a key is 'Released'
 whileKeyUp :: SDL.Scancode -> Generate () -> Generate ()
 whileKeyUp scancode act = do
   isKeyDown <- syncKeyUp scancode
@@ -233,27 +290,40 @@ renderFrame = do
       SDL.updateWindowSurface window
       writeIORef vmLastRenderedTimeRef now
 
+-- | Monadic 'modifyIORef' which returns the value written.
 modifyIORefM :: MonadBase IO m => IORef a -> (a -> m a) -> m a
 modifyIORefM ref f = do
   a <- readIORef ref
   b <- f a
   b <$ writeIORef ref b
 
+-- | Monadic 'modifyIORef'
 modifyIORefM_ :: MonadBase IO m => IORef a -> (a -> m a) -> m ()
 modifyIORefM_ ref = void . modifyIORefM ref
 
+-- | 'readIORef', running a function on the output
 readIORefWith :: MonadBase IO m => (t -> b) -> IORef t -> m b
 readIORefWith f b = do
   b0 <- readIORef b
   pure (f b0)
 
+-- | Flipped 'readIORef', sometimes reads better
 forIORef :: MonadBase IO m => IORef t -> (t -> b) -> m b
 forIORef = flip readIORefWith
 
+-- | Monadic 'readIORefWith'
 readIORefWithM :: MonadBase IO m =>  (t -> m b) ->  IORef t -> m b
 readIORefWithM f b = do
   b0 <- readIORef b
   f b0
 
+-- | Flipped 'readIORefWithM', sometimes reads better
 forIORefM :: MonadBase IO m =>  IORef t -> (t -> m b) -> m b
 forIORefM = flip readIORefWithM
+
+-- Utilities
+
+newSignal :: a -> (IORef a -> Generate ()) -> Generate (IORef a)
+newSignal def act = do
+  ref <- newIORef def
+  ref <$ act ref

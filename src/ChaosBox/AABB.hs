@@ -21,6 +21,7 @@ data AABB = AABB
   }
   deriving stock (Show, Eq, Ord)
 
+-- | Class of types that can be minimally bounded by an 'AABB'
 class HasAABB shape where
   aabb :: shape -> AABB
 
@@ -33,6 +34,7 @@ boundary xs = AABB tl w h
   br       = maximum $ fmap (^. _V2) l
   (V2 w h) = br - tl
 
+-- | Check if an 'AABB' contains some 2d point ('P2')
 aabbContains :: AABB -> P2 -> Bool
 aabbContains AABB {..} (P2 x y) =
   x >= x0 && x < x0 + aabbW && y >= y0 && y < y0 + aabbH
