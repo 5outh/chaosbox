@@ -85,8 +85,22 @@ overSDLEvent f = \case
   Tick           -> pure ()
   SDLEvent event -> f event
 
+-- TODO: Implement this interface
+--
+-- newtype EventHandler = EventHandler { ehEventHandlers :: IntMap (ChaosBoxEvent -> Generate ())}
+-- newtype EventHandlerId = EventHandlerId !Int
+-- registerEventHandler :: (ChaosboxEvent -> Generate ()) -> Generate EventHandlerId
+-- unregisterEventHandler :: EventHandlerId -> Generate ()
+
+-- | How to handle 'ChaosBoxEvent's
+--
+-- New event handlers can be registered with
+-- 'ChaosBox.Interactive.registerEventHandler' and other functions in that
+-- module.
+--
 newtype EventHandler = EventHandler { ehHandleEvent :: ChaosBoxEvent -> Generate () }
 
+-- | Interactive video data
 data VideoManager = VideoManager
   { vmFps                 :: Int
   -- ^ How many frames to render per second
@@ -101,7 +115,6 @@ beforeSave hook = do
   writeIORef beforeSaveHookRef (Just hook)
 
 type GenerateT m a = RandT PureMT (ReaderT GenerateCtx m) a
-
 instance MonadBase Render m => MonadBase Render (RandT PureMT (ReaderT GenerateCtx m)) where
   liftBase = liftBaseDefault
 
@@ -112,7 +125,8 @@ instance MonadBase Render m => MonadBase Render (RandT PureMT (ReaderT GenerateC
 -- - Writing to a cairo canvas via 'Render'
 -- - Reading the 'GenerateCtx'
 -- - Randomly generating values via 'RandT' 'PureMT', which hooks nicely into
--- 'MonadRandom' and 'random-fu'
+-- @MonadRandom@ and @random-fu@.
+--
 type Generate a = GenerateT Render a
 
 $(monadRandom [d|
@@ -120,16 +134,44 @@ $(monadRandom [d|
     getRandomWord64 = liftRandT (pure . randomWord64)
   |])
 
+-- | Get the @(width, height)@ pair of the current surface in user-space
 getSize :: Num a => Generate (a, a)
 getSize = do
   (w, h) <- asks (gcWidth &&& gcHeight)
   pure (fromIntegral w, fromIntegral h)
 
+-- | Get the center 'P2' of the current surface in user-space
 getCenterPoint :: Generate P2
 getCenterPoint = do
   (w, h) <- asks (gcWidth &&& gcHeight)
   pure $ V2 (fromIntegral w / 2) (fromIntegral h / 2)
 
+-- | Render an "in-progress" image to @./images/$name/$seed/$progress/$N@
+--
+--  @N@ is the number of times 'renderProgress' has been previously called.
+--  For example:
+--
+--  @
+--  center <- getCenterPoint
+--  circleRef <- newIORef $ Circle center 1
+--
+--  replicateM_ 100 $ do
+--    fillScreenRGB white
+--    cairo $ setSourceRGB black
+--    modifyIORef circleRef $ \c -> c { circleRadius = circleRadius c + 1 }
+--    circle  <- readIORef circleRef
+--    cairo $
+--      draw circle *> stroke
+--    renderProgress
+--  @
+--
+--  This will render a sequence of images that show a circle growing from the
+--  center of the image from 2 units in diameter to 50 units in diameter.
+--
+--  This function is useful for writing @ffmpeg@ scripts to render videos from
+--  @ChaosBox@ output -- the sequence generated in the @progress@ folder is
+--  suitable for @ffmpeg@.
+--
 renderProgress :: Generate ()
 renderProgress = do
   (name, progressRef) <- asks (gcName &&& gcProgress)
