@@ -3,7 +3,7 @@ module Main where
 import           ChaosBox
 
 import           ChaosBox.Math                 (lerp)
-import           ChaosBox.Video
+import           ChaosBox.Interactive
 import           Control.Monad                 (replicateM)
 import           Control.Monad.Random
 import           Control.Monad.Reader
@@ -14,17 +14,15 @@ import           System.Random.Mersenne.Pure64
 -- Run this example with
 --
 -- @@@
--- > chaosbox-example -- --scale=100
+-- > chaosbox-example -- --scale=60
 -- @@@
 --
 main :: IO ()
 main = do
-  opts <- getDefaultOpts
-  runChaosBoxWith
-    (\o -> o { optWidth = 10, optHeight = 10, optScale = 60, optFps = 30 })
-    renderSketch
+  runChaosBoxWith (\o -> o { optWidth = 10, optHeight = 10, optFps = 30 })
+                  renderSketch
 
-renderSketch :: RandT PureMT (ReaderT GenerateCtx Render) ()
+renderSketch :: Generate ()
 renderSketch = do
   setup
 

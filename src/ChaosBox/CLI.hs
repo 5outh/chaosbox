@@ -1,11 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
--- | Utilities for creating CLI applications that interface with 'ChaosBox'
+-- | Utilities for creating CLI applications that interface with @ChaosBox@
 module ChaosBox.CLI
-  ( runChaosBoxWith
-  , runChaosBox
-  , runChaosBoxDirectly
+  (
+  -- * ChaosBox options
+    Opts(..)
   , getDefaultOpts
-  , Opts(..)
+  -- * Running ChaosBox programs
+  , runChaosBox
+  , runChaosBoxWith
+  , runChaosBoxDirectly
+  -- * Saving images
   , saveImage
   , saveImageWith
   )
@@ -14,10 +18,11 @@ where
 
 import           ChaosBox.Generate
 
+import           ChaosBox.Orphanage()
 import           Data.Foldable                  ( for_ )
 import           Control.Monad.Random
 import           Control.Monad.Reader
-import           Data.IORef
+import           Data.IORef.Lifted
 import           Data.Maybe                     ( fromMaybe )
 import           Data.Semigroup                 ( (<>) )
 import           Data.Time.Clock.POSIX
@@ -32,6 +37,7 @@ import           SDL
 
 data RenderMode = Static | Interactive
 
+-- | ChaosBox's options
 data Opts = Opts
   { optSeed           :: Maybe Word64
   -- ^ Random seed used for all PRNG.
@@ -45,13 +51,13 @@ data Opts = Opts
   -- ^ How many times to repeat rendering, helpful for fast experimentation
   , optName           :: String
   -- ^ Name of the process. Images will be stored at
-  -- @images/${optName}-${optSeed}.png@
+  -- @images/${optName}.${optName}-${optSeed}.png@
   , optMetadataString :: Maybe String
-  -- Optional string to append to file name, useful for tagging
+  -- ^ Optional string to append to file name, useful for tagging
   , optFps            :: Int
-  -- ^ How many frames a video should render per second
+  -- ^ How many frames an interactive video should render per second
   , optRenderMode :: RenderMode
-  -- ^ Should we render a png directly or spawn an interactive video?
+  -- ^ Should the program render a png directly or spawn an interactive video?
   }
 
 getDefaultOpts :: IO Opts
@@ -89,6 +95,18 @@ optsInfo = info
   (fullDesc <> progDesc "Generate art with ChaosBox" <> header "chaosbox")
 
 -- | Run 'ChaosBox' with 'Opts' parsed from the CLI
+--
+-- For the following program (assume it's called @sketch@):
+--
+-- @
+-- main = runChaosBox generate
+--
+-- generate :: Generate ()
+-- generate = -- blah blah blah
+-- @
+--
+-- Run @sketch --help@ to view all available options.
+--
 runChaosBox
   :: Generate a
   -- ^ Render function
@@ -96,6 +114,15 @@ runChaosBox
 runChaosBox = runChaosBoxWith id
 
 -- | Run 'ChaosBox' with 'Opts' parsed from the CLI, allowing overrides.
+--
+-- You might want to parse some options from the CLI, but not all of them. For
+-- example, it's relatively common to fix 'optHeight' and 'optWidth', but vary
+-- other factors. 'runChaosBoxWith' allows this flexibility:
+--
+-- @
+-- runChaosBoxWith (opts -> opts { optWidth = 16, optHeight = 20)) generate
+-- @
+--
 runChaosBoxWith
   :: (Opts -> Opts)
   -- ^ Option modifier
@@ -107,6 +134,10 @@ runChaosBoxWith fn render = do
   runChaosBoxDirectly (fn options) render
 
 -- | Run 'ChaosBox' with the given 'Opts'
+--
+-- Does not produce a CLI interface, just an executable with no arguments or
+-- options.
+--
 runChaosBoxDirectly
   :: Opts
   -- ^ Art options
@@ -174,12 +205,17 @@ runChaosBoxDirectly Opts {..} doRender = replicateM_ optRenderTimes $ do
 
     saveImage
 
+-- | Save the current image at @./images/$name/$seed@
 saveImage :: Generate ()
 saveImage = saveImageWith Nothing
 
+-- | Save the current image at @./images/$name/$seed/$random-string@
 saveImageWith :: Maybe String -> Generate ()
 saveImageWith mStr = do
   GenerateCtx {..} <- ask
+  mHook <- readIORef gcBeforeSaveHook
+  for_ mHook $ \hook -> hook
+
   liftIO $ do
     putStrLn "Saving Image"
     createDirectoryIfMissing True $ "./images/" <> gcName

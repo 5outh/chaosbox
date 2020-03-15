@@ -1,6 +1,8 @@
 {-# LANGUAGE TypeFamilies #-}
 module ChaosBox.Affine
-  ( Affine(..)
+  (
+  -- * Data Types
+    Affine(..)
   , Transform2d(..)
   , defaultTransform
   , withCairoAffine
@@ -29,18 +31,17 @@ import qualified ChaosBox.Math.Matrix    as Matrix
 import           Control.Lens            ((%~))
 import           GI.Cairo.Render         hiding (transform)
 import qualified GI.Cairo.Render.Matrix  as CairoMatrix
--- import qualified Graphics.Rendering.Cairo.Matrix as CairoMatrix
 
 -- | 2d transformation represented as a 3x3 Matrix
 --
--- In 'Transform2d'\'s 'Semigroup' and 'Monoid' instances, 'mempty' is the
+-- In 'Transform2d's 'Semigroup' and 'Monoid' instances, 'mempty' is the
 -- 'identity' matrix and '<>' is matrix multiplication. This means
 -- 'Transform2d's created in this module can be combined with regular
 -- 'semigroup' append. For example, the following 'Transform2d' represents
 -- translating 5 units in the Y direction, then rotating in the Y direction by
--- pi radians around the point (10, 0):
+-- @pi@ radians around the point @(10, 0)@:
 --
--- > translated (V2 0 5) <> around (V2 10 0) (rotated pi)
+-- @translated (V2 0 5) <> around (V2 10 0) (rotated pi)@
 --
 newtype Transform2d = Transform2d { getTransform2d :: M33 Double }
 
@@ -50,15 +51,26 @@ instance Semigroup Transform2d where
 instance Monoid Transform2d where
   mempty = Transform2d identity
 
+-- | Create a 'Transform2d' from a 3x3 matrix ('M33')
 matrix :: M33 Double -> Transform2d
 matrix = Transform2d
 
--- | A class of items that are transformable via linear transformations
+-- | A class of items transformable via linear transformations
 class Affine a where
   type Transformed a :: *
+  -- ^ The type of item produced after applying an 'Affine' transformation to
+  -- 'a'. Most of the time, @Transformed a ~ a@. However, sometimes an 'Affine'
+  -- transformation can change the underlying type of a shape.
+  --
+  -- For example, when 'ChaosBox.Geometry.Circle.Circle's are 'transform'ed
+  -- with a scalar in one direction, an 'ChaosBox.Geometry.Ellipse.Ellipse' is
+  -- formed.
   type Transformed a = a
+
+  -- Apply a 'Transform2d' to an 'Affine'
   transform :: Transform2d -> a -> Transformed a
 
+-- | 'transform' an 'Affine' using a 3x3 matrix ('M33')
 transformMatrix :: Affine a => M33 Double -> a -> Transformed a
 transformMatrix = transform . matrix
 
@@ -86,32 +98,55 @@ withCairoAffine (Transform2d (V3 (V3 a b c) (V3 d e f) _)) render = do
 
 -- Applied transformations
 
+-- | Rotation matrix by @n@ radians counter-clockwise.
 rotated :: Double -> Transform2d
 rotated = Transform2d . Matrix.rotation
 
+-- | Translation matrix by an offset vector
 translated :: P2 -> Transform2d
 translated = Transform2d . Matrix.translation
 
+-- | Scalar matrix by a scaling vector.
+--
+-- @scaled (P2 3 2)@ represents a 3x scale in the x direction and a 3x scale in
+-- the y direction.
 scaled :: P2 -> Transform2d
 scaled = Transform2d . Matrix.scalar
 
+-- | Shear matrix in the x direction
 shearedX :: Double -> Transform2d
 shearedX = Transform2d . Matrix.shearX
 
+-- | Shear matrix in the y direction
 shearedY :: Double -> Transform2d
 shearedY = Transform2d . Matrix.shearY
 
+-- | Shear matrix in both directions
+--
+-- @shered (P2 x y) = shearedX x <> shearedY y@
+--
 sheared :: P2 -> Transform2d
 sheared = Transform2d . Matrix.shear
 
+-- | Reflection about the origin (0,0)
 reflectedOrigin :: Transform2d
 reflectedOrigin = Transform2d Matrix.reflectOrigin
 
+-- | Reflection across the x axis
 reflectedX :: Transform2d
 reflectedX = Transform2d Matrix.reflectX
 
+-- | Reflection across the y axis
 reflectedY :: Transform2d
 reflectedY = Transform2d Matrix.reflectY
 
+-- | A 'Transform2d' run after shifting to some point
+--
+-- For example (assume @center@ is the center of some shape):
+--
+-- @transform (around center (rotated (pi/2))) shape@
+--
+-- will rotate @shape@ by @pi/2@ radians about its @center@.
+--
 around :: P2 -> Transform2d -> Transform2d
 around v (Transform2d m) = Transform2d (Matrix.around v m)

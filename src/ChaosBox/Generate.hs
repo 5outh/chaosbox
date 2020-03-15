@@ -1,14 +1,35 @@
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE QuasiQuotes           #-}
-{-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE TemplateHaskell       #-}
-{-# LANGUAGE TypeFamilies          #-}
-module ChaosBox.Generate where
+module ChaosBox.Generate
+  (
+  -- * Generate's 'Reader' context
+    GenerateCtx(..)
+  , VideoManager(..)
+  -- * 'ChaosBoxEvent' management
+  , EventHandler(..)
+  , ChaosBoxEvent(..)
+  , overSDLEvent
+  -- * Hooks
+  , beforeSave
+  -- * Effects
+  , Generate
+  , GenerateT
+  , runGenerate
+  -- * Context-sensitive rendering utilities
+  , renderProgress
+  , getSize
+  , getCenterPoint
+  , getBounds
+  -- * Useful aliases
+  , cairo
+  )
+where
 
-import           System.Directory
+import           ChaosBox.Orphanage             ( )
 import           ChaosBox.AABB
 import           ChaosBox.Geometry.P2
+
+import           System.Directory
 import           Control.Arrow                  ( (&&&) )
 import           Control.Monad.Base
 import           Control.Monad.Random
@@ -49,18 +70,22 @@ data GenerateCtx = GenerateCtx
   , gcEventHandler   :: IORef EventHandler
   -- ^ Mutable Event Handler
   , gcMetadataString :: Maybe String
-  -- Optional string to append to file name
+  -- ^ Optional string to append to file name
   }
 
-data ChaosBoxEvent = Tick | SDLEvent SDL.Event
+data ChaosBoxEvent
+  = Tick
+  -- ^ A single loop of 'ChaosBox.Video.eventLoop' has passed
+  | SDLEvent SDL.Event
+  -- ^ An 'SDL.Event' has occurred
   deriving (Show, Eq)
 
+-- | Build an event handler for an 'SDL.Event'
 overSDLEvent :: Applicative f => (SDL.Event -> f ()) -> ChaosBoxEvent -> f ()
 overSDLEvent f = \case
   Tick           -> pure ()
   SDLEvent event -> f event
 
--- Note: event handlers will be kleisli-composed together to handle many events
 newtype EventHandler = EventHandler { ehHandleEvent :: ChaosBoxEvent -> Generate () }
 
 data VideoManager = VideoManager
@@ -70,12 +95,22 @@ data VideoManager = VideoManager
   -- ^ The number of picoseconds since the last frame was rendered
   }
 
+-- | Register an action to be performed before an image is saved
 beforeSave :: Generate () -> Generate ()
 beforeSave hook = do
   beforeSaveHookRef <- asks gcBeforeSaveHook
   liftIO $ writeIORef beforeSaveHookRef (Just hook)
 
 type GenerateT m a = RandT PureMT (ReaderT GenerateCtx m) a
+
+-- | The main 'ChaosBox' Monad
+--
+-- Supports the following effects:
+--
+-- - Writing to a cairo canvas via 'Render'
+-- - Reading the 'GenerateCtx'
+-- - Randomly generating values via 'RandT' 'PureMT', which hooks nicely into
+-- 'MonadRandom' and 'random-fu'
 type Generate a = GenerateT Render a
 
 $(monadRandom [d|
@@ -103,7 +138,7 @@ renderProgress = do
   let padInt :: Int -> String
       padInt = printf "%.8v"
 
-  progress            <- liftIO $ readIORef progressRef
+  progress <- liftIO $ readIORef progressRef
 
   cairo . withTargetSurface $ \surface -> do
     liftIO . putStrLn $ "Rendering progress surface #" <> show progress
@@ -123,11 +158,11 @@ runGenerate surface ctx@GenerateCtx {..} doRender =
     cairo $ scale gcScale gcScale
     doRender
 
--- | Lift a 'Render' (cairo) action into a 'Generate' action
+-- | Lift a 'Render' (cairo) action into a 'GenerateT' action
 cairo :: Render a -> Generate a
 cairo = lift . lift
 
--- | Get the bounding 'AABB' for the image surface
+-- | Get the bounding 'ChaosBox.Geometry.AABB' for the screen or image
 getBounds :: Generate AABB
 getBounds = do
   (w, h) <- getSize
