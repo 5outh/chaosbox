@@ -2,14 +2,11 @@ module Main where
 
 import           ChaosBox
 
-import           ChaosBox.Math                 (lerp)
 import           ChaosBox.Interactive
-import           Control.Monad                 (replicateM)
-import           Control.Monad.Random
-import           Control.Monad.Reader
-import           Data.IORef.Lifted
-import qualified Data.List.NonEmpty            as NE
-import           System.Random.Mersenne.Pure64
+import           ChaosBox.Math        (lerp)
+import           Control.Monad        (replicateM)
+import qualified Data.List.NonEmpty   as NE
+import           UnliftIO.IORef
 
 -- Run this example with
 --

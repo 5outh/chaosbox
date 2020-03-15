@@ -18,11 +18,11 @@ where
 
 import           ChaosBox.Generate
 
-import           ChaosBox.Orphanage()
+import           ChaosBox.Orphanage             ( )
 import           Data.Foldable                  ( for_ )
 import           Control.Monad.Random
 import           Control.Monad.Reader
-import           Data.IORef.Lifted
+import           UnliftIO.IORef
 import           Data.Maybe                     ( fromMaybe )
 import           Data.Semigroup                 ( (<>) )
 import           Data.Time.Clock.POSIX
@@ -63,17 +63,16 @@ data Opts = Opts
 getDefaultOpts :: IO Opts
 getDefaultOpts = do
   seed <- round . (* 1000) <$> getPOSIXTime
-  pure Opts
-    { optSeed           = Just seed
-    , optScale          = 1
-    , optWidth          = 100
-    , optHeight         = 100
-    , optRenderTimes    = 1
-    , optName           = "sketch"
-    , optMetadataString = Nothing
-    , optFps            = 30
-    , optRenderMode     = Interactive
-    }
+  pure Opts { optSeed           = Just seed
+            , optScale          = 1
+            , optWidth          = 100
+            , optHeight         = 100
+            , optRenderTimes    = 1
+            , optName           = "sketch"
+            , optMetadataString = Nothing
+            , optFps            = 30
+            , optRenderMode     = Interactive
+            }
 
 opts :: Parser Opts
 opts =
@@ -177,23 +176,24 @@ runChaosBoxDirectly Opts {..} doRender = replicateM_ optRenderTimes $ do
   lastRenderedTimeRef <- newIORef 0
   gcEventHandlerRef   <- newIORef (EventHandler $ const $ pure ())
 
-  let ctx = GenerateCtx
-        { gcWidth          = optWidth
-        , gcHeight         = optHeight
-        , gcSeed           = seed
-        , gcScale          = optScale
-        , gcName           = optName
-        , gcProgress       = progressRef
-        , gcBeforeSaveHook = beforeSaveHookRef
-        , gcCairoSurface   = surface
-        , gcWindow         = window
-        , gcVideoManager   = VideoManager
-          { vmFps                 = optFps
-          , vmLastRenderedTimeRef = lastRenderedTimeRef
-          }
-        , gcEventHandler   = gcEventHandlerRef
-        , gcMetadataString = optMetadataString
-        }
+  let
+    ctx = GenerateCtx
+      { gcWidth          = optWidth
+      , gcHeight         = optHeight
+      , gcSeed           = seed
+      , gcScale          = optScale
+      , gcName           = optName
+      , gcProgress       = progressRef
+      , gcBeforeSaveHook = beforeSaveHookRef
+      , gcCairoSurface   = surface
+      , gcWindow         = window
+      , gcVideoManager   = VideoManager
+                             { vmFps                 = optFps
+                             , vmLastRenderedTimeRef = lastRenderedTimeRef
+                             }
+      , gcEventHandler   = gcEventHandlerRef
+      , gcMetadataString = optMetadataString
+      }
 
   void . renderWith surface . flip runReaderT ctx . flip runRandT stdGen $ do
     cairo $ scale optScale optScale
@@ -213,7 +213,7 @@ saveImage = saveImageWith Nothing
 saveImageWith :: Maybe String -> Generate ()
 saveImageWith mStr = do
   GenerateCtx {..} <- ask
-  mHook <- readIORef gcBeforeSaveHook
+  mHook            <- readIORef gcBeforeSaveHook
   for_ mHook $ \hook -> hook
 
   liftIO $ do
