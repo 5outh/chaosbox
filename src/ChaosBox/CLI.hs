@@ -2,9 +2,8 @@
 -- | Utilities for creating CLI applications that interface with 'ChaosBox'
 module ChaosBox.CLI
   ( runChaosBoxWith
-  , runChaosBoxIO
-  , runChaosBoxIOWith
-  , runChaosBoxInteractive
+  , runChaosBox
+  , runChaosBoxDirectly
   , getDefaultOpts
   , Opts(..)
   , saveImage
@@ -16,8 +15,6 @@ where
 import           ChaosBox.Generate
 
 import           Data.Foldable                  ( for_ )
-import           Control.Concurrent
-import           Control.Monad                  ( unless )
 import           Control.Monad.Random
 import           Control.Monad.Reader
 import           Data.IORef
@@ -32,6 +29,8 @@ import           System.Random.Mersenne.Pure64
 
 import           Foreign.Ptr                    ( castPtr )
 import           SDL
+
+data RenderMode = Static | Interactive
 
 data Opts = Opts
   { optSeed           :: Maybe Word64
@@ -51,6 +50,8 @@ data Opts = Opts
   -- Optional string to append to file name, useful for tagging
   , optFps            :: Int
   -- ^ How many frames a video should render per second
+  , optRenderMode :: RenderMode
+  -- ^ Should we render a png directly or spawn an interactive video?
   }
 
 getDefaultOpts :: IO Opts
@@ -65,6 +66,7 @@ getDefaultOpts = do
     , optName           = "sketch"
     , optMetadataString = Nothing
     , optFps            = 30
+    , optRenderMode     = Interactive
     }
 
 opts :: Parser Opts
@@ -79,6 +81,7 @@ opts =
     <*> strOption (long "name" <> metavar "NAME" <> value "sketch")
     <*> optional (strOption (long "metadata" <> metavar "METADATA"))
     <*> option auto (long "fps" <> metavar "FPS" <> value 30)
+    <*> flag Interactive Static (long "static" <> short 's')
 
 optsInfo :: ParserInfo Opts
 optsInfo = info
@@ -86,31 +89,31 @@ optsInfo = info
   (fullDesc <> progDesc "Generate art with ChaosBox" <> header "chaosbox")
 
 -- | Run 'ChaosBox' with 'Opts' parsed from the CLI
-runChaosBoxIO
+runChaosBox
   :: Generate a
   -- ^ Render function
   -> IO ()
-runChaosBoxIO = runChaosBoxIOWith id
+runChaosBox = runChaosBoxWith id
 
 -- | Run 'ChaosBox' with 'Opts' parsed from the CLI, allowing overrides.
-runChaosBoxIOWith
+runChaosBoxWith
   :: (Opts -> Opts)
   -- ^ Option modifier
   -> Generate a
   -- ^ Render function
   -> IO ()
-runChaosBoxIOWith fn render = do
+runChaosBoxWith fn render = do
   options <- execParser optsInfo
-  runChaosBoxWith (fn options) render
+  runChaosBoxDirectly (fn options) render
 
 -- | Run 'ChaosBox' with the given 'Opts'
-runChaosBoxWith
+runChaosBoxDirectly
   :: Opts
   -- ^ Art options
   -> Generate a
   -- ^ Render function
   -> IO ()
-runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
+runChaosBoxDirectly Opts {..} doRender = replicateM_ optRenderTimes $ do
   seed <- case optSeed of
     Just seed' -> pure seed'
     Nothing    -> round . (* 1000) <$> getPOSIXTime
@@ -119,9 +122,26 @@ runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
       w      = round $ fromIntegral optWidth * optScale
       h      = round $ fromIntegral optHeight * optScale
 
-  surface             <- createImageSurface FormatARGB32 w h
-  progressRef         <- newIORef 0
+  (surface, window) <- case optRenderMode of
+    Static      -> (,) <$> createImageSurface FormatARGB32 w h <*> pure Nothing
+    Interactive -> do
+      SDL.initialize [SDL.InitVideo]
+      window <- SDL.createWindow
+        "ChaosBox"
+        SDL.defaultWindow
+          { SDL.windowInitialSize = V2 (fromIntegral w) (fromIntegral h)
+          , SDL.windowHighDPI     = True
+          }
+      SDL.showWindow window
+      screenSurface <- SDL.getWindowSurface window
+      let white = V4 maxBound maxBound maxBound maxBound
+      SDL.surfaceFillRect screenSurface Nothing white
+      pixels  <- castPtr <$> surfacePixels screenSurface
 
+      surface <- createImageSurfaceForData pixels FormatRGB24 w h (w * 4)
+      pure (surface, Just window)
+
+  progressRef         <- newIORef 0
   beforeSaveHookRef   <- newIORef Nothing
   lastRenderedTimeRef <- newIORef 0
   gcEventHandlerRef   <- newIORef (EventHandler $ const $ pure ())
@@ -135,7 +155,7 @@ runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
         , gcProgress       = progressRef
         , gcBeforeSaveHook = beforeSaveHookRef
         , gcCairoSurface   = surface
-        , gcWindow         = Nothing
+        , gcWindow         = window
         , gcVideoManager   = VideoManager
           { vmFps                 = optFps
           , vmLastRenderedTimeRef = lastRenderedTimeRef
@@ -150,8 +170,8 @@ runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
 
     ref   <- asks gcBeforeSaveHook
     mHook <- liftIO $ readIORef ref
-
     fromMaybe (pure ()) mHook
+
     saveImage
 
 saveImage :: Generate ()
@@ -162,7 +182,7 @@ saveImageWith mStr = do
   GenerateCtx {..} <- ask
   liftIO $ do
     putStrLn "Saving Image"
-    createDirectoryIfMissing True $ "./images/" <> gcName <> "/progress"
+    createDirectoryIfMissing True $ "./images/" <> gcName
     for_ mStr $ \_ ->
       createDirectoryIfMissing True
         $  "./images/"
@@ -205,71 +225,3 @@ saveImageWith mStr = do
 
       putStrLn $ "Writing " <> extraFile
       surfaceWriteToPNG gcCairoSurface extraFile
-
--- | Run 'ChaosBox' with the given 'Opts'
-runChaosBoxInteractive
-  :: Opts
-  -- ^ Art options
-  -> Generate ()
-  -- ^ Render function
-  -> IO ()
-runChaosBoxInteractive Opts {..} doRender = replicateM_ optRenderTimes $ do
-  seed <- case optSeed of
-    Just seed' -> pure seed'
-    Nothing    -> round . (* 1000) <$> getPOSIXTime
-
-  let stdGen       = pureMT seed
-      screenWidth  = round $ fromIntegral optWidth * optScale
-      screenHeight = round $ fromIntegral optHeight * optScale
-  progressRef <- newIORef 0
-
-  -- Create directories if they don't exist
-  createDirectoryIfMissing False "./images/"
-  createDirectoryIfMissing False $ "./images/" <> optName
-  createDirectoryIfMissing False $ "./images/" <> optName <> "/progress"
-
-  beforeSaveHookRef <- newIORef Nothing
-
-  SDL.initialize [SDL.InitVideo]
-  window <- SDL.createWindow
-    "ChaosBox"
-    SDL.defaultWindow { SDL.windowInitialSize = V2 screenWidth screenHeight
-                      , SDL.windowHighDPI     = True
-                      }
-  SDL.showWindow window
-  screenSurface <- SDL.getWindowSurface window
-  let white = V4 maxBound maxBound maxBound maxBound
-  SDL.surfaceFillRect screenSurface Nothing white
-  pixels <- castPtr <$> surfacePixels screenSurface
-
-  canvas <- createImageSurfaceForData pixels
-                                      FormatRGB24
-                                      (fromIntegral screenWidth)
-                                      (fromIntegral screenHeight)
-                                      (fromIntegral $ screenWidth * 4)
-
-  lastRenderedTimeRef <- newIORef 0
-  gcEventHandlerRef   <- newIORef (EventHandler $ const $ pure ())
-
-  let ctx = GenerateCtx
-        { gcWidth          = optWidth
-        , gcHeight         = optHeight
-        , gcSeed           = seed
-        , gcScale          = optScale
-        , gcName           = optName
-        , gcProgress       = progressRef
-        , gcBeforeSaveHook = beforeSaveHookRef
-        , gcCairoSurface   = canvas
-        , gcWindow         = Just window
-        , gcVideoManager   = VideoManager
-          { vmFps                 = optFps
-          , vmLastRenderedTimeRef = lastRenderedTimeRef
-          }
-        , gcEventHandler   = gcEventHandlerRef
-        , gcMetadataString = optMetadataString
-        }
-
-  void . renderWith canvas . flip runReaderT ctx . flip runRandT stdGen $ do
-    cairo $ scale optScale optScale
-    void doRender
-    saveImage

@@ -6,6 +6,7 @@
 {-# LANGUAGE TypeFamilies          #-}
 module ChaosBox.Generate where
 
+import           System.Directory
 import           ChaosBox.AABB
 import           ChaosBox.Geometry.P2
 import           Control.Arrow                  ( (&&&) )
@@ -97,10 +98,11 @@ getCenterPoint = do
 
 renderProgress :: Generate ()
 renderProgress = do
+  (name, progressRef) <- asks (gcName &&& gcProgress)
+  liftIO $ createDirectoryIfMissing False $ "./images/" <> name <> "/progress"
   let padInt :: Int -> String
       padInt = printf "%.8v"
 
-  (name, progressRef) <- asks (gcName &&& gcProgress)
   progress            <- liftIO $ readIORef progressRef
 
   cairo . withTargetSurface $ \surface -> do
