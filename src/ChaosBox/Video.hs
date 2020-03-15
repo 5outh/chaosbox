@@ -10,7 +10,12 @@ module ChaosBox.Video
   , heldMousePosition
   -- * Keyboard events
   , onKeyDown
+  , bindKey
   , onKeyUp
+  , syncKeyDown
+  , syncKeyUp
+  , whileKeyDown
+  , whileKeyUp
   -- * 'Tick'
   , everyTick
   -- * Debugging
@@ -51,7 +56,11 @@ import           System.CPUTime
 -- with 'registerEventHandler' or a variety of other functions in this module).
 --
 eventLoop :: Generate a -> Generate ()
-eventLoop act = loop
+eventLoop act = do
+  bindKey SDL.ScancodeS $ do
+    str <- replicateM 6 $ unsafeUniform ['a'..'z']
+    saveImageWith (Just str)
+  loop
  where
   loop = do
     EventHandler {..} <- readIORef =<< asks gcEventHandler
@@ -149,10 +158,46 @@ newSignal def act = do
   ref <$ act ref
 
 onKeyUp :: SDL.Scancode -> Generate () -> Generate ()
-onKeyUp = undefined -- todo
+onKeyUp scancode act = registerEventHandler . overSDLEvent $ \event ->
+  case eventPayload event of
+    KeyboardEvent KeyboardEventData {..}
+      | (SDL.keysymScancode keyboardEventKeysym == scancode && keyboardEventKeyMotion == Released) -> act
+    _ -> pure ()
 
 onKeyDown :: SDL.Scancode -> Generate () -> Generate ()
-onKeyDown = undefined -- todo
+onKeyDown scancode act = registerEventHandler . overSDLEvent $ \event ->
+  case eventPayload event of
+    KeyboardEvent KeyboardEventData {..}
+      | (SDL.keysymScancode keyboardEventKeysym == scancode && keyboardEventKeyMotion == Pressed) -> act
+    _ -> pure ()
+
+-- | Alias for 'onKeyDown'
+bindKey :: SDL.Scancode -> Generate () -> Generate ()
+bindKey = onKeyDown
+
+syncKeyDown :: SDL.Scancode -> Generate (IORef Bool)
+syncKeyDown scancode = newSignal False $ \ref -> do
+  onKeyDown scancode $ writeIORef ref True
+  onKeyUp scancode $ writeIORef ref False
+
+syncKeyUp :: SDL.Scancode -> Generate (IORef Bool)
+syncKeyUp scancode = newSignal True $ \ref -> do
+  onKeyDown scancode $ writeIORef ref False
+  onKeyUp scancode $ writeIORef ref True
+
+whileKeyDown :: SDL.Scancode -> Generate () -> Generate ()
+whileKeyDown scancode act = do
+  isKeyDown <- syncKeyDown scancode
+  everyTick $ do
+    isDown <- readIORef isKeyDown
+    when isDown act
+
+whileKeyUp :: SDL.Scancode -> Generate () -> Generate ()
+whileKeyUp scancode act = do
+  isKeyDown <- syncKeyUp scancode
+  everyTick $ do
+    isDown <- readIORef isKeyDown
+    when isDown act
 
 -- | Render a frame one-off
 --
