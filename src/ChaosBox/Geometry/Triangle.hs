@@ -1,3 +1,4 @@
+-- | Triangles
 module ChaosBox.Geometry.Triangle
   ( TriangleOf(..)
   , Triangle

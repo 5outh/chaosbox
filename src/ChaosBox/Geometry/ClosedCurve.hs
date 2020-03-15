@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+-- | Closed cubic b-splines
 module ChaosBox.Geometry.ClosedCurve
   ( ClosedCurveOf(..)
   , ClosedCurve

@@ -1,3 +1,4 @@
+-- | Arcs (partial circles)
 module ChaosBox.Geometry.Arc
   ( ArcOf(..)
   , Arc

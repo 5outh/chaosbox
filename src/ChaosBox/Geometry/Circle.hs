@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies #-}
+-- | Circles
 module ChaosBox.Geometry.Circle
   ( CircleOf(..)
   , Circle
