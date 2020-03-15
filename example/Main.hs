@@ -20,9 +20,8 @@ import           System.Random.Mersenne.Pure64
 main :: IO ()
 main = do
   opts <- getDefaultOpts
-  -- TODO: is there a way for this to be async???
-  runChaosBoxInteractive
-    (opts { optWidth = 10, optHeight = 10, optScale = 60, optFps = 60 })
+  runChaosBoxWith
+    (\o -> o { optWidth = 10, optHeight = 10, optScale = 60, optFps = 30 })
     renderSketch
 
 renderSketch :: RandT PureMT (ReaderT GenerateCtx Render) ()

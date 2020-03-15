@@ -60,9 +60,12 @@ eventLoop act = do
   bindKey SDL.ScancodeS $ do
     str <- replicateM 6 $ unsafeUniform ['a'..'z']
     saveImageWith (Just str)
-  loop
+  -- TODO: This isn't perfect, could bind the key down event directly to the
+  -- "quit" action
+  shouldQuitRef <- syncKeyDown SDL.ScancodeQ
+  loop shouldQuitRef
  where
-  loop = do
+  loop shouldQuitRef = do
     EventHandler {..} <- readIORef =<< asks gcEventHandler
 
     -- Handle a single 'Tick'
@@ -71,10 +74,11 @@ eventLoop act = do
     -- Handle all 'SDL.Event's
     events            <- liftIO SDL.pollEvents
     for_ events (ehHandleEvent . SDLEvent)
-    unless (SDL.QuitEvent `elem` map SDL.eventPayload events) $ do
+    shouldQuit <- readIORef shouldQuitRef
+    unless (SDL.QuitEvent `elem` map SDL.eventPayload events || shouldQuit) $ do
       void act
       renderFrame
-      loop
+      loop shouldQuitRef
 
 -- | Register a new event handler for an 'SDL.Event'
 registerEventHandler :: (ChaosBoxEvent -> Generate ()) -> Generate ()
