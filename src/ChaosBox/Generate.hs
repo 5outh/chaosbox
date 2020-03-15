@@ -14,7 +14,6 @@ module ChaosBox.Generate
   -- * Effects
   , Generate
   , GenerateT
-  , runGenerate
   -- * Context-sensitive rendering utilities
   , renderProgress
   , getSize
@@ -151,12 +150,6 @@ renderProgress = do
       <> ".png"
 
   modifyIORef progressRef (+ 1)
-
-runGenerate :: Surface -> GenerateCtx -> Generate a -> IO (a, PureMT)
-runGenerate surface ctx@GenerateCtx {..} doRender =
-  renderWith surface . flip runReaderT ctx . flip runRandT (pureMT gcSeed) $ do
-    cairo $ scale gcScale gcScale
-    doRender
 
 -- | Lift a 'Render' (cairo) action into a 'GenerateT' action
 cairo :: MonadBase Render m => Render a -> GenerateT m a
