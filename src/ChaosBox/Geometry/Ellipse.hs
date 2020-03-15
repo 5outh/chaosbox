@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies #-}
+-- | Axis-aligned ellipses
 module ChaosBox.Geometry.Ellipse
   ( EllipseOf(..)
   , Ellipse

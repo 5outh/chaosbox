@@ -1,3 +1,4 @@
+-- | Arbitrary polygons
 module ChaosBox.Geometry.Polygon
   ( PolygonOf(..)
   , Polygon

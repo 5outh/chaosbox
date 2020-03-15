@@ -1,3 +1,4 @@
+-- | Open cubic b-splines
 module ChaosBox.Geometry.Curve
   ( CurveOf(..)
   , Curve

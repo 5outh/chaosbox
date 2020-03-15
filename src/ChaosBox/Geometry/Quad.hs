@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+-- | Quadrilaterals (four-sided polygons)
 module ChaosBox.Geometry.Quad
   ( QuadOf(..)
   , Quad

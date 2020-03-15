@@ -1,4 +1,5 @@
 {-# LANGUAGE ViewPatterns #-}
+-- | Line segments
 module ChaosBox.Geometry.Line
   ( LineOf(..)
   , Line

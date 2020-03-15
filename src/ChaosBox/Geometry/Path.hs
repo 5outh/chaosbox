@@ -1,3 +1,4 @@
+-- | Open paths
 module ChaosBox.Geometry.Path
   ( PathOf(..)
   , Path

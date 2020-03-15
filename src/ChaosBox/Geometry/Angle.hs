@@ -1,5 +1,4 @@
-{-# LANGUAGE DerivingStrategies         #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+-- | Angles
 module ChaosBox.Geometry.Angle
   ( Angle(..)
   , fromRadians
@@ -11,7 +10,7 @@ module ChaosBox.Geometry.Angle
 where
 
 import           ChaosBox.Geometry.P2
-import           Data.Fixed           (mod')
+import           Data.Fixed                     ( mod' )
 import           Linear.V2
 
 newtype Angle = Angle { getAngle :: Double }

@@ -1,4 +1,5 @@
 {-# LANGUAGE ViewPatterns #-}
+-- | Axis-aligned rectangles
 module ChaosBox.Geometry.Rect
   ( RectOf(..)
   , Rect
