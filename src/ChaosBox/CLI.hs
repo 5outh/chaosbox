@@ -7,19 +7,22 @@ module ChaosBox.CLI
   , runChaosBoxInteractive
   , getDefaultOpts
   , Opts(..)
+  , saveImage
+  , saveImageWith
   )
 where
 
 
 import           ChaosBox.Generate
 
+import           Data.Foldable                  ( for_ )
 import           Control.Concurrent
-import           Control.Monad                 (unless)
+import           Control.Monad                  ( unless )
 import           Control.Monad.Random
 import           Control.Monad.Reader
 import           Data.IORef
-import           Data.Maybe                    (fromMaybe)
-import           Data.Semigroup                ((<>))
+import           Data.Maybe                     ( fromMaybe )
+import           Data.Semigroup                 ( (<>) )
 import           Data.Time.Clock.POSIX
 import           GHC.Word
 import           GI.Cairo.Render
@@ -27,7 +30,7 @@ import           Options.Applicative
 import           System.Directory
 import           System.Random.Mersenne.Pure64
 
-import           Foreign.Ptr                   (castPtr)
+import           Foreign.Ptr                    ( castPtr )
 import           SDL
 
 data Opts = Opts
@@ -53,15 +56,16 @@ data Opts = Opts
 getDefaultOpts :: IO Opts
 getDefaultOpts = do
   seed <- round . (* 1000) <$> getPOSIXTime
-  pure Opts { optSeed           = Just seed
-            , optScale          = 1
-            , optWidth          = 100
-            , optHeight         = 100
-            , optRenderTimes    = 1
-            , optName           = "sketch"
-            , optMetadataString = Nothing
-            , optFps            = 30
-            }
+  pure Opts
+    { optSeed           = Just seed
+    , optScale          = 1
+    , optWidth          = 100
+    , optHeight         = 100
+    , optRenderTimes    = 1
+    , optName           = "sketch"
+    , optMetadataString = Nothing
+    , optFps            = 30
+    }
 
 opts :: Parser Opts
 opts =
@@ -115,36 +119,30 @@ runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
       w      = round $ fromIntegral optWidth * optScale
       h      = round $ fromIntegral optHeight * optScale
 
-  surface     <- createImageSurface FormatARGB32 w h
-  progressRef <- newIORef 0
-
-  -- Create directories if they don't exist
-  createDirectoryIfMissing False "./images/"
-  createDirectoryIfMissing False $ "./images/" <> optName
-  createDirectoryIfMissing False $ "./images/" <> optName <> "/progress"
+  surface             <- createImageSurface FormatARGB32 w h
+  progressRef         <- newIORef 0
 
   beforeSaveHookRef   <- newIORef Nothing
-
   lastRenderedTimeRef <- newIORef 0
   gcEventHandlerRef   <- newIORef (EventHandler $ const $ pure ())
 
-  let
-    ctx = GenerateCtx
-      { gcWidth          = optWidth
-      , gcHeight         = optHeight
-      , gcSeed           = seed
-      , gcScale          = optScale
-      , gcName           = optName
-      , gcProgress       = progressRef
-      , gcBeforeSaveHook = beforeSaveHookRef
-      , gcCairoSurface   = surface
-      , gcWindow         = Nothing
-      , gcVideoManager   = VideoManager
-                             { vmFps                 = optFps
-                             , vmLastRenderedTimeRef = lastRenderedTimeRef
-                             }
-      , gcEventHandler   = gcEventHandlerRef
-      }
+  let ctx = GenerateCtx
+        { gcWidth          = optWidth
+        , gcHeight         = optHeight
+        , gcSeed           = seed
+        , gcScale          = optScale
+        , gcName           = optName
+        , gcProgress       = progressRef
+        , gcBeforeSaveHook = beforeSaveHookRef
+        , gcCairoSurface   = surface
+        , gcWindow         = Nothing
+        , gcVideoManager   = VideoManager
+          { vmFps                 = optFps
+          , vmLastRenderedTimeRef = lastRenderedTimeRef
+          }
+        , gcEventHandler   = gcEventHandlerRef
+        , gcMetadataString = optMetadataString
+        }
 
   void . renderWith surface . flip runReaderT ctx . flip runRandT stdGen $ do
     cairo $ scale optScale optScale
@@ -154,24 +152,59 @@ runChaosBoxWith Opts {..} doRender = replicateM_ optRenderTimes $ do
     mHook <- liftIO $ readIORef ref
 
     fromMaybe (pure ()) mHook
+    saveImage
 
-  putStrLn "Generating art..."
-  let filename =
-        "images/"
-          <> optName
-          <> "/"
-          <> show seed
-          <> "-"
-          <> show optScale
-          <> fromMaybe "" optMetadataString
-          <> ".png"
-      latest = "images/" <> optName <> "/latest.png"
+saveImage :: Generate ()
+saveImage = saveImageWith Nothing
 
-  putStrLn $ "Writing " <> filename
-  putStrLn $ "Writing " <> latest
+saveImageWith :: Maybe String -> Generate ()
+saveImageWith mStr = do
+  GenerateCtx {..} <- ask
+  liftIO $ do
+    putStrLn "Saving Image"
+    createDirectoryIfMissing True $ "./images/" <> gcName <> "/progress"
+    for_ mStr $ \_ ->
+      createDirectoryIfMissing True
+        $  "./images/"
+        <> gcName
+        <> "/"
+        <> show gcSeed
 
-  surfaceWriteToPNG surface filename
-  surfaceWriteToPNG surface latest
+    putStrLn "Generating art..."
+    let regularFile =
+          "images/"
+            <> gcName
+            <> "/"
+            <> show gcSeed
+            <> "-"
+            <> show gcScale
+            <> fromMaybe "" gcMetadataString
+            <> ".png"
+        latest = "images/" <> gcName <> "/latest.png"
+
+    putStrLn $ "Writing " <> regularFile
+    surfaceWriteToPNG gcCairoSurface regularFile
+
+    putStrLn $ "Writing " <> latest
+    surfaceWriteToPNG gcCairoSurface latest
+
+    for_ mStr $ \s -> do
+      let extraFile =
+            "images/"
+              <> gcName
+              <> "/"
+              <> show gcSeed
+              <> "/"
+              <> show gcSeed
+              <> "-"
+              <> show gcScale
+              <> "-"
+              <> s
+              <> fromMaybe "" gcMetadataString
+              <> ".png"
+
+      putStrLn $ "Writing " <> extraFile
+      surfaceWriteToPNG gcCairoSurface extraFile
 
 -- | Run 'ChaosBox' with the given 'Opts'
 runChaosBoxInteractive
@@ -218,51 +251,25 @@ runChaosBoxInteractive Opts {..} doRender = replicateM_ optRenderTimes $ do
   lastRenderedTimeRef <- newIORef 0
   gcEventHandlerRef   <- newIORef (EventHandler $ const $ pure ())
 
-  let
-    ctx = GenerateCtx
-      { gcWidth          = optWidth
-      , gcHeight         = optHeight
-      , gcSeed           = seed
-      , gcScale          = optScale
-      , gcName           = optName
-      , gcProgress       = progressRef
-      , gcBeforeSaveHook = beforeSaveHookRef
-      , gcCairoSurface   = canvas
-      , gcWindow         = Just window
-      , gcVideoManager   = VideoManager
-                             { vmFps                 = optFps
-                             , vmLastRenderedTimeRef = lastRenderedTimeRef
-                             }
-      , gcEventHandler   = gcEventHandlerRef
-      }
+  let ctx = GenerateCtx
+        { gcWidth          = optWidth
+        , gcHeight         = optHeight
+        , gcSeed           = seed
+        , gcScale          = optScale
+        , gcName           = optName
+        , gcProgress       = progressRef
+        , gcBeforeSaveHook = beforeSaveHookRef
+        , gcCairoSurface   = canvas
+        , gcWindow         = Just window
+        , gcVideoManager   = VideoManager
+          { vmFps                 = optFps
+          , vmLastRenderedTimeRef = lastRenderedTimeRef
+          }
+        , gcEventHandler   = gcEventHandlerRef
+        , gcMetadataString = optMetadataString
+        }
 
   void . renderWith canvas . flip runReaderT ctx . flip runRandT stdGen $ do
     cairo $ scale optScale optScale
     void doRender
-
-  SDL.updateWindowSurface window
-
-  putStrLn "Generating art..."
-
-  let filename =
-        "images/"
-          <> optName
-          <> "/"
-          <> show seed
-          <> "-"
-          <> show optScale
-          <> fromMaybe "" optMetadataString
-          <> ".png"
-      latest = "images/" <> optName <> "/latest.png"
-
-  putStrLn $ "Writing " <> filename
-  putStrLn $ "Writing " <> latest
-
-  surfaceWriteToPNG canvas filename
-  surfaceWriteToPNG canvas latest
-  forkIO idle
- where
-  idle = do
-    events <- liftIO SDL.pollEvents
-    let shouldQuit = elem SDL.QuitEvent $ map SDL.eventPayload events
-    unless shouldQuit idle
+    saveImage

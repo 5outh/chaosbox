@@ -47,6 +47,8 @@ data GenerateCtx = GenerateCtx
   -- ^ Video manager
   , gcEventHandler   :: IORef EventHandler
   -- ^ Mutable Event Handler
+  , gcMetadataString :: Maybe String
+  -- Optional string to append to file name
   }
 
 data ChaosBoxEvent = Tick | SDLEvent SDL.Event
