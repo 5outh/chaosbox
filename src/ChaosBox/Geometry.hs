@@ -23,7 +23,7 @@
 --
 -- @
 -- pattern Line :: P2 -> P2 -> Line
--- pattern Line s e = LineOf s e
+-- pattern Line { lineStart, lineEnd } = LineOf lineStart lineEnd
 -- @
 --
 -- This allows the user to construct 'Line's with 'Line':
@@ -40,8 +40,15 @@
 -- midPoint (Line s e) = (s + e) / 2
 -- @
 --
--- This is a little uncommon, but it works well here. The user can sort of
--- forget about the generalized data type when programming with the common
+-- You can also use @NamedFieldPuns@ or @RecordWildCards@ on the @pattern@:
+--
+-- @
+-- midpoint :: Line -> P2
+-- midPoint Line{..} = (lineStart + lineEnd) / 2
+-- @
+--
+-- This is an uncommon design choice, but it works well here. The user can sort
+-- of forget about the generalized data type when programming with the common
 -- case, but the flexibility is there to generalize if and when it is needed.
 --
 -- All shapes instantiate the following when possible:
