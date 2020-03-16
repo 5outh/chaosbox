@@ -3,6 +3,10 @@ module ChaosBox.Geometry.Ellipse
   ( EllipseOf(..)
   , Ellipse
   , pattern Ellipse
+  , ellipseCenter
+  , ellipseWidth
+  , ellipseHeight
+  , ellipseDetail
   , ellipse
   , ellipseOf
   , ellipsePoints
@@ -26,26 +30,26 @@ import           Data.List.NonEmpty        (NonEmpty (..))
 
 -- | Axis-bound ellipse
 data EllipseOf a = EllipseOf
-  { ellipseCenter :: a
-  , ellipseWidth  :: Double
-  , ellipseHeight :: Double
-  , ellipseDetail :: Int
+  { ellipseOfCenter :: a
+  , ellipseOfWidth  :: Double
+  , ellipseOfHeight :: Double
+  , ellipseOfDetail :: Int
   }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 type Ellipse = EllipseOf P2
 
 pattern Ellipse :: P2 -> Double -> Double -> Int -> Ellipse
-pattern Ellipse c w h d = EllipseOf c w h d
+pattern Ellipse {ellipseCenter, ellipseWidth, ellipseHeight, ellipseDetail}
+  = EllipseOf ellipseCenter ellipseWidth ellipseHeight ellipseDetail
 {-# COMPLETE Ellipse #-}
 
 instance HasP2 a => HasAABB (EllipseOf a) where
   aabb EllipseOf {..} = boundary $ tl :| [ br]
    where
-    c  = ellipseCenter ^. _V2
-    tl = c - V2 ellipseWidth ellipseHeight
-    br = c + V2 ellipseWidth ellipseHeight
-
+    c  = ellipseOfCenter ^. _V2
+    tl = c - V2 ellipseOfWidth ellipseOfHeight
+    br = c + V2 ellipseOfWidth ellipseOfHeight
 
 instance HasP2 a => Affine (EllipseOf a) where
   type Transformed (EllipseOf a) = Maybe (PolygonOf a)
@@ -67,18 +71,18 @@ instance HasP2 a => Draw (EllipseOf a) where
 -- | Sample 'N' evenly spaced points along the ellipse's path
 ellipsePoints :: HasP2 a => EllipseOf a -> [a]
 ellipsePoints EllipseOf {..} =
-  map ((\p -> ellipseCenter & set _V2 p) . ellipsePoint)
-    $ lerpMany ellipseDetail 0 (2 * pi)
+  map ((\p -> ellipseOfCenter & set _V2 p) . ellipsePoint)
+    $ lerpMany ellipseOfDetail 0 (2 * pi)
  where
-  V2 x y = ellipseCenter ^. _V2
-  mat    = Matrix.scalar (V2 ellipseWidth ellipseHeight)
-    * Matrix.translation (ellipseCenter ^. _V2)
+  V2 x y = ellipseOfCenter ^. _V2
+  mat    = Matrix.scalar (V2 ellipseOfWidth ellipseOfHeight)
+    * Matrix.translation (ellipseOfCenter ^. _V2)
   ellipsePoint t = Matrix.applyMatrix mat $ V2 (x + cos t) (y + sin t)
 
 toPolygon :: HasP2 a => EllipseOf a -> Maybe (PolygonOf a)
 toPolygon EllipseOf {..} =
   transform
-      (  translated (ellipseCenter ^. _V2)
-      <> scaled (V2 ellipseWidth ellipseHeight)
+      (  translated (ellipseOfCenter ^. _V2)
+      <> scaled (V2 ellipseOfWidth ellipseOfHeight)
       )
-    $ circleOf (ellipseCenter & set _V2 0) 1
+    $ circleOf (ellipseOfCenter & set _V2 0) 1

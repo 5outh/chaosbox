@@ -3,6 +3,9 @@ module ChaosBox.Geometry.Circle
   ( CircleOf(..)
   , Circle
   , pattern Circle
+  , circleCenter
+  , circleRadius
+  , circleDetail
   , circle
   , circleOf
   , point
@@ -23,22 +26,22 @@ import           Control.Lens              ((&), (.~), (^.))
 import           Data.List.NonEmpty        (NonEmpty (..))
 import           GI.Cairo.Render           hiding (transform)
 
--- | A circle with radius 'circleRadius' centered at 'circleCenter'
-data CircleOf a = CircleOf { circleCenter :: a, circleRadius :: Double, circleDetail :: Int }
+-- | A circle with radius 'circleOfRadius' centered at 'circleOfCenter'
+data CircleOf a = CircleOf { circleOfCenter :: a, circleOfRadius :: Double, circleOfDetail :: Int }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 type Circle = CircleOf P2
 
 pattern Circle :: P2 -> Double -> Int -> Circle
-pattern Circle a r d = CircleOf a r d
+pattern Circle {circleCenter, circleRadius, circleDetail} = CircleOf circleCenter circleRadius circleDetail
 {-# COMPLETE Circle #-}
 
 instance HasP2 a => HasAABB (CircleOf a) where
   aabb CircleOf {..} = boundary $ tl :| [br]
    where
-    c  = circleCenter ^. _V2
-    tl = c - (circleRadius *^ (-1))
-    br = c + (circleRadius *^ 1)
+    c  = circleOfCenter ^. _V2
+    tl = c - (circleOfRadius *^ (-1))
+    br = c + (circleOfRadius *^ 1)
 
 instance HasP2 a => Affine (CircleOf a) where
   type Transformed (CircleOf a) = Maybe (PolygonOf a)
@@ -48,9 +51,9 @@ instance HasP2 a => Affine (CircleOf a) where
 
 instance HasP2 a => Draw (CircleOf a) where
   draw CircleOf {..} = do
-    let V2 x y = circleCenter ^. _V2
-    moveTo (x + circleRadius) y
-    arc x y circleRadius 0 (2 * pi)
+    let V2 x y = circleOfCenter ^. _V2
+    moveTo (x + circleOfRadius) y
+    arc x y circleOfRadius 0 (2 * pi)
 
 -- | A 'Circle' with default detail (200)
 circleOf :: a -> Double -> CircleOf a
@@ -68,11 +71,11 @@ toPolygon = polygonOf . circlePoints
 
 circlePoints :: HasP2 a => CircleOf a -> [a]
 circlePoints CircleOf {..} = tail $ flip map points $ \v ->
-  circleCenter & _V2 .~ v
+  circleOfCenter & _V2 .~ v
  where
-  step = 2 * pi / fromIntegral circleDetail
+  step = 2 * pi / fromIntegral circleOfDetail
   intervals = [0, step .. (2 * pi)]
-  points = map ((+ circleCenter ^. _V2) . (^* circleRadius) . angle) intervals
+  points = map ((+ circleOfCenter ^. _V2) . (^* circleOfRadius) . angle) intervals
 
 pointsOnCircle :: HasP2 a => Int -> CircleOf a -> [a]
-n `pointsOnCircle` c = circlePoints $ c { circleDetail = n }
+n `pointsOnCircle` c = circlePoints $ c { circleOfDetail = n }
