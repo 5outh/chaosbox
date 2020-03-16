@@ -4,6 +4,8 @@ module ChaosBox.Geometry.Line
   ( LineOf(..)
   , Line
   , pattern Line
+  , lineStart
+  , lineEnd
   )
 where
 
@@ -18,29 +20,29 @@ import           Data.Maybe              (maybeToList)
 import           Linear.V2               (V2 (..))
 import           Linear.Vector           ((*^))
 
-data LineOf a = LineOf { lineStart :: a, lineEnd :: a}
+data LineOf a = LineOf { lineOfStart :: a, lineOfEnd :: a}
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 type Line = LineOf P2
 
 pattern Line :: P2 -> P2 -> Line
-pattern Line s e = LineOf s e
+pattern Line { lineStart, lineEnd } = LineOf lineStart lineEnd
 {-# COMPLETE Line #-}
 
 instance HasP2 a => HasAABB (LineOf a) where
-  aabb LineOf {..} = boundary $ lineStart :| [lineEnd]
+  aabb LineOf {..} = boundary $ lineOfStart :| [lineOfEnd]
 
 instance HasP2 a => Affine (LineOf a) where
   transform = defaultTransform
 
 instance HasP2 a => Draw (LineOf a) where
-  draw LineOf {..} = draw $ PathOf (lineStart :| [lineEnd])
+  draw LineOf {..} = draw $ PathOf (lineOfStart :| [lineOfEnd])
 
 instance (HasP2 a, HasP2 b) => Intersects (LineOf a) (LineOf b) where
   intersectionPoints a b = maybeToList $ segmentIntersectionPoint a b
 
 segmentIntersectionPoint :: (HasP2 a, HasP2 b) =>  LineOf a -> LineOf b -> Maybe P2
-segmentIntersectionPoint (fmap getP2 -> LineOf { lineStart = p, lineEnd = pr }) (fmap getP2 -> LineOf { lineStart = q, lineEnd = qs })
+segmentIntersectionPoint (fmap getP2 -> LineOf { lineOfStart = p, lineOfEnd = pr }) (fmap getP2 -> LineOf { lineOfStart = q, lineOfEnd = qs })
   | r `cross2` s == 0 && (q - p) `cross2` r == 0
   = Nothing
   | -- Collinear; don't worry about the rest of this case.

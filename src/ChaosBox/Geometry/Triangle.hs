@@ -3,6 +3,9 @@ module ChaosBox.Geometry.Triangle
   ( TriangleOf(..)
   , Triangle
   , pattern Triangle
+  , triangleA
+  , triangleB
+  , triangleC
   )
 where
 
@@ -20,9 +23,9 @@ import           Data.List                 (sortBy)
 import           Data.List.NonEmpty        (NonEmpty (..))
 
 data TriangleOf a = TriangleOf
-  { triangleA :: a
-  , triangleB :: a
-  , triangleC :: a
+  { triangleOfA :: a
+  , triangleOfB :: a
+  , triangleOfC :: a
   }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
@@ -38,13 +41,13 @@ instance HasP2 a => Draw (TriangleOf a) where
 type Triangle = TriangleOf P2
 
 pattern Triangle :: P2 -> P2 -> P2 -> Triangle
-pattern Triangle a b c = TriangleOf a b c
+pattern Triangle {triangleA, triangleB, triangleC} = TriangleOf triangleA triangleB triangleC
 {-# COMPLETE Triangle #-}
 
 -- TODO: This should exist in a typeclass IsPolygon or triangleToPolygon etc
 -- etc
 toPolygon :: TriangleOf a -> PolygonOf a
-toPolygon TriangleOf {..} = PolygonOf $ triangleA :| [triangleB, triangleC]
+toPolygon TriangleOf {..} = PolygonOf $ triangleOfA :| [triangleOfB, triangleOfC]
 
 instance HasP2 a => Boundary (TriangleOf a) where
   containsPoint t p = b1 == b2 && b2 == b3
@@ -60,7 +63,7 @@ instance HasP2 a => Boundary (TriangleOf a) where
     b3 = sign p t3 t1 < 0
 
 triangleList :: TriangleOf a -> [a]
-triangleList TriangleOf {..} = [triangleA, triangleB, triangleC]
+triangleList TriangleOf {..} = [triangleOfA, triangleOfB, triangleOfC]
 
 sortOnPolarAngle :: (Fractional a, Ord a) => [V2 a] -> [V2 a]
 sortOnPolarAngle []       = []
