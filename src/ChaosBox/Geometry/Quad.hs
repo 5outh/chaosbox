@@ -4,6 +4,10 @@ module ChaosBox.Geometry.Quad
   ( QuadOf(..)
   , Quad
   , pattern Quad
+  , quadA
+  , quadB
+  , quadC
+  , quadD
   )
 where
 
@@ -21,24 +25,24 @@ import           Data.Foldable             (for_)
 import           Data.List.NonEmpty        (NonEmpty (..))
 
 data QuadOf a = QuadOf
-  { quadA :: a
-  , quadB :: a
-  , quadC :: a
-  , quadD :: a
+  { quadOfA :: a
+  , quadOfB :: a
+  , quadOfC :: a
+  , quadOfD :: a
   }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 type Quad = QuadOf P2
 
 pattern Quad :: P2 -> P2 -> P2 -> P2 -> Quad
-pattern Quad a b c d = QuadOf a b c d
+pattern Quad {quadA, quadB, quadC, quadD} = QuadOf quadA quadB quadC quadD
 {-# COMPLETE Quad #-}
 
 instance HasP2 a => Affine (QuadOf a) where
   transform = defaultTransform
 
 instance HasP2 a => HasAABB (QuadOf a) where
-  aabb QuadOf {..} = boundary $ quadA :| [quadB, quadC, quadD]
+  aabb QuadOf {..} = boundary $ quadOfA :| [quadOfB, quadOfC, quadOfD]
 
 -- To avoid cyclic dependencies this orphan instance must be located here
 instance HasP2 a => Affine (RectOf a) where
@@ -46,10 +50,10 @@ instance HasP2 a => Affine (RectOf a) where
   transform m = transform m . fromRect
 
 instance HasP2 a => Draw (QuadOf a) where
-  draw QuadOf {..} = for_ (polygonOf [quadA, quadB, quadC, quadD]) draw
+  draw QuadOf {..} = for_ (polygonOf [quadOfA, quadOfB, quadOfC, quadOfD]) draw
 
 fromRect :: HasP2 a => RectOf a -> QuadOf a
-fromRect RectOf {..} = QuadOf rectTopLeft
-                              (rectTopLeft & _V2 +~ V2 rectW 0)
-                              (rectTopLeft & _V2 +~ V2 rectW rectH)
-                              (rectTopLeft & _V2 +~ V2 0 rectH)
+fromRect RectOf {..} = QuadOf rectOfTopLeft
+                              (rectOfTopLeft & _V2 +~ V2 rectOfW 0)
+                              (rectOfTopLeft & _V2 +~ V2 rectOfW rectOfH)
+                              (rectOfTopLeft & _V2 +~ V2 0 rectOfH)

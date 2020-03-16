@@ -8,7 +8,7 @@
 --
 -- Let's look at "ChaosBox.Geometry.Line" as an example (@X = Line@):
 --
--- > data LineOf a = LineOf { lineStart :: a, lineEnd :: a}
+-- > data LineOf a = LineOf { lineOfStart :: a, lineOfEnd :: a}
 --
 -- 'LineOf' contains a start and end of any type @a@. This gives us 'Functor',
 -- 'Foldable', and 'Traversable' instances for free.
