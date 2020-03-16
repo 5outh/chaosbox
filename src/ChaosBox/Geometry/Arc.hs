@@ -6,6 +6,11 @@ module ChaosBox.Geometry.Arc
   , arc
   , arcOf
   , arcPoints
+  , arcCenter
+  ,arcRadius
+  ,arcStart
+  ,arcEnd
+  ,arcDetail
   )
 where
 
@@ -25,15 +30,15 @@ import qualified GI.Cairo.Render         as Cairo
 
 -- | Arc (partial Circle)
 data ArcOf a = ArcOf
-  { arcCenter :: a
+  { arcOfCenter :: a
   -- ^ Center of the arc's circle
-  , arcRadius :: Double
+  , arcOfRadius :: Double
   -- ^ Radius of the arc's circle
-  , arcStart  :: Angle
+  , arcOfStart  :: Angle
   -- ^ Start 'Angle'
-  , arcEnd    :: Angle
+  , arcOfEnd    :: Angle
   -- ^ End 'Angle'
-  , arcDetail :: Int
+  , arcOfDetail :: Int
   -- ^ Detail in number of points
   }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
@@ -41,16 +46,16 @@ data ArcOf a = ArcOf
 type Arc = ArcOf P2
 
 pattern Arc :: P2 -> Double -> Angle -> Angle -> Int -> Arc
-pattern Arc a r s e d = ArcOf a r s e d
+pattern Arc {arcCenter,arcRadius,arcStart,arcEnd,arcDetail} = ArcOf arcCenter arcRadius arcStart arcEnd arcDetail
 {-# COMPLETE Arc #-}
 
 instance HasP2 a => Draw (ArcOf a) where
   draw ArcOf {..} = Cairo.arc x
                               y
-                              arcRadius
-                              (getAngle arcStart)
-                              (getAngle arcEnd)
-    where V2 x y = arcCenter ^. _V2
+                              arcOfRadius
+                              (getAngle arcOfStart)
+                              (getAngle arcOfEnd)
+    where V2 x y = arcOfCenter ^. _V2
 
 instance HasP2 a => Affine (ArcOf a) where
   type Transformed (ArcOf a) = Maybe (PathOf a)
@@ -59,9 +64,9 @@ instance HasP2 a => Affine (ArcOf a) where
 instance HasP2 a => HasAABB (ArcOf a) where
   aabb ArcOf {..} = boundary $ p1 :| [p2]
    where
-    c  = arcCenter ^. _V2
-    p1 = c + unit arcStart ^* arcRadius
-    p2 = c + unit arcEnd ^* arcRadius
+    c  = arcOfCenter ^. _V2
+    p1 = c + unit arcOfStart ^* arcOfRadius
+    p2 = c + unit arcOfEnd ^* arcOfRadius
 
 -- | An 'Arc' with default detail (200)
 arcOf :: a -> Double -> Angle -> Angle -> ArcOf a
@@ -74,6 +79,6 @@ arc = arcOf @P2
 arcPoints :: HasP2 a => ArcOf a -> [a]
 arcPoints ArcOf {..} = points
  where
-  angles = lerpMany arcDetail arcStart arcEnd
+  angles = lerpMany arcOfDetail arcOfStart arcOfEnd
   points = flip map angles $ \theta ->
-    arcCenter & _V2 .~ (arcCenter ^. _V2 + (unit theta ^* arcRadius))
+    arcOfCenter & _V2 .~ (arcOfCenter ^. _V2 + (unit theta ^* arcOfRadius))

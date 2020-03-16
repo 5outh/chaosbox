@@ -3,6 +3,7 @@ module ChaosBox.Geometry.Path
   ( PathOf(..)
   , Path
   , pattern Path
+  , getPath
   , pathOf
   , path
   )
@@ -21,7 +22,7 @@ import           Data.List.NonEmpty      (NonEmpty (..))
 import qualified Data.List.NonEmpty      as NE
 import           GI.Cairo.Render         hiding (Path)
 
-newtype PathOf a = PathOf { getPath :: NonEmpty a}
+newtype PathOf a = PathOf { getPathOf :: NonEmpty a}
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
   deriving newtype (Applicative, Monad)
 
@@ -29,7 +30,7 @@ newtype PathOf a = PathOf { getPath :: NonEmpty a}
 type Path = PathOf P2
 
 pattern Path :: NonEmpty P2 -> Path
-pattern Path a = PathOf a
+pattern Path { getPath } = PathOf getPath
 {-# COMPLETE Path #-}
 
 instance HasP2 a => Affine (PathOf a) where
@@ -42,7 +43,7 @@ instance HasP2 a => Draw (PathOf a) where
     for_ (map (^. _V2) rest) (\(V2 x y) -> lineTo x y)
 
 instance HasP2 a => HasAABB (PathOf a) where
-  aabb = boundary . getPath
+  aabb = boundary . getPathOf
 
 pathOf :: [a] -> Maybe (PathOf a)
 pathOf xs = PathOf <$> NE.nonEmpty xs

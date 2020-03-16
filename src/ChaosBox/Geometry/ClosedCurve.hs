@@ -3,6 +3,8 @@ module ChaosBox.Geometry.ClosedCurve
   ( ClosedCurveOf(..)
   , ClosedCurve
   , pattern ClosedCurve
+  , getClosedCurve
+  , closedCurveIterations
   , closedCurve
   , closedCurveOf
   , drawWithDetail
@@ -23,13 +25,13 @@ import qualified Data.List.NonEmpty        as NE
 import           GI.Cairo.Render           (Render)
 
 -- | Closed Cubic B-Spline
-data ClosedCurveOf a = ClosedCurveOf { getClosedCurve :: NonEmpty a, closedCurveIterations :: Int }
+data ClosedCurveOf a = ClosedCurveOf { getClosedCurveOf :: NonEmpty a, closedCurveOfIterations :: Int }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 type ClosedCurve = ClosedCurveOf P2
 
 pattern ClosedCurve :: NonEmpty P2 -> Int -> ClosedCurve
-pattern ClosedCurve a i = ClosedCurveOf a i
+pattern ClosedCurve {getClosedCurve, closedCurveIterations} = ClosedCurveOf getClosedCurve closedCurveIterations
 {-# COMPLETE ClosedCurve #-}
 
 closedCurveOf :: [a] -> Maybe (ClosedCurveOf a)

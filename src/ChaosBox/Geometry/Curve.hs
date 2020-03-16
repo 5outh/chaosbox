@@ -3,6 +3,8 @@ module ChaosBox.Geometry.Curve
   ( CurveOf(..)
   , Curve
   , pattern Curve
+  , getCurve
+  , curveIterations
   , curve
   , curveOf
   , curveWithDetail
@@ -23,13 +25,13 @@ import qualified Data.List.NonEmpty      as NE
 import           GI.Cairo.Render         (Render)
 
 -- | Cubic B-Spline
-data CurveOf a = CurveOf { getCurve :: NonEmpty a, curveIterations :: Int }
+data CurveOf a = CurveOf { getCurveOf :: NonEmpty a, curveOfIterations :: Int }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 type Curve = CurveOf P2
 
 pattern Curve :: NonEmpty P2 -> Int -> Curve
-pattern Curve a i = CurveOf a i
+pattern Curve {getCurve, curveIterations} = CurveOf getCurve curveIterations
 {-# COMPLETE Curve #-}
 
 instance HasP2 a => HasAABB (CurveOf a) where

@@ -3,6 +3,7 @@ module ChaosBox.Geometry.Polygon
   ( PolygonOf(..)
   , Polygon
   , pattern Polygon
+  , getPolygon
   , polygonOf
   , polygon
   )
@@ -22,18 +23,18 @@ import qualified Data.List.NonEmpty      as NE
 import           GI.Cairo.Render         hiding (Path)
 
 -- | A closed path
-newtype PolygonOf a = PolygonOf { getPolygon :: NonEmpty a }
+newtype PolygonOf a = PolygonOf { getPolygonOf :: NonEmpty a }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
   deriving newtype (Applicative, Monad)
 
 type Polygon = PolygonOf P2
 
 pattern Polygon :: NonEmpty P2 -> Polygon
-pattern Polygon a = PolygonOf a
+pattern Polygon {getPolygon} = PolygonOf getPolygon
 {-# COMPLETE Polygon #-}
 
 instance HasP2 a => HasAABB (PolygonOf a) where
-  aabb = boundary . getPolygon
+  aabb = boundary . getPolygonOf
 
 instance HasP2 a => Affine (PolygonOf a) where
   transform = defaultTransform

@@ -4,6 +4,9 @@ module ChaosBox.Geometry.Rect
   ( RectOf(..)
   , Rect
   , pattern Rect
+  , rectTopLeft
+  , rectW
+  , rectH
   -- * Smart constructors
   , squareOf
   , square
