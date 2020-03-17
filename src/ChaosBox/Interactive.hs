@@ -47,6 +47,7 @@ module ChaosBox.Interactive
   (
   -- * Dealing with events
     eventLoop
+  , eventLoopN
   , registerEventHandler
   -- * kOne-off rendering
   , renderFrame
@@ -132,6 +133,32 @@ eventLoop act = do
       void act
       renderFrame
       loop shouldQuitRef
+
+-- | Same as 'eventLoop', but only run for some specified number of frames.
+eventLoopN :: Int -> Generate a -> Generate ()
+eventLoopN n act = do
+  bindKey SDL.ScancodeS $ do
+    str <- replicateM 6 $ unsafeUniform ['a' .. 'z']
+    saveImageWith (Just str)
+  shouldQuitRef <- syncKeyDown SDL.ScancodeQ
+
+  loop n shouldQuitRef
+ where
+  loop 0 _ = pure ()
+  loop m shouldQuitRef = do
+    EventHandler {..} <- readIORef =<< asks gcEventHandler
+
+    -- Handle a single 'Tick'
+    ehHandleEvent Tick
+
+    -- Handle all 'SDL.Event's
+    events <- liftIO SDL.pollEvents
+    for_ events (ehHandleEvent . SDLEvent)
+    shouldQuit <- readIORef shouldQuitRef
+    unless (SDL.QuitEvent `elem` map SDL.eventPayload events || shouldQuit) $ do
+      void act
+      renderFrame
+      loop (pred m) shouldQuitRef
 
 -- | Register a new event handler for an 'SDL.Event'
 registerEventHandler :: (ChaosBoxEvent -> Generate ()) -> Generate ()

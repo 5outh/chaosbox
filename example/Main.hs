@@ -7,23 +7,19 @@ import qualified Data.List.NonEmpty as NE
 
 -- Run this example with
 --
--- @@@
+-- @
 -- > chaosbox-example -- --scale=60
--- @@@
+-- @
 --
 main :: IO ()
 main = runChaosBoxWith (\o -> o { optWidth = 10, optHeight = 10 }) renderSketch
 
-setup :: Generate ()
-setup = do
-  fillScreenRGB white
-  cairo $ do
-    setLineWidth 0.02
-    setSourceRGB black
+setup :: Render ()
+setup = setLineWidth 0.02
 
 renderSketch :: Generate ()
 renderSketch = do
-  setup
+  cairo setup
 
   (w, h)           <- getSize
   center           <- getCenterPoint
@@ -44,7 +40,7 @@ renderSketch = do
     fillScreenRGB black
     cairo $ do
       setSourceRGB white
-      draw (ClosedCurve nextPath 2) *> stroke
+      draw (ClosedCurve nextPath 10) *> stroke
 
 -- | An unsafe version of 'Data.List.NonEmpty.take'
 --
