@@ -20,9 +20,11 @@ import           ChaosBox.Geometry.Class
 import           ChaosBox.Geometry.P2
 import           ChaosBox.Geometry.Polygon
 import           Control.Lens
+import           Data.Foldable
 import           Data.List.NonEmpty        (NonEmpty)
 import qualified Data.List.NonEmpty        as NE
 import           GI.Cairo.Render           (Render)
+import           Linear                    ((*^))
 
 -- | Closed Cubic B-Spline
 data ClosedCurveOf a = ClosedCurveOf { getClosedCurveOf :: NonEmpty a, closedCurveOfIterations :: Int }
@@ -41,7 +43,7 @@ closedCurve :: [P2] -> Maybe ClosedCurve
 closedCurve = closedCurveOf @P2
 
 instance HasP2 a => HasAABB (ClosedCurveOf a) where
-  aabb = aabb . toPolygon
+  aabb = boundary .getClosedCurveOf
 
 instance HasP2 a => Affine (ClosedCurveOf a) where
   transform = defaultTransform
@@ -51,25 +53,32 @@ instance HasP2 a => Draw (ClosedCurveOf a) where
 
 -- | Draw with a specified level of detail (default 5; smaller is less detailed)
 drawWithDetail :: HasP2 a => ClosedCurveOf a -> Render ()
-drawWithDetail = draw . toPolygon
+drawWithDetail c = for_ (toPolygon c) draw
 
-toPolygon :: HasP2 a => ClosedCurveOf a -> PolygonOf a
-toPolygon (ClosedCurveOf ps detail) = PolygonOf (NE.fromList $ NE.tail newPath)
+-- Note: this is unsafe.
+toPolygon :: HasP2 a => ClosedCurveOf a -> Maybe (PolygonOf a)
+toPolygon (ClosedCurveOf ps detail)
+  = fmap PolygonOf
+    . NE.nonEmpty
+    $ zipWith (\t (a,b,c,d) -> a & _V2 .~ catmullRom t (getP2 a) (getP2 b) (getP2 c) (getP2 d)) ts (quads (NE.toList ps))
  where
-  newPath = NE.fromList $ iterateNLast
-    detail
-    (go . expand)
-    (NE.last ps : (NE.toList ps <> NE.take 2 (NE.cycle ps)))
+  -- newPath = NE.fromList $ iterateNLast
+    -- detail
+    -- (go . expand)
+    -- (NE.last ps : (NE.toList ps <> NE.take 2 (NE.cycle ps)))
 
-  expand1 prev a = [prev & _V2 .~ (prev ^. _V2 + a ^. _V2) / 2, a]
+  -- expand1 prev a = [prev & _V2 .~ (prev ^. _V2 + a ^. _V2) / 2, a]
 
-  expand ys@(y : _) = y : concat (zipWith expand1 ys (tail ys))
-  expand []         = error "impossible"
+  -- expand ys@(y : _) = y : concat (zipWith expand1 ys (tail ys))
+  -- expand []         = error "impossible"
 
-  mask a b c = b & _V2 .~ ((a ^. _V2 + 2 * b ^. _V2 + c ^. _V2) / 4)
+  -- mask a b c = b & _V2 .~ ((a ^. _V2 + 2 * b ^. _V2 + c ^. _V2) / 4)
 
-  go (a : b : c : xs) = mask a b c : go (b : c : xs)
-  go _                = []
+  -- go (a : b : c : xs) = mask a b c : go (b : c : xs)
+  -- go _                = []
+   d = fromIntegral detail
+   ts = map (/ (d * 100)) [0..(d * 100)]
+
 
 fromPolygon :: PolygonOf a -> ClosedCurveOf a
 fromPolygon (PolygonOf p) = ClosedCurveOf p 5
@@ -77,3 +86,13 @@ fromPolygon (PolygonOf p) = ClosedCurveOf p 5
 -- TODO: Consolidate
 iterateNLast :: Int -> (a -> a) -> a -> a
 iterateNLast n f x = last . take n $ iterate f x
+
+quads (a:xs@(b:c:d:_)) = (a,b,c,d):quads xs
+quads _                = []
+
+catmullRom :: Double -> P2 -> P2 -> P2 -> P2 -> P2
+catmullRom t p_1 p0 p1 p2 =
+           (t*((2-t)*t - 1)   *^ p_1
+         + (t*t*(3*t - 5) + 2) *^ p0
+         + t*((4 - 3*t)*t + 1) *^ p1
+         + (t-1)*t*t         *^ p2 ) / 2
