@@ -1,5 +1,45 @@
 {-# LANGUAGE OverloadedStrings #-}
--- | Utilities for creating CLI applications that interface with @ChaosBox@
+-- | CLI entrypoints for @ChaosBox@
+--
+-- Most @ChaosBox@ programs will start with either 'runChaosBox',
+-- 'runChaosBoxWith' or 'runChaosBoxDirectly'. These functions build a
+-- command-line interface to start the art generation program.
+--
+-- For example, the following @main@:
+--
+-- @
+-- main = runChaosBoxWith
+--  (\o -> o { optWidth = 10, optHeight = 10, optFps = 60 })
+--  renderSketch
+-- @
+--
+-- will spawn the following command-line interface, and override the default or
+-- user-supplied @width@, @height@, and @fps@:
+--
+-- @
+-- ChaosBox
+--
+-- Usage: chaosbox-example [--seed SEED] [--scale SCALE] [-w|--width WIDTH]
+--                         [-h|--height HEIGHT] [--times TIMES] [--name NAME]
+--                         [--metadata METADATA] [--fps FPS] [-s|--static]
+--   Generate art with ChaosBox
+--
+-- Available options:
+--   --seed SEED              Seed for the global PRNG
+--   --scale SCALE            Scaling factor from user space to image space
+--   -w,--width WIDTH         Width of the canvas in user space
+--   -h,--height HEIGHT       Width of the canvas in user space
+--   --times TIMES            How many times to run the program
+--   --name NAME              Name of the output
+--   --metadata METADATA      Optional metadata string to append to output file
+--                            name
+--   --fps FPS                How many frames per second to render in interactive
+--                            mode
+--   -s,--static              Render an image directly instead of in an interactive
+--                            window
+--   -h,--help                Show this help text
+-- @
+--
 module ChaosBox.CLI
   (
   -- * ChaosBox options
@@ -14,7 +54,6 @@ module ChaosBox.CLI
   , saveImageWith
   )
 where
-
 
 import           ChaosBox.Generate
 
@@ -77,21 +116,52 @@ getDefaultOpts = do
 opts :: Parser Opts
 opts =
   Opts
-    <$> optional (option auto $ long "seed" <> metavar "SEED")
-    <*> option auto (long "scale" <> metavar "SCALE" <> value 1)
-    <*> option auto (long "width" <> short 'w' <> metavar "WIDTH" <> value 100)
+    <$> optional (option auto $ long "seed" <> metavar "SEED" <> help seedHelp)
     <*> option auto
-               (long "height" <> short 'h' <> metavar "HEIGHT" <> value 100)
-    <*> option auto (long "times" <> metavar "TIMES" <> value 1)
-    <*> strOption (long "name" <> metavar "NAME" <> value "sketch")
-    <*> optional (strOption (long "metadata" <> metavar "METADATA"))
-    <*> option auto (long "fps" <> metavar "FPS" <> value 30)
-    <*> flag Interactive Static (long "static" <> short 's')
+               (long "scale" <> metavar "SCALE" <> value 1 <> help scaleHelp)
+    <*> option
+          auto
+          (  long "width"
+          <> short 'w'
+          <> metavar "WIDTH"
+          <> value 100
+          <> help widthHelp
+          )
+    <*> option
+          auto
+          (  long "height"
+          <> short 'h'
+          <> metavar "HEIGHT"
+          <> value 100
+          <> help heightHelp
+          )
+    <*> option auto
+               (long "times" <> metavar "TIMES" <> value 1 <> help timesHelp)
+    <*> strOption
+          (long "name" <> metavar "NAME" <> value "sketch" <> help nameHelp)
+    <*> optional
+          (strOption
+            (long "metadata" <> metavar "METADATA" <> help metadataHelp)
+          )
+    <*> option auto (long "fps" <> metavar "FPS" <> value 30 <> help fpsHelp)
+    <*> flag Interactive Static (long "static" <> short 's' <> help staticHelp)
+ where
+  seedHelp     = "Seed for the global PRNG (optional)"
+  scaleHelp    = "Scaling factor from user space to image space (default: 1)"
+  widthHelp    = "Width of the canvas in user space (default: 100)"
+  heightHelp   = "Width of the canvas in user space (default: 100)"
+  timesHelp    = "How many times to run the program (default: 1)"
+  nameHelp     = "Name of the output (default: \"sketch\")"
+  metadataHelp = "Metadata string to append to output file name (optional)"
+  fpsHelp =
+    "How many frames per second to render in interactive mode (default: 30)"
+  staticHelp
+    = "Render an image directly instead of in an interactive window (default: False)"
 
 optsInfo :: ParserInfo Opts
 optsInfo = info
   (opts <**> helper)
-  (fullDesc <> progDesc "Generate art with ChaosBox" <> header "chaosbox")
+  (fullDesc <> progDesc "Generate art with ChaosBox" <> header "ChaosBox")
 
 -- | Run 'ChaosBox' with 'Opts' parsed from the CLI
 --

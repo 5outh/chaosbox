@@ -1,10 +1,18 @@
-module ChaosBox.Pixel
-  ( parsePixelsFromFile
+-- | PNG image parsing
+--
+-- Currently, this only supports 24 bit ARGB PNGs with transparency.
+--
+module ChaosBox.PNG
+  (
+  -- * Data Typs
+    PixelArray(..)
+  , Pixel(..)
+  -- * Parse @PNG@ files
+  , parsePixelsFromFile
+  -- * Read portions of @PixelArray@s
   , readPixelAt
   , readColumn
   , readRow
-  , PixelArray(..)
-  , Pixel(..)
   )
 where
 
@@ -21,24 +29,29 @@ import           Data.Word
 import           GI.Cairo.Render         hiding ( Path )
 import           Linear.V2
 
+-- | A single 'RGB' pixel
 newtype Pixel = Pixel { getPixel :: RGB Double }
  deriving (Show, Eq)
 
+-- | A 2d array of 'Pixel's
 newtype PixelArray = PixelArray{ getPixelArray :: Seq (Seq Pixel) }
  deriving (Show, Eq)
 
+-- | Read the pixel at the provided coordinate.
 readPixelAt :: V2 Int -> PixelArray -> Pixel
 readPixelAt (V2 x y) pixelArray =
   fromMaybe (error $ "Column " <> show y <> " out of bounds")
     $      readColumn x pixelArray
     Seq.!? y
 
+-- | Read one column of a 'PixelArray'
 readColumn :: Int -> PixelArray -> Seq Pixel
 readColumn y PixelArray {..} =
   fromMaybe (error $ "Column " <> show y <> " out of bounds")
     $      getPixelArray
     Seq.!? y
 
+-- | Read one row of a 'PixelArray'
 readRow :: Int -> PixelArray -> Seq Pixel
 readRow x PixelArray {..} =
   fromMaybe (error $ "Row " <> show x <> " out of bounds")
