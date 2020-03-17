@@ -2,11 +2,8 @@ module Main where
 
 import           ChaosBox
 
-import           ChaosBox.Interactive
-import           ChaosBox.Math        (lerp)
-import           Data.List.NonEmpty   (NonEmpty (..))
-import qualified Data.List.NonEmpty   as NE
-import           UnliftIO.IORef
+import           Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.List.NonEmpty as NE
 
 -- Run this example with
 --
