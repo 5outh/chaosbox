@@ -79,20 +79,20 @@ module ChaosBox.Interactive
   )
 where
 
-import           ChaosBox
+import           ChaosBox.CLI           (saveImageWith)
+import           ChaosBox.Generate
+import           ChaosBox.Geometry.P2
+import           ChaosBox.Random        (unsafeUniform)
 
-import           Control.Concurrent             ( threadDelay )
-import           Control.Monad                  ( unless
-                                                , void
-                                                , when
-                                                )
+import           Control.Concurrent     (threadDelay)
+import           Control.Monad          (unless, void, when)
 import           Control.Monad.IO.Class
 import           Control.Monad.Reader
-import           Data.Foldable                  ( for_ )
-import           UnliftIO.IORef
+import           Data.Foldable          (for_)
 import qualified SDL
 import           SDL.Event
 import           System.CPUTime
+import           UnliftIO.IORef
 
 -- | The main video rendering loop
 --

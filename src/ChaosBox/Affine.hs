@@ -149,4 +149,4 @@ reflectedY = Transform2d Matrix.reflectY
 -- will rotate @shape@ by @pi/2@ radians about its @center@.
 --
 around :: P2 -> Transform2d -> Transform2d
-around v (Transform2d m) = Transform2d (Matrix.around v m)
+around v (Transform2d m) = Transform2d (Matrix.aroundMatrix v m)

@@ -11,10 +11,9 @@ module ChaosBox.Math.Matrix
   , reflectX
   , reflectY
   -- * Vector Operations
-  , transform
   , applyMatrix
   -- * Combinators
-  , around
+  , aroundMatrix
   -- * Re-exports
   , identity
   )
@@ -91,18 +90,15 @@ reflectY = affine
   0    1 0
   0    0 1
 
-transform :: P2 -> M33 Double -> P2
-transform (V2 x y) m = V2 x0 y0
+applyMatrix :: M33 Double -> P2 -> P2
+applyMatrix m (V2 x y) = V2 x0 y0
  where
   v0 = V3 x y 0
   V3 x0 y0 _ = m !* v0
-
-applyMatrix :: M33 Double -> P2 -> P2
-applyMatrix = flip transform
 
 -- | Perform a linear transformation around a certain point
 --
 -- This is useful for rotation around the center, etc.
 --
-around :: P2 -> M33 Double -> M33 Double
-around v m = translation (-v) !*! m !*! translation v
+aroundMatrix :: P2 -> M33 Double -> M33 Double
+aroundMatrix v m = translation (-v) !*! m !*! translation v
