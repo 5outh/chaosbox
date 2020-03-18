@@ -74,7 +74,7 @@ normal
   -> GenerateT m a
 normal a dev = sampleRVar (Random.normal a dev)
 
--- | A normally distributed random variable with center 0 & standard deviation 1.
+-- | A normally distributed random variable with mean 0 & standard deviation 1.
 stdNormal :: (Distribution Normal a, Monad m) => GenerateT m a
 stdNormal = sampleRVar Random.stdNormal
 

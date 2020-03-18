@@ -101,6 +101,8 @@
 module ChaosBox
   ( module X
     -- * Re-exports
+  , module Linear.V2
+  , module UnliftIO.IORef
   , module Ext
   )
 where
@@ -121,6 +123,5 @@ import           GI.Cairo.Render      as Ext (LineCap (..), LineJoin (..),
                                               setLineCap, setLineJoin,
                                               setLineWidth, stroke,
                                               strokePreserve)
-import           Linear.V2            as Ext
-import           UnliftIO.IORef       as Ext (IORef, modifyIORef, newIORef,
-                                              readIORef, writeIORef)
+import           Linear.V2
+import           UnliftIO.IORef
