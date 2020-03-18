@@ -77,6 +77,7 @@ module ChaosBox.Interactive
   , modifyIORefM_
   -- * Re-exports
   , MouseButton(..)
+  , module SDL.Input.Keyboard.Codes
   )
 where
 
@@ -94,6 +95,9 @@ import           Control.Monad.IO.Class
 import           Control.Monad.Reader
 import           Data.Foldable                  ( for_ )
 import qualified SDL
+import           SDL.Input.Keyboard.Codes
+
+
 import           SDL.Event
 import           System.CPUTime
 import           UnliftIO.IORef
