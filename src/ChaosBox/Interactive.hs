@@ -19,21 +19,21 @@
 -- might look something like this:
 --
 -- @
--- center <- getCenterPoint
--- let centerCircle = Circle center 0
--- circleRef <- newIORef centerCircle
+-- center <- 'getCenterPoint'
+-- let centerCircle = 'Circle' center 0
+-- circleRef <- 'newIORef' centerCircle
 --
--- onMouseDown $ \p -> do
---  modifyIORefM_ circleRef $ \c -> do
---    newCenter <- normal p 1
---    let newRadius = circleRadius c + 0.1
---    pure $ Circle newCenter newRadius
+-- 'onMouseDown' $ \p -> do
+--  'modifyIORefM_' circleRef $ \c -> do
+--    newCenter <- 'normal' p 1
+--    let newRadius = 'circleRadius' c + 0.1
+--    pure $ 'Circle' newCenter newRadius
 --
--- cairo $ setSourceRGB black
--- eventLoop $ do
---   c <- readIORef circleRef
---   cairo $ do
---     draw c *> stroke
+-- 'cairo' $ 'setSourceRGB' 'black'
+-- 'eventLoop' $ do
+--   c <- 'readIORef' circleRef
+--   'cairo' $ do
+--     'draw' c *> 'stroke'
 -- @
 --
 -- This will draw a 'Circle' each time the mouse is clicked. The center of that
@@ -80,16 +80,19 @@ module ChaosBox.Interactive
   )
 where
 
-import           ChaosBox.CLI           (saveImageWith)
+import           ChaosBox.CLI                   ( saveImageWith )
 import           ChaosBox.Generate
 import           ChaosBox.Geometry.P2
-import           ChaosBox.Random        (unsafeUniform)
+import           ChaosBox.Random                ( unsafeUniform )
 
-import           Control.Concurrent     (threadDelay)
-import           Control.Monad          (unless, void, when)
+import           Control.Concurrent             ( threadDelay )
+import           Control.Monad                  ( unless
+                                                , void
+                                                , when
+                                                )
 import           Control.Monad.IO.Class
 import           Control.Monad.Reader
-import           Data.Foldable          (for_)
+import           Data.Foldable                  ( for_ )
 import qualified SDL
 import           SDL.Event
 import           System.CPUTime
@@ -144,7 +147,7 @@ eventLoopN n act = do
 
   loop n shouldQuitRef
  where
-  loop 0 _ = pure ()
+  loop 0 _             = pure ()
   loop m shouldQuitRef = do
     EventHandler {..} <- readIORef =<< asks gcEventHandler
 
