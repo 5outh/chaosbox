@@ -36,4 +36,4 @@ lerpManyV
 lerpManyV n p q = map (\c -> L.lerp c p q) constants
  where
   step      = 1 / fromIntegral n
-  constants = [0, step .. fromIntegral n - step]
+  constants = [0, step .. (1 - step)]
