@@ -1,80 +1,156 @@
 # chaosbox
 
-`chaosbox` is a Haskell framework for generative art. It is in the early stages
-and is prone to a lot of API churn, so use at your own risk!
+`chaosbox` is a generative art framework. It ties together many well-known
+and powerful tools and builds on them to provide an intuitive, extensible
+experience developing artwork powered by algorithms and procedural
+generation, interactively.
 
-The goal of this project is to provide a solid base for building 2d generative
-artwork. Let's look at a simple example of what it can do. We'll build
-out a generator for a simple curve that looks something like this:
+## Setup
 
-![](example-image.png)
+### Prerequisites
 
-```hs
-import           ChaosBox
+You'll need `cairo` and `sdl` version 2.0+ to run a `chaosbox` program.
 
-import           Control.Monad (replicateM)
-import           Data.Foldable (for_)
+Follow the platform-specific instructions to get these installed:
 
--- 'runChaosBoxIOWith' provides a CLI shim for the underlying render function.
--- Often it makes sense to specify a static user-space width and height
--- ('optWidth', 'optHeight') here, but these are fully configurable from the
--- command line program if you prefer.
--- 
--- Assuming this file is compiled to an executable named @chaosbox-example@, it
--- can be run like so:
---
--- > chaosbox-example --scale=100
---
--- to produce a 800x1000 version of this artwork, which is a good starting
--- size.
---
-main :: IO ()
-main = runChaosBoxIOWith (\opts -> opts { optWidth = 8, optHeight = 10 })
-                         renderSketch
+- [Install `cairo`](https://www.cairographics.org/download)
+- [Setup `sdl2` by LazyFoo](http://lazyfoo.net/tutorials/SDL/01_hello_SDL/index.php)
 
--- This is our main rendering function. The type 'Generate ()' says this is an
--- action that can perform pseudo-random generation, write to a Cairo canvas
--- and the file system (to save the Cairo canvas as a png).
---
-renderSketch :: Generate ()
-renderSketch = do
-  -- Perform some initial parameter setting at the cairo level.
-  setup
-  
-  -- Grab the user-space size of the canvas (width, height) and the center
-  -- coordinate.
-  (w, h)     <- getSize
-  center     <- getCenterPoint
+### Installing the library
 
-  -- Generate 20 points normally distributed around the center with standard
-  -- deviation = w/4 in the x direction and standard deviation = h/4 in the y
-  -- direction.
-  randomPath <- replicateM 20 $ normal center $ P2 (w / 4) (h / 4)
+`chaosbox` uses `stack` as a build tool. This is pre-release software, so
+you'll need to point your `stack.yaml` to the right git commit in your
+project's root directory. Additionally you'll need a few extra-deps that don't
+exist in recent stackage snapshots:
 
-  -- The points in -- 'randomPath' are used as control points in a cyclic cubic
-  -- B-Spline ('ClosedCurve') which is traced in black.
-  cairo $ for_ (closedCurve randomPath) $ \p -> draw p *> stroke
+`stack.yaml`
 
--- Some basic setup logic
-setup :: Generate ()
-setup = do
-  cairo $ do
-    -- Line width is in user-space, so this will be about 0.05*100 = 5px wide
-    -- in the final image.
-    setLineWidth 0.05
-    setLineJoin LineJoinRound
-    setLineCap LineCapRound
-
-  -- Filling the whole screen requires knowledge of the width and height of the
-  -- canvas, which  stored in the 'Generate' context.
-  fillScreenRGB white
-
-  -- Set the source color to black (you can think of this like a paint bucket;
-  -- anything stroked or filled after this point will use this source if/until
-  -- it is set to a different value)
-  cairo $ setSourceRGB black
+```yaml
+extra-deps:
+  - random-extras-0.19
+  - gtk2hs-buildtools-0.13.5.4
+  - gi-cairo-render-0.0.1@sha256:ff2ccc309c021c2c023fa0d380375ef36cff2df93e0c78ed733f052dd1aa9782,3502
+  - github: 5outh/chaosbox
+    commit: 93093054cfdf2af0f5d72546aada2c5d474b8c27
 ```
 
-There is a lot more to ChaosBox than this simple functionality; I intend to
-expand on this with more examples and a full tutorial in the future, but this
-should get you started!
+And add the dependency `chaosbox` to your `cabal` (or `package.yaml` if using hpack) file
+
+`package.yaml`
+
+```
+dependencies:
+  - chaosbox
+```
+
+`project.cabal`
+
+```
+executable example-project
+  -- ... 
+  build-depends:
+    - chaosbox
+```
+
+Then `stack build` your project as normal.
+
+If you run into any issues with these setup instructions, [please file an
+issue](https://github.com/5outh/chaosbox/issues).
+
+## Example `chaosbox` Program
+
+Let's take a look at an example program. First, a description of the program:
+
+> A white curve grows from the center of a black canvas. A new control point
+> is generated in every frame. The curve is limited to 100 control points;
+> once that limit is exceeded, the curve drops points from the end.
+> 
+> The amount the curve grows is determined by a backing simplex noise field.
+> It will grow more quickly in some spots than others.
+> 
+> The user can interact with the program by clicking and holding the mouse.
+> While the mouse is held, the front of the curve slowly interpolates to the
+> cursor's location.
+
+There's quite a bit going on. Here's the code:
+
+```haskell
+import           ChaosBox
+
+import           Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.List.NonEmpty as NE
+
+main :: IO ()
+main = runChaosBoxWith
+  (\o -> o { optWidth = 10, optHeight = 10, optScale = 60 })
+  renderSketch
+
+renderSketch :: Generate ()
+renderSketch = do
+  cairo setup
+
+  (w, h)           <- getSize
+  center           <- getCenterPoint
+
+  startingPoint    <- normal center \$ P2 (w / 4) (h / 4)
+  pathRef          <- newIORef \$ startingPoint :| []
+  noise            <- newNoise2
+
+  mousePositionRef <- heldMousePosition ButtonLeft
+
+  eventLoop $ do
+    nextPath <- modifyIORef pathRef \$ \ps@(p :| _) -> do
+      c <- forIORef mousePositionRef \$ maybe p (lerp 0.05 p)
+      let deviation = 0.3 * noise (c / 100)
+      nextPoint <- normal c $ P2 deviation deviation
+      pure $ unsafeTake 100 $ nextPoint `NE.cons` ps
+
+    fillScreenRGB black
+    cairo $ do
+      setSourceRGB white
+      draw (ClosedCurve nextPath 2) *> stroke
+
+setup :: Render ()
+setup = setLineWidth 0.02
+
+-- | An unsafe version of 'Data.List.NonEmpty.take'
+unsafeTake :: Int -> NonEmpty a -> NonEmpty a
+unsafeTake n = NE.fromList . NE.take n
+```
+
+Note: this example is taken directly from `chaosbox-example`, an executable
+shipped along with `chaosbox`. See the haddock documentation for a
+link-annotated version of this program.
+
+This short example covers myriad concepts in `chaosbox`. Notably:
+
+- All drawing is done through `libcairo` via `cairo`.
+- We can query the world (`getSize` and `getCenterPoint`)
+- `chaosbox` supports non-uniform random sampling (`normal`)
+- `chaosbox` handles variable mutation using `IORef`s and provides helpers
+around common operations (`modifyIORefM`, `forIORef`)
+- Interactive `chaosbox` programs run in an _Event Loop_. This gets called
+once per frame.
+- We can 'draw' various data types, including `ClosedCurve`s, to the canvas.
+(see `ChaosBox.Geometry` for more)
+- Some common event handling is abstracted away (`heldMousePosition`)
+
+In addition to what is visible here, `eventLoop` also provides a couple
+global keybindings:
+
+- Pressing `s` will save the current image at any time.
+- Pressing `q` will immediately quit the window and save the image.
+
+More can be added at any time using facilities provided in
+`ChaosBox.Interactive`.
+
+To get a feel for how `ChaosBox` works using this documentation, check out
+`ChaosBox.CLI`, `ChaosBox.Generate`, `ChaosBox.Interactive`,
+`ChaosBox.Geometry` and `ChaosBox.Affine`.
+
+Additionally, it is recommended to get up to speed with `libcairo` and its
+haskell bindings. Since the actual drawing is done using `libcairo`,
+learning these bindings will allow you to customize your art much more
+easily by digging down a level below this high-level interface.
+
+Have fun!
