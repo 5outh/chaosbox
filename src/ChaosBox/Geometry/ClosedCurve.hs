@@ -55,30 +55,26 @@ instance HasP2 a => Draw (ClosedCurveOf a) where
 drawWithDetail :: HasP2 a => ClosedCurveOf a -> Render ()
 drawWithDetail c = for_ (toPolygon c) draw
 
--- Note: this is unsafe.
 toPolygon :: HasP2 a => ClosedCurveOf a -> Maybe (PolygonOf a)
 toPolygon (ClosedCurveOf ps detail)
   = fmap PolygonOf
     . NE.nonEmpty
-    $ zipWith (\t (a,b,c,d) -> a & _V2 .~ catmullRom t (getP2 a) (getP2 b) (getP2 c) (getP2 d)) ts (quads (NE.toList ps))
+    $ newPath
  where
-  -- newPath = NE.fromList $ iterateNLast
-    -- detail
-    -- (go . expand)
-    -- (NE.last ps : (NE.toList ps <> NE.take 2 (NE.cycle ps)))
+  newPath = iterateNLast
+    detail
+    (go . expand)
+    (NE.last ps : (NE.toList ps <> NE.take 2 (NE.cycle ps)))
 
-  -- expand1 prev a = [prev & _V2 .~ (prev ^. _V2 + a ^. _V2) / 2, a]
+  expand1 prev a = [prev & _V2 .~ (prev ^. _V2 + a ^. _V2) / 2, a]
 
-  -- expand ys@(y : _) = y : concat (zipWith expand1 ys (tail ys))
-  -- expand []         = error "impossible"
+  expand ys@(y : _) = y : concat (zipWith expand1 ys (tail ys))
+  expand []         = error "impossible"
 
-  -- mask a b c = b & _V2 .~ ((a ^. _V2 + 2 * b ^. _V2 + c ^. _V2) / 4)
+  mask a b c = b & _V2 .~ ((a ^. _V2 + 2 * b ^. _V2 + c ^. _V2) / 4)
 
-  -- go (a : b : c : xs) = mask a b c : go (b : c : xs)
-  -- go _                = []
-   d = fromIntegral detail
-   ts = map (/ (d * 100)) [0..(d * 100)]
-
+  go (a : b : c : xs) = mask a b c : go (b : c : xs)
+  go _                = []
 
 fromPolygon :: PolygonOf a -> ClosedCurveOf a
 fromPolygon (PolygonOf p) = ClosedCurveOf p 5
