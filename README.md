@@ -92,15 +92,15 @@ renderSketch = do
   (w, h)           <- getSize
   center           <- getCenterPoint
 
-  startingPoint    <- normal center \$ P2 (w / 4) (h / 4)
-  pathRef          <- newIORef \$ startingPoint :| []
+  startingPoint    <- normal center $ P2 (w / 4) (h / 4)
+  pathRef          <- newIORef $ startingPoint :| []
   noise            <- newNoise2
 
   mousePositionRef <- heldMousePosition ButtonLeft
 
   eventLoop $ do
-    nextPath <- modifyIORef pathRef \$ \ps@(p :| _) -> do
-      c <- forIORef mousePositionRef \$ maybe p (lerp 0.05 p)
+    nextPath <- modifyIORef pathRef $ \ps@(p :| _) -> do
+      c <- forIORef mousePositionRef $ maybe p (lerp 0.05 p)
       let deviation = 0.3 * noise (c / 100)
       nextPoint <- normal c $ P2 deviation deviation
       pure $ unsafeTake 100 $ nextPoint `NE.cons` ps
