@@ -7,9 +7,9 @@ module ChaosBox.AABB
   )
 where
 
-import           ChaosBox.Geometry.Class (HasP2 (..))
+import           ChaosBox.Geometry.Class
 import           ChaosBox.Geometry.P2
-import           Control.Lens            ((^.))
+import           Control.Lens                   ( (^.) )
 import           Data.List.NonEmpty
 import           Linear.V2
 
@@ -25,6 +25,9 @@ data AABB = AABB
 class HasAABB shape where
   aabb :: shape -> AABB
 
+instance HasAABB AABB where
+  aabb = id
+
 -- | Get the bounds of a list of positioned objects.
 boundary :: HasP2 a => NonEmpty a -> AABB
 boundary xs = AABB tl w h
@@ -39,3 +42,6 @@ aabbContains :: AABB -> P2 -> Bool
 aabbContains AABB {..} (P2 x y) =
   x >= x0 && x < x0 + aabbW && y >= y0 && y < y0 + aabbH
   where V2 x0 y0 = aabbTopLeft
+
+instance Boundary AABB where
+  containsPoint = aabbContains

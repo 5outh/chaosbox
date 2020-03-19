@@ -20,6 +20,7 @@ module ChaosBox.Random
   , suchThat
   , unsafeSuchThat
   , uniformPointIn
+  , unsafeUniformPointIn
   -- * Re-Exports
   , MonadRandom.uniformMay
   , MonadRandom.weightedMay
@@ -34,6 +35,7 @@ import           ChaosBox.Orphanage                  ()
 
 import           Control.Monad.Random                (MonadRandom)
 import qualified Control.Monad.Random                as MonadRandom
+import           Data.Maybe                          (fromJust)
 import           Data.Random                         (Distribution,
                                                       Distribution (..), Normal,
                                                       Normal (..), StdUniform)
@@ -161,3 +163,6 @@ uniformPointIn a = genPointInAABB (aabb a) `suchThat` containsPoint a
     x <- MonadRandom.getRandomR (tx, tx + w)
     y <- MonadRandom.getRandomR (ty, ty + h)
     pure $ V2 x y
+
+unsafeUniformPointIn :: (Boundary a, HasAABB a, Monad m) => a -> GenerateT m P2
+unsafeUniformPointIn = fmap fromJust . uniformPointIn
