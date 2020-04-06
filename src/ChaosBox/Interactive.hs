@@ -23,7 +23,7 @@
 -- let centerCircle = 'Circle' center 0
 -- circleRef <- 'newIORef' centerCircle
 --
--- 'onMouseDown' $ \p -> do
+-- 'onMouseDown' ButtonLeft $ \p -> do
 --  'modifyIORefM_' circleRef $ \c -> do
 --    newCenter <- 'normal' p 1
 --    let newRadius = 'circleRadius' c + 0.1
