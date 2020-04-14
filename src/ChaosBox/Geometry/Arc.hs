@@ -7,22 +7,25 @@ module ChaosBox.Geometry.Arc
   , arcOf
   , arcPoints
   , arcCenter
-  ,arcRadius
-  ,arcStart
-  ,arcEnd
-  ,arcDetail
+  , arcRadius
+  , arcStart
+  , arcEnd
+  , arcDetail
+  , translateArc
+  , scaleArc
+  , scaleArcAround
+  , rotateArc
+  , rotateArcAround
   )
 where
 
 import           ChaosBox.Prelude        hiding (unit)
 
 import           ChaosBox.AABB
-import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Angle
 import           ChaosBox.Geometry.Class
 import           ChaosBox.Geometry.P2
-import           ChaosBox.Geometry.Path
 import           ChaosBox.Math           (lerpMany)
 import           Control.Lens            ((&), (.~), (^.))
 import           Data.List.NonEmpty      (NonEmpty (..))
@@ -57,10 +60,6 @@ instance HasP2 a => Draw (ArcOf a) where
                               (getAngle arcOfEnd)
     where V2 x y = arcOfCenter ^. _V2
 
-instance HasP2 a => Affine (ArcOf a) where
-  type Transformed (ArcOf a) = Maybe (PathOf a)
-  transform m = fmap (transform m) . pathOf . arcPoints
-
 instance HasP2 a => HasAABB (ArcOf a) where
   aabb ArcOf {..} = boundary $ p1 :| [p2]
    where
@@ -82,3 +81,22 @@ arcPoints ArcOf {..} = points
   angles = lerpMany arcOfDetail arcOfStart arcOfEnd
   points = flip map angles $ \theta ->
     arcOfCenter & _V2 .~ (arcOfCenter ^. _V2 + (unit theta ^* arcOfRadius))
+
+translateArc :: P2 -> Arc -> Arc
+translateArc p2 = fmap (translateP2 p2)
+
+scaleArc :: Double -> Arc -> Arc
+scaleArc amount = fmap (scaleP2 amount)
+
+scaleArcAround :: P2 -> Double -> Arc -> Arc
+scaleArcAround center amount = fmap (scaleP2Around center amount)
+
+rotateArc :: Angle -> Arc -> Arc
+rotateArc theta a = newArc { arcStart = newStart, arcEnd = newEnd }
+ where
+  newArc = fmap (rotateP2 theta) a
+  newStart = addRadians (getAngle theta) (arcStart a)
+  newEnd = addRadians (getAngle theta) (arcEnd a)
+
+rotateArcAround :: P2 -> Angle -> Arc -> Arc
+rotateArcAround center theta a = translateArc center (rotateArc theta (translateArc (-center) a))

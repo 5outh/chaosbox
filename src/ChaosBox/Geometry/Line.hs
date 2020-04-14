@@ -6,19 +6,26 @@ module ChaosBox.Geometry.Line
   , pattern Line
   , lineStart
   , lineEnd
+  -- * Transforming 'Line's
+  , translateLine
+  , scaleLine
+  , scaleLineAround
+  , rotateLine
+  , rotateLineAround
   )
 where
 
 import           ChaosBox.AABB
-import           ChaosBox.Affine
 import           ChaosBox.Draw
+import           ChaosBox.Geometry.Angle
 import           ChaosBox.Geometry.Class
 import           ChaosBox.Geometry.P2
 import           ChaosBox.Geometry.Path
+import           ChaosBox.Geometry.Transform
 import           Data.List.NonEmpty
-import           Data.Maybe              (maybeToList)
-import           Linear.V2               (V2 (..))
-import           Linear.Vector           ((*^))
+import           Data.Maybe                  (maybeToList)
+import           Linear.V2                   (V2 (..))
+import           Linear.Vector               ((*^))
 
 data LineOf a = LineOf { lineOfStart :: a, lineOfEnd :: a}
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
@@ -31,9 +38,6 @@ pattern Line { lineStart, lineEnd } = LineOf lineStart lineEnd
 
 instance HasP2 a => HasAABB (LineOf a) where
   aabb LineOf {..} = boundary $ lineOfStart :| [lineOfEnd]
-
-instance HasP2 a => Affine (LineOf a) where
-  transform = defaultTransform
 
 instance HasP2 a => Draw (LineOf a) where
   draw LineOf {..} = draw $ PathOf (lineOfStart :| [lineOfEnd])
@@ -62,3 +66,18 @@ segmentIntersectionPoint (fmap getP2 -> LineOf { lineOfStart = p, lineOfEnd = pr
 
 cross2 :: P2 -> P2 -> Double
 V2 vx vy `cross2` V2 wx wy = (vx * wy) - (vy * wx)
+
+translateLine :: HasP2 a => P2 -> LineOf a -> LineOf a
+translateLine = translatePoints
+
+scaleLine :: HasP2 a => Double -> LineOf a -> LineOf a
+scaleLine = scalePoints
+
+scaleLineAround :: HasP2 a => P2 -> Double -> LineOf a -> LineOf a
+scaleLineAround = scaleAroundPoints
+
+rotateLine :: HasP2 a => Angle -> LineOf a -> LineOf a
+rotateLine = rotatePoints
+
+rotateLineAround :: HasP2 a => P2 -> Angle -> LineOf a -> LineOf a
+rotateLineAround = rotateAroundPoints
