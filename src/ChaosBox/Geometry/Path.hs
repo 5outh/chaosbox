@@ -4,6 +4,11 @@ module ChaosBox.Geometry.Path
   , Path
   , pattern Path
   , getPath
+  , translatePath
+  , scalePath
+  , scalePathAround
+  , rotatePath
+  , rotatePathAround
   )
 where
 
@@ -14,10 +19,11 @@ import           ChaosBox.Draw
 import           ChaosBox.Geometry.Angle
 import           ChaosBox.Geometry.Class
 import           ChaosBox.Geometry.P2
-import           Control.Lens            ((^.))
-import           Data.Foldable           (for_)
-import           Data.List.NonEmpty      (NonEmpty (..))
-import           GI.Cairo.Render         hiding (Path)
+import           ChaosBox.Geometry.Transform
+import           Control.Lens                ((^.))
+import           Data.Foldable               (for_)
+import           Data.List.NonEmpty          (NonEmpty (..))
+import           GI.Cairo.Render             hiding (Path)
 
 newtype PathOf a = PathOf { getPathOf :: NonEmpty a }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
@@ -39,17 +45,17 @@ instance HasP2 a => Draw (PathOf a) where
 instance HasP2 a => HasAABB (PathOf a) where
   aabb = boundary . getPathOf
 
-translatePath :: P2 -> Path -> Path
-translatePath p2 = fmap (translateP2 p2)
+translatePath :: HasP2 a => P2 -> PathOf a -> PathOf a
+translatePath = translatePoints
 
-scalePath :: Double -> Path -> Path
-scalePath amount = fmap (scaleP2 amount)
+scalePath :: HasP2 a => Double -> PathOf a -> PathOf a
+scalePath = scalePoints
 
-scalePathAround :: P2 -> Double -> Path -> Path
-scalePathAround center amount = fmap (scaleP2Around center amount)
+scalePathAround :: HasP2 a => P2 -> Double -> PathOf a -> PathOf a
+scalePathAround = scaleAroundPoints
 
-rotatePath :: Angle -> Path -> Path
-rotatePath theta = fmap (rotateP2 theta)
+rotatePath :: HasP2 a => Angle -> PathOf a -> PathOf a
+rotatePath = rotatePoints
 
-rotatePathAround :: P2 -> Angle -> Path -> Path
-rotatePathAround center theta = fmap (rotateP2Around center theta)
+rotatePathAround :: HasP2 a => P2 -> Angle -> PathOf a -> PathOf a
+rotatePathAround = rotateAroundPoints
