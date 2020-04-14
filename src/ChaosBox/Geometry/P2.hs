@@ -1,9 +1,13 @@
 module ChaosBox.Geometry.P2
   ( P2
   , pattern P2
+  , translateP2
+  , scaleP2
+  , scaleP2Around
   )
 where
 
+import           Linear    ((*^))
 import           Linear.V2
 
 -- | A monomorphized 'V2'
@@ -22,3 +26,22 @@ type P2 = V2 Double
 pattern P2 :: Double -> Double -> P2
 pattern P2 x y = V2 x y
 {-# COMPLETE P2 #-}
+
+-- | Translate a 'P2' by an offset vector
+translateP2 :: P2 -> P2 -> P2
+translateP2 offset p2 = p2 - offset
+
+-- | Scale a 'P2' around the origin (@(0,0)@) by a scalar
+scaleP2 :: Double -> P2 -> P2
+scaleP2 = (*^)
+
+-- | Scale a 'P2' around the specified point
+scaleP2Around
+  :: P2
+  -- ^ Point to scale around
+  -> Double
+  -- ^ Scalar
+  -> P2
+  -- ^ Point to scale
+  -> P2
+scaleP2Around center amount p2 = translateP2 center (scaleP2 amount (translateP2 (-center) p2))

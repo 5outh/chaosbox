@@ -4,25 +4,22 @@ module ChaosBox.Geometry.Path
   , Path
   , pattern Path
   , getPath
-  , pathOf
-  , path
   )
 where
 
 import           ChaosBox.Prelude
 
 import           ChaosBox.AABB
-import           ChaosBox.Affine
 import           ChaosBox.Draw
+import           ChaosBox.Geometry.Angle
 import           ChaosBox.Geometry.Class
 import           ChaosBox.Geometry.P2
 import           Control.Lens            ((^.))
 import           Data.Foldable           (for_)
 import           Data.List.NonEmpty      (NonEmpty (..))
-import qualified Data.List.NonEmpty      as NE
 import           GI.Cairo.Render         hiding (Path)
 
-newtype PathOf a = PathOf { getPathOf :: NonEmpty a}
+newtype PathOf a = PathOf { getPathOf :: NonEmpty a }
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
   deriving newtype (Applicative, Monad)
 
@@ -33,9 +30,6 @@ pattern Path :: NonEmpty P2 -> Path
 pattern Path { getPath } = PathOf getPath
 {-# COMPLETE Path #-}
 
-instance HasP2 a => Affine (PathOf a) where
-  transform = defaultTransform
-
 instance HasP2 a => Draw (PathOf a) where
   draw (PathOf (start :| rest)) = do
     newPath
@@ -45,8 +39,17 @@ instance HasP2 a => Draw (PathOf a) where
 instance HasP2 a => HasAABB (PathOf a) where
   aabb = boundary . getPathOf
 
-pathOf :: [a] -> Maybe (PathOf a)
-pathOf xs = PathOf <$> NE.nonEmpty xs
+translatePath :: P2 -> Path -> Path
+translatePath p2 = fmap (translateP2 p2)
 
-path :: [P2] -> Maybe Path
-path = pathOf @P2
+scalePath :: Double -> Path -> Path
+scalePath amount = fmap (scaleP2 amount)
+
+scalePathAround :: P2 -> Double -> Path -> Path
+scalePathAround center amount = fmap (scaleP2Around center amount)
+
+rotatePath :: Angle -> Path -> Path
+rotatePath theta = fmap (rotateP2 theta)
+
+rotatePathAround :: P2 -> Angle -> Path -> Path
+rotatePathAround center theta = fmap (rotateP2Around center theta)

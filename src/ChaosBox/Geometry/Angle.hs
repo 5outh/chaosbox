@@ -6,11 +6,13 @@ module ChaosBox.Geometry.Angle
   , unit
   , addRadians
   , addDegrees
+  , rotateP2
+  , rotateP2Around
   )
 where
 
 import           ChaosBox.Geometry.P2
-import           Data.Fixed                     ( mod' )
+import           Data.Fixed           (mod')
 import           Linear.V2
 
 newtype Angle = Angle { getAngle :: Double }
@@ -48,3 +50,22 @@ addRadians theta (Angle a) = Angle (theta + a)
 --
 addDegrees :: Double -> Angle -> Angle
 addDegrees theta (Angle a) = Angle (theta * pi / 180 + a)
+
+-- | Rotate a 'P2' about the origin (@(0,0)@)
+rotateP2 :: Angle -> P2 -> P2
+rotateP2 (Angle theta) (P2 x0 y0) = P2 x y
+ where
+  x = x0 * cos theta - y0 * sin theta
+  y = x0 * sin theta + y0 * cos theta
+
+-- | Rotate a 'P2' around a specified point
+rotateP2Around
+  :: P2
+  -- ^ Point to rotate around
+  -> Angle
+  -- ^ Rotation angle
+  -> P2
+  -- ^ Point to rotate
+  -> P2
+rotateP2Around center theta point =
+  translateP2 center (rotateP2 theta (translateP2 (-center) point))

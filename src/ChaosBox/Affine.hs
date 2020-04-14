@@ -2,12 +2,10 @@
 module ChaosBox.Affine
   (
   -- * Data Types
-    Affine(..)
-  , Transform2d(..)
+    Transform2d(..)
   , defaultTransform
   , withCairoAffine
   , matrix
-  , transformMatrix
   -- * Transformations
   , rotated
   , translated
@@ -54,25 +52,6 @@ instance Monoid Transform2d where
 -- | Create a 'Transform2d' from a 3x3 matrix ('M33')
 matrix :: M33 Double -> Transform2d
 matrix = Transform2d
-
--- | A class of items transformable via linear transformations
-class Affine a where
-  type Transformed a :: *
-  -- ^ The type of item produced after applying an 'Affine' transformation to
-  -- 'a'. Most of the time, @Transformed a ~ a@. However, sometimes an 'Affine'
-  -- transformation can change the underlying type of a shape.
-  --
-  -- For example, when 'ChaosBox.Geometry.Circle.Circle's are 'transform'ed
-  -- with a scalar in one direction, an 'ChaosBox.Geometry.Ellipse.Ellipse' is
-  -- formed.
-  type Transformed a = a
-
-  -- Apply a 'Transform2d' to an 'Affine'
-  transform :: Transform2d -> a -> Transformed a
-
--- | 'transform' an 'Affine' using a 3x3 matrix ('M33')
-transformMatrix :: Affine a => M33 Double -> a -> Transformed a
-transformMatrix = transform . matrix
 
 -- | A useful default 'transform' for 'Functor's over 2D coordinates
 --
