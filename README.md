@@ -27,9 +27,11 @@ exist in recent stackage snapshots:
 
 ```yaml
 extra-deps:
-  - random-extras-0.19
-  - gtk2hs-buildtools-0.13.5.4
   - gi-cairo-render-0.0.1@sha256:ff2ccc309c021c2c023fa0d380375ef36cff2df93e0c78ed733f052dd1aa9782,3502
+  - random-fu-0.2.7.4@sha256:5b5cd338ebbf02ff867691ec27abe481158fb2ae161c3e2e77163434eea0008a,4527
+  - random-source-0.3.0.8@sha256:db1897e13adb4748d571a8e71fb0c38911ae66ea2557d4def7c30378a0ae2f69,3879
+  - rvar-0.2.0.4@sha256:8ce31c8eb78e9800b57fce23b3a391e9bb46021c901440c37e472c4c887b74f5,2280
+  - flexible-defaults-0.0.3@sha256:6a7ab000561e1075003cb1053dfbbb4020ae2b02916776d1479c9c3fc82f5d0d,2508
   - github: 5outh/chaosbox
     commit: 93093054cfdf2af0f5d72546aada2c5d474b8c27
 ```
