@@ -85,10 +85,10 @@ arcPoints ArcOf {..} = points
 translateArc :: P2 -> Arc -> Arc
 translateArc p2 = fmap (translateP2 p2)
 
-scaleArc :: Double -> Arc -> Arc
+scaleArc :: P2 -> Arc -> Arc
 scaleArc amount = fmap (scaleP2 amount)
 
-scaleArcAround :: P2 -> Double -> Arc -> Arc
+scaleArcAround :: P2 -> P2 -> Arc -> Arc
 scaleArcAround center amount = fmap (scaleP2Around center amount)
 
 rotateArc :: Angle -> Arc -> Arc

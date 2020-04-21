@@ -4,25 +4,32 @@ module ChaosBox.Geometry.Quad
   ( QuadOf(..)
   , Quad
   , pattern Quad
+  , fromRect
   , quadA
   , quadB
   , quadC
   , quadD
+  , translateQuad
+  , scaleQuad
+  , scaleQuadAround
+  , rotateQuad
+  , rotateQuadAround
   )
 where
 
 import           ChaosBox.Prelude
 
 import           ChaosBox.AABB
-import           ChaosBox.Affine
 import           ChaosBox.Draw
+import           ChaosBox.Geometry.Angle
 import           ChaosBox.Geometry.Class
 import           ChaosBox.Geometry.P2
-import           ChaosBox.Geometry.Polygon (polygonOf)
+import           ChaosBox.Geometry.Polygon   (polygonOf)
 import           ChaosBox.Geometry.Rect
-import           Control.Lens              ((&), (+~))
-import           Data.Foldable             (for_)
-import           Data.List.NonEmpty        (NonEmpty (..))
+import           ChaosBox.Geometry.Transform
+import           Control.Lens                ((&), (+~))
+import           Data.Foldable               (for_)
+import           Data.List.NonEmpty          (NonEmpty (..))
 
 data QuadOf a = QuadOf
   { quadOfA :: a
@@ -38,16 +45,8 @@ pattern Quad :: P2 -> P2 -> P2 -> P2 -> Quad
 pattern Quad {quadA, quadB, quadC, quadD} = QuadOf quadA quadB quadC quadD
 {-# COMPLETE Quad #-}
 
-instance HasP2 a => Affine (QuadOf a) where
-  transform = defaultTransform
-
 instance HasP2 a => HasAABB (QuadOf a) where
   aabb QuadOf {..} = boundary $ quadOfA :| [quadOfB, quadOfC, quadOfD]
-
--- To avoid cyclic dependencies this orphan instance must be located here
-instance HasP2 a => Affine (RectOf a) where
-  type Transformed (RectOf a) = QuadOf a
-  transform m = transform m . fromRect
 
 instance HasP2 a => Draw (QuadOf a) where
   draw QuadOf {..} = for_ (polygonOf [quadOfA, quadOfB, quadOfC, quadOfD]) draw
@@ -57,3 +56,18 @@ fromRect RectOf {..} = QuadOf rectOfTopLeft
                               (rectOfTopLeft & _V2 +~ V2 rectOfW 0)
                               (rectOfTopLeft & _V2 +~ V2 rectOfW rectOfH)
                               (rectOfTopLeft & _V2 +~ V2 0 rectOfH)
+
+translateQuad :: HasP2 a => P2 -> QuadOf a -> QuadOf a
+translateQuad = translatePoints
+
+scaleQuad :: HasP2 a => P2 -> QuadOf a -> QuadOf a
+scaleQuad = scalePoints
+
+scaleQuadAround :: HasP2 a => P2 -> P2 -> QuadOf a -> QuadOf a
+scaleQuadAround = scaleAroundPoints
+
+rotateQuad :: HasP2 a => Angle -> QuadOf a -> QuadOf a
+rotateQuad = rotatePoints
+
+rotateQuadAround :: HasP2 a => P2 -> Angle -> QuadOf a -> QuadOf a
+rotateQuadAround = rotateAroundPoints

@@ -15,10 +15,10 @@ import           Control.Lens            ((%~))
 translatePoints :: (Functor f, HasP2 a) => P2 -> f a -> f a
 translatePoints p2 = fmap (_V2 %~ translateP2 p2)
 
-scalePoints :: (Functor f, HasP2 a) => Double -> f a -> f a
+scalePoints :: (Functor f, HasP2 a) => P2 -> f a -> f a
 scalePoints amount = fmap (_V2 %~ scaleP2 amount)
 
-scaleAroundPoints :: (Functor f, HasP2 a) => P2 -> Double -> f a -> f a
+scaleAroundPoints :: (Functor f, HasP2 a) => P2 -> P2 -> f a -> f a
 scaleAroundPoints center amount = fmap (_V2 %~ scaleP2Around center amount)
 
 rotatePoints :: (Functor f, HasP2 a) => Angle -> f a -> f a

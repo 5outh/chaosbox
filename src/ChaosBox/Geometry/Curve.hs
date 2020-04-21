@@ -14,7 +14,6 @@ module ChaosBox.Geometry.Curve
 where
 
 import           ChaosBox.AABB
-import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Class
 import           ChaosBox.Geometry.P2
@@ -36,9 +35,6 @@ pattern Curve {getCurve, curveIterations} = CurveOf getCurve curveIterations
 
 instance HasP2 a => HasAABB (CurveOf a) where
   aabb = aabb . toPath
-
-instance HasP2 a => Affine (CurveOf a) where
-  transform = defaultTransform
 
 instance HasP2 a => Draw (CurveOf a) where
   draw = drawWithDetail

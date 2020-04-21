@@ -10,21 +10,26 @@ module ChaosBox.Geometry.ClosedCurve
   , drawWithDetail
   , fromPolygon
   , toPolygon
+  , translateClosedCurve
+  , scaleClosedCurve
+  , scaleClosedCurveAround
+  , rotateClosedCurve
+  , rotateClosedCurveAround
   )
 where
 
 import           ChaosBox.AABB
-import           ChaosBox.Affine
 import           ChaosBox.Draw
+import           ChaosBox.Geometry.Angle
 import           ChaosBox.Geometry.Class
 import           ChaosBox.Geometry.P2
 import           ChaosBox.Geometry.Polygon
+import           ChaosBox.Geometry.Transform
 import           Control.Lens
 import           Data.Foldable
-import           Data.List.NonEmpty        (NonEmpty)
-import qualified Data.List.NonEmpty        as NE
-import           GI.Cairo.Render           (Render)
-import           Linear                    ((*^))
+import           Data.List.NonEmpty          (NonEmpty)
+import qualified Data.List.NonEmpty          as NE
+import           GI.Cairo.Render             (Render)
 
 -- | Closed Cubic B-Spline
 data ClosedCurveOf a = ClosedCurveOf { getClosedCurveOf :: NonEmpty a, closedCurveOfIterations :: Int }
@@ -44,9 +49,6 @@ closedCurve = closedCurveOf @P2
 
 instance HasP2 a => HasAABB (ClosedCurveOf a) where
   aabb = boundary .getClosedCurveOf
-
-instance HasP2 a => Affine (ClosedCurveOf a) where
-  transform = defaultTransform
 
 instance HasP2 a => Draw (ClosedCurveOf a) where
   draw = drawWithDetail
@@ -83,12 +85,17 @@ fromPolygon (PolygonOf p) = ClosedCurveOf p 5
 iterateNLast :: Int -> (a -> a) -> a -> a
 iterateNLast n f x = last . take n $ iterate f x
 
-quads (a:xs@(b:c:d:_)) = (a,b,c,d):quads xs
-quads _                = []
+translateClosedCurve :: HasP2 a => P2 -> ClosedCurveOf a -> ClosedCurveOf a
+translateClosedCurve = translatePoints
 
-catmullRom :: Double -> P2 -> P2 -> P2 -> P2 -> P2
-catmullRom t p_1 p0 p1 p2 =
-           (t*((2-t)*t - 1)   *^ p_1
-         + (t*t*(3*t - 5) + 2) *^ p0
-         + t*((4 - 3*t)*t + 1) *^ p1
-         + (t-1)*t*t         *^ p2 ) / 2
+scaleClosedCurve :: HasP2 a => P2 -> ClosedCurveOf a -> ClosedCurveOf a
+scaleClosedCurve = scalePoints
+
+scaleClosedCurveAround :: HasP2 a => P2 -> P2 -> ClosedCurveOf a -> ClosedCurveOf a
+scaleClosedCurveAround = scaleAroundPoints
+
+rotateClosedCurve :: HasP2 a => Angle -> ClosedCurveOf a -> ClosedCurveOf a
+rotateClosedCurve = rotatePoints
+
+rotateClosedCurveAround :: HasP2 a => P2 -> Angle -> ClosedCurveOf a -> ClosedCurveOf a
+rotateClosedCurveAround = rotateAroundPoints
