@@ -10,23 +10,26 @@ module ChaosBox.Geometry.Ellipse
   , ellipse
   , ellipseOf
   , ellipsePoints
+  , scaleEllipseAround
+  , scaleEllipse
+  , translateEllipse
   )
 where
 
-import           ChaosBox.Prelude          hiding (scaled)
+import           ChaosBox.Prelude            hiding (scaled)
 
 import           ChaosBox.AABB
-import           ChaosBox.Affine
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Circle
 import           ChaosBox.Geometry.Class
 import           ChaosBox.Geometry.P2
 import           ChaosBox.Geometry.Polygon
-import           ChaosBox.Math             (lerpMany)
-import qualified ChaosBox.Math.Matrix      as Matrix
-import           Control.Lens              (set, (&), (^.))
-import           Data.Foldable             (for_)
-import           Data.List.NonEmpty        (NonEmpty (..))
+import           ChaosBox.Geometry.Transform
+import           ChaosBox.Math               (lerpMany)
+import qualified ChaosBox.Math.Matrix        as Matrix
+import           Control.Lens                (set, (&), (^.))
+import           Data.Foldable               (for_)
+import           Data.List.NonEmpty          (NonEmpty (..))
 
 -- | Axis-bound ellipse
 data EllipseOf a = EllipseOf
@@ -40,7 +43,7 @@ data EllipseOf a = EllipseOf
 type Ellipse = EllipseOf P2
 
 pattern Ellipse :: P2 -> Double -> Double -> Int -> Ellipse
-pattern Ellipse {ellipseCenter, ellipseWidth, ellipseHeight, ellipseDetail}
+pattern Ellipse {ellipseCenter, ellipseWidth, ellipseHeight, ellipseDetail }
   = EllipseOf ellipseCenter ellipseWidth ellipseHeight ellipseDetail
 {-# COMPLETE Ellipse #-}
 
@@ -51,22 +54,16 @@ instance HasP2 a => HasAABB (EllipseOf a) where
     tl = c - V2 ellipseOfWidth ellipseOfHeight
     br = c + V2 ellipseOfWidth ellipseOfHeight
 
-instance HasP2 a => Affine (EllipseOf a) where
-  type Transformed (EllipseOf a) = Maybe (PolygonOf a)
-  transform m e = case toPolygon e of
-    Nothing -> Nothing
-    Just p  -> Just $ transform m p
-
--- | An ellipse with default detail (200)
+-- | An ellipse with default detail (200) and no rotation
 ellipseOf :: a -> Double -> Double -> EllipseOf a
 ellipseOf c w h = EllipseOf c w h 200
 
--- | An ellipse with default detail (200)
+-- | An ellipse with default detail (200) and no rotation
 ellipse :: P2 -> Double -> Double -> Ellipse
 ellipse c w h = EllipseOf c w h 200
 
 instance HasP2 a => Draw (EllipseOf a) where
-  draw e = for_ (toPolygon e) draw
+  draw e = for_ (ellipseToPolygon e) draw
 
 -- | Sample 'N' evenly spaced points along the ellipse's path
 ellipsePoints :: HasP2 a => EllipseOf a -> [a]
@@ -79,10 +76,19 @@ ellipsePoints EllipseOf {..} =
     * Matrix.translation (ellipseOfCenter ^. _V2)
   ellipsePoint t = Matrix.applyMatrix mat $ V2 (x + cos t) (y + sin t)
 
-toPolygon :: HasP2 a => EllipseOf a -> Maybe (PolygonOf a)
-toPolygon EllipseOf {..} =
-  transform
-      (  translated (ellipseOfCenter ^. _V2)
-      <> scaled (V2 ellipseOfWidth ellipseOfHeight)
-      )
-    $ circleOf (ellipseOfCenter & set _V2 0) 1
+ellipseToPolygon :: forall a. HasP2 a => EllipseOf a -> Maybe (PolygonOf a)
+ellipseToPolygon EllipseOf {..}
+  = scalePolygonAround (ellipseOfCenter^._V2) (P2 ellipseOfWidth ellipseOfHeight) <$> mPolygon
+ where
+  mPolygon :: Maybe (PolygonOf a)
+  mPolygon = circleToPolygon
+    $ CircleOf ellipseOfCenter 1 ellipseOfDetail
+
+translateEllipse :: HasP2 a => P2 -> EllipseOf a -> EllipseOf a
+translateEllipse = translatePoints
+
+scaleEllipse :: HasP2 a => P2 -> EllipseOf a -> EllipseOf a
+scaleEllipse (V2 x y) e = e { ellipseOfWidth = ellipseOfWidth e * x, ellipseOfHeight = ellipseOfHeight e * y }
+
+scaleEllipseAround :: HasP2 a => P2 -> P2 -> EllipseOf a -> EllipseOf a
+scaleEllipseAround center amount e = scaleEllipse amount (scaleAroundPoints center amount e)

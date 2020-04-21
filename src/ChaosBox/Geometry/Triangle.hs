@@ -6,21 +6,27 @@ module ChaosBox.Geometry.Triangle
   , triangleA
   , triangleB
   , triangleC
+  , translateTriangle
+  , scaleTriangle
+  , scaleTriangleAround
+  , rotateTriangle
+  , rotateTriangleAround
   )
 where
 
 import           ChaosBox.Prelude
 
 import           ChaosBox.AABB
-import           ChaosBox.Affine
 import           ChaosBox.Draw
+import           ChaosBox.Geometry.Angle
 import           ChaosBox.Geometry.Class
 import           ChaosBox.Geometry.P2
 import           ChaosBox.Geometry.Polygon
-import           Control.Lens              ((^.))
-import           Data.Function             (on)
-import           Data.List                 (sortBy)
-import           Data.List.NonEmpty        (NonEmpty (..))
+import           ChaosBox.Geometry.Transform
+import           Control.Lens                ((^.))
+import           Data.Function               (on)
+import           Data.List                   (sortBy)
+import           Data.List.NonEmpty          (NonEmpty (..))
 
 data TriangleOf a = TriangleOf
   { triangleOfA :: a
@@ -31,9 +37,6 @@ data TriangleOf a = TriangleOf
 
 instance HasP2 a => HasAABB (TriangleOf a) where
   aabb = aabb . toPolygon
-
-instance HasP2 a => Affine (TriangleOf a) where
-  transform = defaultTransform
 
 instance HasP2 a => Draw (TriangleOf a) where
   draw = draw . toPolygon
@@ -70,3 +73,18 @@ sortOnPolarAngle []       = []
 sortOnPolarAngle [x     ] = [x]
 sortOnPolarAngle (x : xs) = x : sortBy (compare `on` polarAngle x) xs
   where polarAngle a b = negate $ (b ^. _x - a ^. _x) / (b ^. _y - a ^. _y)
+
+translateTriangle :: HasP2 a => P2 -> TriangleOf a -> TriangleOf a
+translateTriangle = translatePoints
+
+scaleTriangle :: HasP2 a => P2 -> TriangleOf a -> TriangleOf a
+scaleTriangle = scalePoints
+
+scaleTriangleAround :: HasP2 a => P2 -> P2 -> TriangleOf a -> TriangleOf a
+scaleTriangleAround = scaleAroundPoints
+
+rotateTriangle :: HasP2 a => Angle -> TriangleOf a -> TriangleOf a
+rotateTriangle = rotatePoints
+
+rotateTriangleAround :: HasP2 a => P2 -> Angle -> TriangleOf a -> TriangleOf a
+rotateTriangleAround = rotateAroundPoints

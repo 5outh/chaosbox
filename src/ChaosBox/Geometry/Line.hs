@@ -70,10 +70,10 @@ V2 vx vy `cross2` V2 wx wy = (vx * wy) - (vy * wx)
 translateLine :: HasP2 a => P2 -> LineOf a -> LineOf a
 translateLine = translatePoints
 
-scaleLine :: HasP2 a => Double -> LineOf a -> LineOf a
+scaleLine :: HasP2 a => P2 -> LineOf a -> LineOf a
 scaleLine = scalePoints
 
-scaleLineAround :: HasP2 a => P2 -> Double -> LineOf a -> LineOf a
+scaleLineAround :: HasP2 a => P2 -> P2 -> LineOf a -> LineOf a
 scaleLineAround = scaleAroundPoints
 
 rotateLine :: HasP2 a => Angle -> LineOf a -> LineOf a

@@ -48,10 +48,10 @@ instance HasP2 a => HasAABB (PathOf a) where
 translatePath :: HasP2 a => P2 -> PathOf a -> PathOf a
 translatePath = translatePoints
 
-scalePath :: HasP2 a => Double -> PathOf a -> PathOf a
+scalePath :: HasP2 a => P2 -> PathOf a -> PathOf a
 scalePath = scalePoints
 
-scalePathAround :: HasP2 a => P2 -> Double -> PathOf a -> PathOf a
+scalePathAround :: HasP2 a => P2 -> P2 -> PathOf a -> PathOf a
 scalePathAround = scaleAroundPoints
 
 rotatePath :: HasP2 a => Angle -> PathOf a -> PathOf a

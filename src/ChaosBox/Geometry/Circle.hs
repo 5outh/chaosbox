@@ -11,20 +11,27 @@ module ChaosBox.Geometry.Circle
   , point
   , circlePoints
   , pointsOnCircle
+  , circleToPolygon
+  , translateCircle
+  , scaleCircle
+  , scaleCircleAround
+  , rotateCircle
+  , rotateCircleAround
   )
 where
 
-import           ChaosBox.Prelude          hiding (point)
+import           ChaosBox.Prelude            hiding (point)
 
 import           ChaosBox.AABB
-import           ChaosBox.Affine
 import           ChaosBox.Draw
+import           ChaosBox.Geometry.Angle
 import           ChaosBox.Geometry.Class
 import           ChaosBox.Geometry.P2
 import           ChaosBox.Geometry.Polygon
-import           Control.Lens              ((&), (.~), (^.))
-import           Data.List.NonEmpty        (NonEmpty (..))
-import           GI.Cairo.Render           hiding (transform)
+import           ChaosBox.Geometry.Transform
+import           Control.Lens                ((&), (.~), (^.))
+import           Data.List.NonEmpty          (NonEmpty (..))
+import           GI.Cairo.Render             hiding (transform)
 
 -- | A circle with radius 'circleOfRadius' centered at 'circleOfCenter'
 data CircleOf a = CircleOf { circleOfCenter :: a, circleOfRadius :: Double, circleOfDetail :: Int }
@@ -43,12 +50,6 @@ instance HasP2 a => HasAABB (CircleOf a) where
     tl = c - (circleOfRadius *^ (-1))
     br = c + (circleOfRadius *^ 1)
 
-instance HasP2 a => Affine (CircleOf a) where
-  type Transformed (CircleOf a) = Maybe (PolygonOf a)
-  transform m c = case toPolygon c of
-    Nothing -> Nothing
-    Just p  -> Just $ transform m p
-
 instance HasP2 a => Draw (CircleOf a) where
   draw CircleOf {..} = do
     let V2 x y = circleOfCenter ^. _V2
@@ -66,8 +67,8 @@ circle = circleOf @P2
 point :: a -> CircleOf a
 point center = CircleOf center 0.5 200
 
-toPolygon :: HasP2 a => CircleOf a -> Maybe (PolygonOf a)
-toPolygon = polygonOf . circlePoints
+circleToPolygon :: HasP2 a => CircleOf a -> Maybe (PolygonOf a)
+circleToPolygon = polygonOf . circlePoints
 
 circlePoints :: HasP2 a => CircleOf a -> [a]
 circlePoints CircleOf {..} = tail $ flip map points $ \v ->
@@ -79,3 +80,18 @@ circlePoints CircleOf {..} = tail $ flip map points $ \v ->
 
 pointsOnCircle :: HasP2 a => Int -> CircleOf a -> [a]
 n `pointsOnCircle` c = circlePoints $ c { circleOfDetail = n }
+
+translateCircle :: HasP2 a => P2 -> CircleOf a -> CircleOf a
+translateCircle = translatePoints
+
+scaleCircle :: HasP2 a => Double -> CircleOf a -> CircleOf a
+scaleCircle amount c = c { circleOfRadius = circleOfRadius c * amount }
+
+scaleCircleAround :: HasP2 a => P2 -> Double -> CircleOf a -> CircleOf a
+scaleCircleAround center amount c = scaleCircle amount (scaleAroundPoints center (P2 amount amount) c)
+
+rotateCircle :: HasP2 a => Angle -> CircleOf a -> CircleOf a
+rotateCircle = rotatePoints
+
+rotateCircleAround :: HasP2 a => P2 -> Angle -> CircleOf a -> CircleOf a
+rotateCircleAround = rotateAroundPoints
