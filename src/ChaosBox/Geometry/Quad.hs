@@ -14,11 +14,14 @@ module ChaosBox.Geometry.Quad
   , scaleQuadAround
   , rotateQuad
   , rotateQuadAround
+  , quadCenter
   )
 where
 
 import           ChaosBox.Prelude
 
+import           ChaosBox.Math (average)
+import           Control.Lens ((^.))
 import           ChaosBox.AABB
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Angle
@@ -71,3 +74,7 @@ rotateQuad = rotatePoints
 
 rotateQuadAround :: HasP2 a => P2 -> Angle -> QuadOf a -> QuadOf a
 rotateQuadAround = rotateAroundPoints
+
+-- | The center of mass of a 'Quad'
+quadCenter :: HasP2 a => QuadOf a -> P2
+quadCenter = average . fmap (^._V2)

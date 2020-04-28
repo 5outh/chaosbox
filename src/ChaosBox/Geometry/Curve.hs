@@ -10,6 +10,7 @@ module ChaosBox.Geometry.Curve
   , curveWithDetail
   , toPath
   , fromPath
+  , curveCenter
   )
 where
 
@@ -22,6 +23,7 @@ import           Control.Lens
 import           Data.List.NonEmpty      (NonEmpty (..))
 import qualified Data.List.NonEmpty      as NE
 import           GI.Cairo.Render         (Render)
+import           ChaosBox.Math (average)
 
 -- | Cubic B-Spline
 data CurveOf a = CurveOf { getCurveOf :: NonEmpty a, curveOfIterations :: Int }
@@ -76,3 +78,7 @@ curve = curveOf @P2
 
 curveWithDetail :: [a] -> Int -> Maybe (CurveOf a)
 curveWithDetail xs detail = CurveOf <$> NE.nonEmpty xs <*> pure detail
+
+-- | The center of mass of a 'Curve'
+curveCenter :: HasP2 a => CurveOf a -> P2
+curveCenter = average . fmap (^._V2)
