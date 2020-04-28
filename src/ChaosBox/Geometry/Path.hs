@@ -9,11 +9,13 @@ module ChaosBox.Geometry.Path
   , scalePathAround
   , rotatePath
   , rotatePathAround
+  , pathCenter
   )
 where
 
 import           ChaosBox.Prelude
 
+import           ChaosBox.Math (average)
 import           ChaosBox.AABB
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Angle
@@ -59,3 +61,7 @@ rotatePath = rotatePoints
 
 rotatePathAround :: HasP2 a => P2 -> Angle -> PathOf a -> PathOf a
 rotatePathAround = rotateAroundPoints
+
+-- | The center of mass of a 'Path'
+pathCenter :: HasP2 a => PathOf a -> P2
+pathCenter = average . fmap (^._V2)

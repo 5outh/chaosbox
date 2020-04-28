@@ -7,6 +7,7 @@ module ChaosBox.Geometry.ClosedCurve
   , closedCurveIterations
   , closedCurve
   , closedCurveOf
+  , closedCurveCenter
   , drawWithDetail
   , fromPolygon
   , toPolygon
@@ -18,6 +19,7 @@ module ChaosBox.Geometry.ClosedCurve
   )
 where
 
+import           ChaosBox.Math (average)
 import           ChaosBox.AABB
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Angle
@@ -99,3 +101,7 @@ rotateClosedCurve = rotatePoints
 
 rotateClosedCurveAround :: HasP2 a => P2 -> Angle -> ClosedCurveOf a -> ClosedCurveOf a
 rotateClosedCurveAround = rotateAroundPoints
+
+-- | The center of mass of a 'ClosedCurve'
+closedCurveCenter :: HasP2 a => ClosedCurveOf a -> P2
+closedCurveCenter = average . fmap (^._V2)

@@ -6,6 +6,7 @@ module ChaosBox.Geometry.Polygon
   , getPolygon
   , polygonOf
   , polygon
+  , polygonCenter
   , translatePolygon
   , scalePolygon
   , scalePolygonAround
@@ -16,6 +17,7 @@ where
 
 import           ChaosBox.Prelude
 
+import           ChaosBox.Math (average)
 import           ChaosBox.AABB
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Angle
@@ -70,3 +72,7 @@ rotatePolygon = rotatePoints
 
 rotatePolygonAround :: HasP2 a => P2 -> Angle -> PolygonOf a -> PolygonOf a
 rotatePolygonAround = rotateAroundPoints
+
+-- | The center of mass of a 'Polygon'
+polygonCenter :: HasP2 a => PolygonOf a -> P2
+polygonCenter = average . fmap (^._V2)

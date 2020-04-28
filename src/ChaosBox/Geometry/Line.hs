@@ -6,6 +6,7 @@ module ChaosBox.Geometry.Line
   , pattern Line
   , lineStart
   , lineEnd
+  , lineCenter
   -- * Transforming 'Line's
   , translateLine
   , scaleLine
@@ -26,6 +27,8 @@ import           Data.List.NonEmpty
 import           Data.Maybe                  (maybeToList)
 import           Linear.V2                   (V2 (..))
 import           Linear.Vector               ((*^))
+import           Control.Lens ((^.))
+import           ChaosBox.Math (average)
 
 data LineOf a = LineOf { lineOfStart :: a, lineOfEnd :: a}
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)
@@ -81,3 +84,7 @@ rotateLine = rotatePoints
 
 rotateLineAround :: HasP2 a => P2 -> Angle -> LineOf a -> LineOf a
 rotateLineAround = rotateAroundPoints
+
+-- | The center of mass of a 'Line'
+lineCenter :: HasP2 a => LineOf a -> P2
+lineCenter = average . fmap (^._V2)

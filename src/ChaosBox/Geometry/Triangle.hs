@@ -6,6 +6,7 @@ module ChaosBox.Geometry.Triangle
   , triangleA
   , triangleB
   , triangleC
+  , triangleCenter
   , translateTriangle
   , scaleTriangle
   , scaleTriangleAround
@@ -16,6 +17,7 @@ where
 
 import           ChaosBox.Prelude
 
+import           ChaosBox.Math (average)
 import           ChaosBox.AABB
 import           ChaosBox.Draw
 import           ChaosBox.Geometry.Angle
@@ -88,3 +90,7 @@ rotateTriangle = rotatePoints
 
 rotateTriangleAround :: HasP2 a => P2 -> Angle -> TriangleOf a -> TriangleOf a
 rotateTriangleAround = rotateAroundPoints
+
+-- | The center of mass of a 'Triangle'
+triangleCenter :: HasP2 a => TriangleOf a -> P2
+triangleCenter = average . fmap (^._V2)

@@ -7,6 +7,7 @@ module ChaosBox.Geometry.Rect
   , rectTopLeft
   , rectW
   , rectH
+  , rectCenter
   -- * Smart constructors
   , squareOf
   , square
@@ -58,6 +59,10 @@ pattern Rect { rectTopLeft, rectW, rectH} = RectOf rectTopLeft rectW rectH
 
 fromAABB :: AABB -> Rect
 fromAABB (AABB tl w h) = RectOf tl w h
+
+-- | The center of a 'Rect'
+rectCenter :: HasP2 a => RectOf a -> P2
+rectCenter RectOf{..} = (rectOfTopLeft^._V2) + (P2 rectOfW rectOfH / 2)
 
 --
 -- There are a LOT of ways this can happen. let's enumerate them
