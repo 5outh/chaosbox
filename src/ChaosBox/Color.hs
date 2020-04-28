@@ -36,14 +36,18 @@ import qualified GI.Cairo.Render               as Cairo
 -- | Hue-saturation-value color space
 data HSV = HSV
   { hsvHue        :: Double
+  -- ^ Between 0 and 1
   , hsvSaturation :: Double
+  -- ^ Between 0 and 1
   , hsvValue      :: Double
+  -- ^ Between 0 and 1
   } deriving (Show, Read, Eq, Ord)
 
 -- | A color with transparency
 data WithAlpha color = WithAlpha
   { waColor :: color
   , waAlpha :: Double
+  -- ^ Between 0 and 1
   } deriving (Show, Read, Eq, Ord)
 
 -- | Set the current source to an 'HSV' color
@@ -52,8 +56,8 @@ setSourceHSV = setSourceRGB . toRGB
 
 -- | Set the current source to an 'HSVA' color
 setSourceHSVA :: WithAlpha HSV -> Render ()
-setSourceHSVA (WithAlpha HSV {..} alpha) =
-  hsva hsvHue hsvSaturation hsvValue alpha
+setSourceHSVA (WithAlpha color alpha) = setSourceRGBA r g b alpha
+  where RGB r g b = toRGB color
 
 -- | Parse an RGB value from hexadecimal form
 --
@@ -109,10 +113,6 @@ hsv2rgb h s v = case i `mod` 6 of
   q = v * (1 - f * s)
   t = v * (1 - (1 - f) * s)
 
-hsva :: Double -> Double -> Double -> Double -> Render ()
-hsva h s v = setSourceRGBA channelRed channelGreen channelBlue
-  where RGB {..} = hsv h s v
-
 -- | Fill the whole window with an 'HSV' color
 fillScreenHSV :: HSV -> Generate ()
 fillScreenHSV color = do
@@ -121,7 +121,7 @@ fillScreenHSV color = do
     rectangle 0 0 w h
     setSourceHSV color *> fill
 
--- | Fill the whole window with an 'RGB' color
+-- | Fill the whole window with an 'RGB' color with components between 0 and 1
 fillScreenRGB :: RGB Double -> Generate ()
 fillScreenRGB color = do
   (w, h) <- getSize
