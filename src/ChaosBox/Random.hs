@@ -68,6 +68,11 @@ weighted = MonadRandom.weighted
 unsafeWeighted :: (Foldable f, MonadRandom m) => f (a, Rational) -> m a
 unsafeWeighted = MonadRandom.weighted
 
+-- | A uniformly distributed random variable between a lower and upper bound.
+--
+-- - For 'Enum' and 'Integral' types, this function is inclusive.
+-- - For 'Fractional' types, this function is exclusive on the upper bound.
+--
 uniform :: (Distribution Uniform a, Monad m) => a -> a -> GenerateT m a
 uniform a b = sampleRVar (Random.uniform a b)
 
