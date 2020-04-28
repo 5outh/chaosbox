@@ -3,7 +3,6 @@ module ChaosBox.Random
   (
   -- * Distribution sampling
     uniform
-  , unsafeUniform
   , uniformBounded
   , weighted
   , unsafeWeighted
@@ -15,7 +14,9 @@ module ChaosBox.Random
   , sometimes
   -- * Collection operations
   , shuffle
+  , sample
   , sampleN
+  , unsafeSample
   -- * Higher-order functions
   , suchThat
   , unsafeSuchThat
@@ -38,7 +39,8 @@ import qualified Control.Monad.Random                as MonadRandom
 import           Data.Maybe                          (fromJust)
 import           Data.Random                         (Distribution,
                                                       Distribution (..), Normal,
-                                                      Normal (..), StdUniform)
+                                                      Normal (..), StdUniform,
+                                                      Uniform)
 import qualified Data.Random                         as Random
 import           Data.Random.Distribution.Bernoulli  (boolBernoulli)
 import           Data.Random.Distribution.Triangular (floatingTriangular)
@@ -47,12 +49,12 @@ import           Data.Semigroup.Foldable
 import           Linear.V2
 
 -- | Sample a uniformly distributed element of a non-empty collection.
-uniform :: (Foldable1 f, MonadRandom m) => f a -> m a
-uniform = MonadRandom.uniform
+sample :: (Foldable1 f, MonadRandom m) => f a -> m a
+sample = MonadRandom.uniform
 
 -- | Sample a uniformly distributed element of a collection.
-unsafeUniform :: (Foldable f, MonadRandom m) => f a -> m a
-unsafeUniform = MonadRandom.uniform
+unsafeSample :: (Foldable f, MonadRandom m) => f a -> m a
+unsafeSample = MonadRandom.uniform
 
 -- | A uniformly distributed random variable of a 'Bounded' 'Enum'.
 uniformBounded :: (Monad m, Enum a, Bounded a) => GenerateT m a
@@ -65,6 +67,9 @@ weighted = MonadRandom.weighted
 -- | Sample a uniformly distributed element from a weighted collection.
 unsafeWeighted :: (Foldable f, MonadRandom m) => f (a, Rational) -> m a
 unsafeWeighted = MonadRandom.weighted
+
+uniform :: (Distribution Uniform a, Monad m) => a -> a -> GenerateT m a
+uniform a b = sampleRVar (Random.uniform a b)
 
 -- | A normally distributed random variable.
 normal

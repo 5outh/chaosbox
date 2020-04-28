@@ -84,7 +84,7 @@ where
 import           ChaosBox.CLI                   ( saveImageWith )
 import           ChaosBox.Generate
 import           ChaosBox.Geometry.P2
-import           ChaosBox.Random                ( unsafeUniform )
+import           ChaosBox.Random                ( unsafeSample )
 
 import           Control.Concurrent             ( threadDelay )
 import           Control.Monad                  ( unless
@@ -119,7 +119,7 @@ import           UnliftIO.IORef
 eventLoop :: Generate a -> Generate ()
 eventLoop act = do
   bindKey SDL.ScancodeS $ do
-    str <- replicateM 6 $ unsafeUniform ['a' .. 'z']
+    str <- replicateM 6 $ unsafeSample ['a' .. 'z']
     saveImageWith (Just str)
   -- TODO: This isn't perfect, could bind the key down event directly to the
   -- "quit" action
@@ -145,7 +145,7 @@ eventLoop act = do
 eventLoopN :: Int -> Generate a -> Generate ()
 eventLoopN n act = do
   bindKey SDL.ScancodeS $ do
-    str <- replicateM 6 $ unsafeUniform ['a' .. 'z']
+    str <- replicateM 6 $ unsafeSample ['a' .. 'z']
     saveImageWith (Just str)
   shouldQuitRef <- syncKeyDown SDL.ScancodeQ
 
