@@ -28,7 +28,7 @@ pattern P2 x y = V2 x y
 
 -- | Translate a 'P2' by an offset vector
 translateP2 :: P2 -> P2 -> P2
-translateP2 offset p2 = p2 - offset
+translateP2 offset p2 = p2 + offset
 
 -- | Scale a 'P2' around the origin (@(0,0)@) by a 2d scalar
 scaleP2 :: P2 -> P2 -> P2
