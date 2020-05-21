@@ -75,6 +75,11 @@ import           Foreign.Ptr                    ( castPtr )
 import           SDL
 
 data RenderMode = Static | Interactive
+data FileFormat = PNG
+                | SVG
+                | PS
+                | PDF
+  deriving (Read, Show, Eq)
 
 -- | ChaosBox's options
 data Opts = Opts
@@ -95,8 +100,10 @@ data Opts = Opts
   -- ^ Optional string to append to file name, useful for tagging
   , optFps            :: Int
   -- ^ How many frames an interactive video should render per second
-  , optRenderMode :: RenderMode
+  , optRenderMode     :: RenderMode
   -- ^ Should the program render a png directly or spawn an interactive video?
+  , optFileFormat     :: FileFormat
+  -- ^ Which file format to use for saving images
   }
 
 getDefaultOpts :: IO Opts
@@ -111,6 +118,7 @@ getDefaultOpts = do
             , optMetadataString = Nothing
             , optFps            = 30
             , optRenderMode     = Interactive
+            , optFileFormat     = PNG
             }
 
 opts :: Parser Opts
@@ -145,6 +153,7 @@ opts =
           )
     <*> option auto (long "fps" <> metavar "FPS" <> value 30 <> help fpsHelp)
     <*> flag Interactive Static (long "static" <> short 's' <> help staticHelp)
+    <*> option auto (long "fileformat"<> short 'f' <> metavar "FILEFORMAT" <> help fileformatHelp <> value PNG )
  where
   seedHelp     = "Seed for the global PRNG (optional)"
   scaleHelp    = "Scaling factor from user space to image space (default: 1)"
@@ -157,6 +166,7 @@ opts =
     "How many frames per second to render in interactive mode (default: 30)"
   staticHelp
     = "Render an image directly instead of in an interactive window (default: False)"
+  fileformatHelp = "Fileformat used for images: PNG, SVG, PS or PDF (default: PNG)"
 
 optsInfo :: ParserInfo Opts
 optsInfo = info
