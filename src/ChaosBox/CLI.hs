@@ -62,6 +62,7 @@ import           Data.Foldable                  ( for_ )
 import           Control.Monad.Random
 import           Control.Monad.Reader
 import           UnliftIO.IORef
+import           Data.Char                      ( toLower )
 import           Data.Maybe                     ( fromMaybe )
 import           Data.Semigroup                 ( (<>) )
 import           Data.Time.Clock.POSIX
@@ -75,6 +76,7 @@ import           Foreign.Ptr                    ( castPtr )
 import           SDL
 
 data RenderMode = Static | Interactive
+  deriving Eq
 data FileFormat = PNG
                 | SVG
                 | PS
@@ -103,7 +105,7 @@ data Opts = Opts
   , optRenderMode     :: RenderMode
   -- ^ Should the program render a png directly or spawn an interactive video?
   , optFileFormat     :: FileFormat
-  -- ^ Which file format to use for saving images
+  -- ^ Which file format to use for saving images in static mode
   }
 
 getDefaultOpts :: IO Opts
@@ -166,7 +168,7 @@ opts =
     "How many frames per second to render in interactive mode (default: 30)"
   staticHelp
     = "Render an image directly instead of in an interactive window (default: False)"
-  fileformatHelp = "Fileformat used for images: PNG, SVG, PS or PDF (default: PNG)"
+  fileformatHelp = "Fileformat used for images rendered in static mode: PNG, SVG, PS or PDF (default: PNG)"
 
 optsInfo :: ParserInfo Opts
 optsInfo = info
@@ -275,15 +277,55 @@ runChaosBoxDirectly Opts {..} doRender = replicateM_ optRenderTimes $ do
       , gcMetadataString = optMetadataString
       }
 
-  void . renderWith surface . flip runReaderT ctx . flip runRandT stdGen $ do
-    cairo $ scale optScale optScale
-    void doRender
+  if optFileFormat == PNG || optRenderMode == Interactive then
+    void . renderWith surface . flip runReaderT ctx . flip runRandT stdGen $ do
+      cairo $ scale optScale optScale
+      void doRender
+      
+      ref   <- asks gcBeforeSaveHook
+      mHook <- liftIO $ readIORef ref
+      fromMaybe (pure ()) mHook
 
-    ref   <- asks gcBeforeSaveHook
-    mHook <- liftIO $ readIORef ref
-    fromMaybe (pure ()) mHook
+      saveImage
 
-    saveImage
+  else case optFileFormat of
+    SVG -> write ctx stdGen (fromIntegral w) (fromIntegral h) withSVGSurface
+    PS  -> write ctx stdGen (fromIntegral w) (fromIntegral h) withPSSurface
+    PDF -> write ctx stdGen (fromIntegral w) (fromIntegral h) withPDFSurface
+    PNG -> error "impossible"
+
+  where write ctx stdGen w h withSurface = void $ do
+          let GenerateCtx {..} = ctx
+          let dotExtension = '.' : map toLower (show optFileFormat)
+
+          putStrLn "Saving Image"
+          createDirectoryIfMissing True $ "./images/" <> gcName
+
+          putStrLn "Generating art..."
+          let regularFile =
+                "images/"
+                  <> gcName
+                  <> "/"
+                  <> show gcSeed
+                  <> "-"
+                  <> show gcScale
+                  <> fromMaybe "" gcMetadataString
+                  <> dotExtension
+              latest = "images/" <> gcName <> "/latest" <> dotExtension
+
+          withSurface regularFile w h $ \surface -> do
+            putStrLn $ "Writing " <> regularFile
+            _ <- renderWith surface . flip runReaderT ctx . flip runRandT stdGen $ do
+              cairo $ scale optScale optScale
+              doRender
+            surfaceFinish surface
+            
+          withSurface latest w h $ \surface -> do
+            putStrLn $ "Writing " <> latest
+            _ <- renderWith surface . flip runReaderT ctx . flip runRandT stdGen $ do
+              cairo $ scale optScale optScale
+              doRender
+            surfaceFinish surface
 
 -- | Save the current image at @./images/$name/$seed@
 saveImage :: Generate ()
