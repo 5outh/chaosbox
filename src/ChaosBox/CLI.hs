@@ -76,7 +76,8 @@ import           Foreign.Ptr                    ( castPtr )
 import           SDL
 
 data RenderMode = Static | Interactive
-  deriving Eq
+  deriving (Eq, Show)
+
 data FileFormat = PNG
                 | SVG
                 | PS
@@ -277,56 +278,33 @@ runChaosBoxDirectly Opts {..} doRender = replicateM_ optRenderTimes $ do
       , gcMetadataString = optMetadataString
       }
 
-  if optFileFormat == PNG || optRenderMode == Interactive then
-    void . renderWith surface . flip runReaderT ctx . flip runRandT stdGen $ do
-      cairo $ scale optScale optScale
-      void doRender
-      
-      ref   <- asks gcBeforeSaveHook
-      mHook <- liftIO $ readIORef ref
-      fromMaybe (pure ()) mHook
+  let 
+    write ff withSurface = flip (writeImage ctx ff) Nothing $ \filePath ->
+      withSurface filePath (fromIntegral w) (fromIntegral h) $ \imageSurface -> do
+        _ <- renderWith imageSurface . flip runReaderT ctx . flip runRandT stdGen $ do
+          cairo $ scale optScale optScale
+          doRender
+        surfaceFinish imageSurface
 
-      saveImage
+  case (optFileFormat, optRenderMode) of
+    (PNG, _) ->
+      void . renderWith surface . flip runReaderT ctx . flip runRandT stdGen $ do
+        cairo $ scale optScale optScale
+        void doRender
+        
+        ref   <- asks gcBeforeSaveHook
+        mHook <- liftIO $ readIORef ref
+        fromMaybe (pure ()) mHook
 
-  else case optFileFormat of
-    SVG -> write ctx stdGen (fromIntegral w) (fromIntegral h) withSVGSurface
-    PS  -> write ctx stdGen (fromIntegral w) (fromIntegral h) withPSSurface
-    PDF -> write ctx stdGen (fromIntegral w) (fromIntegral h) withPDFSurface
-    PNG -> error "impossible"
+        saveImage
 
-  where write ctx stdGen w h withSurface = void $ do
-          let GenerateCtx {..} = ctx
-          let dotExtension = '.' : map toLower (show optFileFormat)
-
-          putStrLn "Saving Image"
-          createDirectoryIfMissing True $ "./images/" <> gcName
-
-          putStrLn "Generating art..."
-          let regularFile =
-                "images/"
-                  <> gcName
-                  <> "/"
-                  <> show gcSeed
-                  <> "-"
-                  <> show gcScale
-                  <> fromMaybe "" gcMetadataString
-                  <> dotExtension
-              latest = "images/" <> gcName <> "/latest" <> dotExtension
-
-          withSurface regularFile w h $ \surface -> do
-            putStrLn $ "Writing " <> regularFile
-            _ <- renderWith surface . flip runReaderT ctx . flip runRandT stdGen $ do
-              cairo $ scale optScale optScale
-              doRender
-            surfaceFinish surface
-            
-          withSurface latest w h $ \surface -> do
-            putStrLn $ "Writing " <> latest
-            _ <- renderWith surface . flip runReaderT ctx . flip runRandT stdGen $ do
-              cairo $ scale optScale optScale
-              doRender
-            surfaceFinish surface
-
+    (ff@SVG, Static) -> write ff withSVGSurface
+    (ff@PS, Static) -> write ff withPSSurface
+    (ff@PDF, Static) -> write ff withPDFSurface
+    (fileFormat, renderMode) ->
+      error $ show renderMode <> " mode does not support rendering to " <> show fileFormat
+  
+  
 -- | Save the current image at @./images/$name/$seed@
 saveImage :: Generate ()
 saveImage = saveImageWith Nothing
@@ -334,52 +312,60 @@ saveImage = saveImageWith Nothing
 -- | Save the current image at @./images/$name/$seed/$random-string@
 saveImageWith :: Maybe String -> Generate ()
 saveImageWith mStr = do
-  GenerateCtx {..} <- ask
+  ctx@GenerateCtx {..} <- ask
   mHook            <- readIORef gcBeforeSaveHook
   for_ mHook $ \hook -> hook
 
-  liftIO $ do
-    putStrLn "Saving Image"
-    createDirectoryIfMissing True $ "./images/" <> gcName
-    for_ mStr $ \_ ->
-      createDirectoryIfMissing True
-        $  "./images/"
-        <> gcName
-        <> "/"
-        <> show gcSeed
+  let writer = surfaceWriteToPNG gcCairoSurface
+  liftIO $ writeImage ctx PNG writer mStr
 
-    putStrLn "Generating art..."
-    let regularFile =
+type Writer = FilePath -> IO ()
+writeImage :: GenerateCtx -> FileFormat -> Writer -> Maybe String -> IO ()
+writeImage ctx fileFormat writer mStr = do
+  let GenerateCtx{..} = ctx
+  let dotExtension = '.' : map toLower (show fileFormat)
+
+  putStrLn "Saving Image"
+  createDirectoryIfMissing True $ "./images/" <> gcName
+  for_ mStr $ \_ ->
+    createDirectoryIfMissing True
+      $  "./images/"
+      <> gcName
+      <> "/"
+      <> show gcSeed
+
+  putStrLn "Generating art..."
+  let regularFile =
+        "images/"
+          <> gcName
+          <> "/"
+          <> show gcSeed
+          <> "-"
+          <> show gcScale
+          <> fromMaybe "" gcMetadataString
+          <> dotExtension
+      latest = "images/" <> gcName <> "/latest" <> dotExtension
+
+  putStrLn $ "Writing " <> latest
+  writer latest
+
+  putStrLn $ "Writing " <> regularFile
+  copyFile latest regularFile
+
+  for_ mStr $ \s -> do
+    let extraFile =
           "images/"
             <> gcName
             <> "/"
             <> show gcSeed
+            <> "/"
+            <> show gcSeed
             <> "-"
             <> show gcScale
+            <> "-"
+            <> s
             <> fromMaybe "" gcMetadataString
-            <> ".png"
-        latest = "images/" <> gcName <> "/latest.png"
+            <> dotExtension
 
-    putStrLn $ "Writing " <> regularFile
-    surfaceWriteToPNG gcCairoSurface regularFile
-
-    putStrLn $ "Writing " <> latest
-    surfaceWriteToPNG gcCairoSurface latest
-
-    for_ mStr $ \s -> do
-      let extraFile =
-            "images/"
-              <> gcName
-              <> "/"
-              <> show gcSeed
-              <> "/"
-              <> show gcSeed
-              <> "-"
-              <> show gcScale
-              <> "-"
-              <> s
-              <> fromMaybe "" gcMetadataString
-              <> ".png"
-
-      putStrLn $ "Writing " <> extraFile
-      surfaceWriteToPNG gcCairoSurface extraFile
+    putStrLn $ "Writing " <> extraFile
+    copyFile latest extraFile
