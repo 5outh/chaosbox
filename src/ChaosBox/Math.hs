@@ -32,3 +32,21 @@ lerpMany n p q = map (\c -> lerp c p q) constants
 -- | Average a 'Foldable' collection
 average :: (Num a, Fractional a, Foldable f) => f a -> a
 average xs = sum xs0 / genericLength xs0 where xs0 = toList xs
+
+-- | Resample a value in one interval to a value in another
+--
+-- prop> resample (0,1) (10,20) 0.5 = 15
+--
+resample :: (Double, Double) -> (Double, Double) -> Double -> Double
+resample (start, end) (newStart, newEnd) x =
+  newStart + ((newEnd - newStart) * perc)
+ where
+  -- The size of the initial interval
+  size = end - start
+  -- amount "through" the intitial interval we are
+  perc = (x - start) / size
+
+-- | Clamp a value in some range
+clamp :: Ord a => (a, a) -> a -> a
+clamp (rangeStart, rangeEnd) x = max rangeStart (min x rangeEnd)
+

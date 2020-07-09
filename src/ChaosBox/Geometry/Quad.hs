@@ -15,6 +15,8 @@ module ChaosBox.Geometry.Quad
   , rotateQuad
   , rotateQuadAround
   , quadCenter
+  , scaleRect
+  , scaleRectAround
   )
 where
 
@@ -59,6 +61,12 @@ fromRect RectOf {..} = QuadOf rectOfTopLeft
                               (rectOfTopLeft & _V2 +~ V2 rectOfW 0)
                               (rectOfTopLeft & _V2 +~ V2 rectOfW rectOfH)
                               (rectOfTopLeft & _V2 +~ V2 0 rectOfH)
+
+scaleRect :: P2 -> Rect -> Rect
+scaleRect p = fromAABB . aabb . scaleQuad p . fromRect
+
+scaleRectAround :: P2 -> P2 -> Rect -> Rect
+scaleRectAround p1 p2 = fromAABB . aabb . scaleQuadAround p1 p2 . fromRect
 
 translateQuad :: HasP2 a => P2 -> QuadOf a -> QuadOf a
 translateQuad = translatePoints

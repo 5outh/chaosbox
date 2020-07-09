@@ -48,8 +48,9 @@ module ChaosBox.Interactive
   -- * Dealing with events
     eventLoop
   , eventLoopN
+  , idle
   , registerEventHandler
-  -- * kOne-off rendering
+  -- * One-off rendering
   , renderFrame
   -- * Mouse events
   , onMouseDown
@@ -140,6 +141,13 @@ eventLoop act = do
       void act
       renderFrame
       loop shouldQuitRef
+
+-- | Keep the window open, but don't accept any more user input\*
+--
+-- \* Excluding default event handlers (@Q@ still quits, for example)
+--
+idle :: Generate ()
+idle = eventLoop $ pure ()
 
 -- | Same as 'eventLoop', but only run for some specified number of frames.
 eventLoopN :: Int -> Generate a -> Generate ()

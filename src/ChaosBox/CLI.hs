@@ -44,6 +44,7 @@ module ChaosBox.CLI
   (
   -- * ChaosBox options
     Opts(..)
+  , RenderMode(..)
   , getDefaultOpts
   -- * Running ChaosBox programs
   , runChaosBox
@@ -156,7 +157,14 @@ opts =
           )
     <*> option auto (long "fps" <> metavar "FPS" <> value 30 <> help fpsHelp)
     <*> flag Interactive Static (long "static" <> short 's' <> help staticHelp)
-    <*> option auto (long "fileformat"<> short 'f' <> metavar "FILEFORMAT" <> help fileformatHelp <> value PNG )
+    <*> option
+          auto
+          (  long "fileformat"
+          <> short 'f'
+          <> metavar "FILEFORMAT"
+          <> help fileformatHelp
+          <> value PNG
+          )
  where
   seedHelp     = "Seed for the global PRNG (optional)"
   scaleHelp    = "Scaling factor from user space to image space (default: 1)"
@@ -169,7 +177,8 @@ opts =
     "How many frames per second to render in interactive mode (default: 30)"
   staticHelp
     = "Render an image directly instead of in an interactive window (default: False)"
-  fileformatHelp = "Fileformat used for images rendered in static mode: PNG, SVG, PS or PDF (default: PNG)"
+  fileformatHelp
+    = "Fileformat used for images rendered in static mode: PNG, SVG, PS or PDF (default: PNG)"
 
 optsInfo :: ParserInfo Opts
 optsInfo = info
@@ -278,33 +287,44 @@ runChaosBoxDirectly Opts {..} doRender = replicateM_ optRenderTimes $ do
       , gcMetadataString = optMetadataString
       }
 
-  let 
-    write ff withSurface = flip (writeImage ctx ff) Nothing $ \filePath ->
-      withSurface filePath (fromIntegral w) (fromIntegral h) $ \imageSurface -> do
-        _ <- renderWith imageSurface . flip runReaderT ctx . flip runRandT stdGen $ do
-          cairo $ scale optScale optScale
-          doRender
-        surfaceFinish imageSurface
+  let write ff withSurface = flip (writeImage ctx ff) Nothing $ \filePath ->
+        withSurface filePath (fromIntegral w) (fromIntegral h)
+          $ \imageSurface -> do
+              _ <-
+                renderWith imageSurface
+                . flip runReaderT ctx
+                . flip runRandT   stdGen
+                $ do
+                    cairo $ scale optScale optScale
+                    doRender
+              surfaceFinish imageSurface
 
   case (optFileFormat, optRenderMode) of
     (PNG, _) ->
-      void . renderWith surface . flip runReaderT ctx . flip runRandT stdGen $ do
-        cairo $ scale optScale optScale
-        void doRender
-        
-        ref   <- asks gcBeforeSaveHook
-        mHook <- liftIO $ readIORef ref
-        fromMaybe (pure ()) mHook
+      void
+        . renderWith surface
+        . flip runReaderT ctx
+        . flip runRandT   stdGen
+        $ do
+            cairo $ scale optScale optScale
+            void doRender
 
-        saveImage
+            ref   <- asks gcBeforeSaveHook
+            mHook <- liftIO $ readIORef ref
+            fromMaybe (pure ()) mHook
+
+            saveImage
 
     (ff@SVG, Static) -> write ff withSVGSurface
-    (ff@PS, Static) -> write ff withPSSurface
+    (ff@PS , Static) -> write ff withPSSurface
     (ff@PDF, Static) -> write ff withPDFSurface
     (fileFormat, renderMode) ->
-      error $ show renderMode <> " mode does not support rendering to " <> show fileFormat
-  
-  
+      error
+        $  show renderMode
+        <> " mode does not support rendering to "
+        <> show fileFormat
+
+
 -- | Save the current image at @./images/$name/$seed@
 saveImage :: Generate ()
 saveImage = saveImageWith Nothing
@@ -313,7 +333,7 @@ saveImage = saveImageWith Nothing
 saveImageWith :: Maybe String -> Generate ()
 saveImageWith mStr = do
   ctx@GenerateCtx {..} <- ask
-  mHook            <- readIORef gcBeforeSaveHook
+  mHook                <- readIORef gcBeforeSaveHook
   for_ mHook $ \hook -> hook
 
   let writer = surfaceWriteToPNG gcCairoSurface
@@ -322,17 +342,13 @@ saveImageWith mStr = do
 type Writer = FilePath -> IO ()
 writeImage :: GenerateCtx -> FileFormat -> Writer -> Maybe String -> IO ()
 writeImage ctx fileFormat writer mStr = do
-  let GenerateCtx{..} = ctx
+  let GenerateCtx {..} = ctx
   let dotExtension = '.' : map toLower (show fileFormat)
 
   putStrLn "Saving Image"
   createDirectoryIfMissing True $ "./images/" <> gcName
   for_ mStr $ \_ ->
-    createDirectoryIfMissing True
-      $  "./images/"
-      <> gcName
-      <> "/"
-      <> show gcSeed
+    createDirectoryIfMissing True $ "./images/" <> gcName <> "/" <> show gcSeed
 
   putStrLn "Generating art..."
   let regularFile =

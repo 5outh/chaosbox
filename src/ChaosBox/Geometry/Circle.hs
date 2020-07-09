@@ -47,7 +47,7 @@ instance HasP2 a => HasAABB (CircleOf a) where
   aabb CircleOf {..} = boundary $ tl :| [br]
    where
     c  = circleOfCenter ^. _V2
-    tl = c - (circleOfRadius *^ (-1))
+    tl = c - (circleOfRadius *^ 1)
     br = c + (circleOfRadius *^ 1)
 
 instance HasP2 a => Draw (CircleOf a) where
