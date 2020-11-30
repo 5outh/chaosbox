@@ -2,6 +2,8 @@ module ChaosBox.Math
   ( lerp
   , lerpMany
   , average
+  , clamp
+  , resample
   , module X
   )
 where
