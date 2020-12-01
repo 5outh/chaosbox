@@ -8,11 +8,13 @@ import qualified Data.List.NonEmpty as NE
 -- Run this example with
 --
 -- @
--- > chaosbox-example -- --scale=60
+-- > chaosbox-example
 -- @
 --
 main :: IO ()
-main = runChaosBoxWith (\o -> o { optWidth = 10, optHeight = 10 }) renderSketch
+main = runChaosBoxWith
+  (\o -> o { optWidth = 10, optHeight = 10, optScale = 60 })
+  renderSketch
 
 setup :: Render ()
 setup = setLineWidth 0.02
