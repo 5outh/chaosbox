@@ -23,12 +23,12 @@ import           ChaosBox.Geometry.Class
 import           ChaosBox.Geometry.P2
 import           ChaosBox.Geometry.Path
 import           ChaosBox.Geometry.Transform
+import           ChaosBox.Math               (average)
+import           Control.Lens                ((^.))
 import           Data.List.NonEmpty
 import           Data.Maybe                  (maybeToList)
 import           Linear.V2                   (V2 (..))
 import           Linear.Vector               ((*^))
-import           Control.Lens ((^.))
-import           ChaosBox.Math (average)
 
 data LineOf a = LineOf { lineOfStart :: a, lineOfEnd :: a}
   deriving stock (Show, Eq, Ord, Functor, Foldable, Traversable)

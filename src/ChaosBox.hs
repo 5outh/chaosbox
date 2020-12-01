@@ -108,7 +108,6 @@ module ChaosBox
 where
 
 import           ChaosBox.AABB        as X
-import           ChaosBox.Affine      as X
 import           ChaosBox.CLI         as X
 import           ChaosBox.Color       as X
 import           ChaosBox.Draw        as X
@@ -117,6 +116,7 @@ import           ChaosBox.Geometry    as X
 import           ChaosBox.Interactive as X
 import           ChaosBox.Math        as X
 import           ChaosBox.Noise       as X
+import           ChaosBox.PNG         as X
 import           ChaosBox.Random      as X
 import           GI.Cairo.Render      as Ext (LineCap (..), LineJoin (..),
                                               Render, fill, fillPreserve,
